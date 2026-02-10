@@ -1,0 +1,60 @@
+<div class="layout-container" [class.collapsed]="isSidebarCollapsed">
+    <aside class="sidebar glass-card">
+        <div class="sidebar-header">
+            <div class="logo">
+                @if (currentOrg()?.logo_url) {
+                <img [src]="currentOrg()?.logo_url" alt="Logo" class="org-logo">
+                } @else {
+                <i class="bi bi-rocket-takeoff-fill"></i>
+                }
+                <span>{{ currentOrg()?.name || 'TaskManagement' }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            @for (item of navItems; track item.label) {
+            <a [routerLink]="item.route" routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact: item.route === '/'}" class="nav-item">
+                <i [class]="'bi ' + item.icon"></i>
+                <span>{{ item.label }}</span>
+            </a>
+            }
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar">RS</div>
+                <div class="user-info">
+                    <span class="name">Rediet Solomon</span>
+                    <span class="role">Administrator</span>
+                </div>
+            </div>
+            <button class="logout-btn" title="Logout" (click)="logout()">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="top-navbar glass-card">
+            <div class="navbar-left">
+                <button class="menu-btn" (click)="toggleSidebar()">
+                    <i class="bi" [class.bi-text-indent-left]="!isSidebarCollapsed"
+                        [class.bi-text-indent-right]="isSidebarCollapsed"></i>
+                </button>
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Search for tasks, branches...">
+                </div>
+            </div>
+            <div class="navbar-right">
+                <button class="icon-btn"><i class="bi bi-bell-fill"></i></button>
+                <button class="icon-btn"><i class="bi bi-question-circle-fill"></i></button>
+            </div>
+        </header>
+
+        <main class="page-content">
+            <router-outlet></router-outlet>
+        </main>
+    </div>
+</div>

@@ -13,4 +13,6 @@ httpx
 pandas
 scikit-learn
 python-telegram-bot
+argon2-cffi
+bcrypt>=4.0.1
 pytest

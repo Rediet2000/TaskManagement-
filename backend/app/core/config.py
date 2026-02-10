@@ -1,7 +1,13 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 class Settings(BaseSettings):
+    # Base paths
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    STATIC_DIR: str = os.path.join(BASE_DIR, "static")
+    LOGOS_DIR: str = os.path.join(STATIC_DIR, "logos")
+
     PROJECT_NAME: str = "TaskManagement API"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "secret"
@@ -19,6 +25,11 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: Optional[str] = None
     
     TELEGRAM_BOT_TOKEN: Optional[str] = None
+    
+    # Initial Setup
+    FIRST_SUPERADMIN_EMAIL: str = "admin@system.com"
+    FIRST_SUPERADMIN_PASSWORD: str = "12345"
+    FIRST_ALLOWED_DOMAIN: Optional[str] = None
     
     class Config:
         case_sensitive = True

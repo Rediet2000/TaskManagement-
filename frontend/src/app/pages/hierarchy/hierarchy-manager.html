@@ -1,0 +1,257 @@
+<div class="hierarchy-container animate-fade-in">
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Organizational Hierarchy & RBAC</h1>
+            <p>Manage departments, teams, and access roles</p>
+        </div>
+        <div class="actions">
+            @if (isSuperAdmin()) {
+            <button class="btn-secondary me-3" (click)="showOrgModal.set(true)">
+                <i class="bi bi-globe"></i> New Organization
+            </button>
+            }
+            <button class="btn-primary me-3" (click)="showBranchModal.set(true)">
+                <i class="bi bi-geo-alt"></i> New Branch
+            </button>
+            <button class="btn-primary me-3" (click)="showRoleModal.set(true)">
+                <i class="bi bi-shield-lock"></i> Add Role
+            </button>
+            <button class="btn-primary" (click)="showDeptModal.set(true)">
+                <i class="bi bi-building-add"></i> Add Department
+            </button>
+        </div>
+    </header>
+
+    <div class="hierarchy-grid">
+        <!-- Roles Section -->
+        <section class="glass-card full-width">
+            <div class="section-header">
+                <h2>Access Roles</h2>
+            </div>
+            <div class="role-badges">
+                @for (role of roles(); track role.id) {
+                <div class="role-badge-group">
+                    <span class="role-badge">
+                        <i class="bi bi-person-badge"></i> {{ role.name }}
+                        <small *ngIf="role.parent_role_id" class="text-muted ms-2">(Reports to {{
+                            getRoleName(role.parent_role_id) }})</small>
+                    </span>
+                    <div class="role-actions">
+                        <button class="icon-btn-xs" (click)="openEditRoleModal(role)" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="icon-btn-xs delete" (click)="onDeleteRole(role.id)" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </section>
+
+        <!-- Branches & Departments Section -->
+        @for (branch of branches(); track branch.id) {
+        <div class="branch-container full-width">
+            <div class="branch-header">
+                <div class="branch-info">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <h2>{{ branch.name }}</h2>
+                    <span class="branch-address" *ngIf="branch.address">{{ branch.address }}</span>
+                </div>
+                <button class="btn-primary btn-sm" (click)="openDeptModal(branch.id)">
+                    <i class="bi bi-building-add"></i> Add Department
+                </button>
+            </div>
+
+            <div class="hierarchy-grid nested">
+                @for (dept of getDeptsByBranch(branch.id); track dept.id) {
+                <div class="glass-card dept-card">
+                    <div class="dept-header">
+                        <i class="bi bi-building"></i>
+                        <h3>{{ dept.name }}</h3>
+                        <button class="icon-btn-sm" title="Add Team" (click)="openTeamModal(dept.id)">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="team-list">
+                        @for (team of getTeamsByDept(dept.id); track team.id) {
+                        <div class="team-item">
+                            <span class="team-name">{{ team.name }}</span>
+                            <span class="member-count">Operational</span>
+                        </div>
+                        }
+                        @if (getTeamsByDept(dept.id).length === 0) {
+                        <div class="empty-msg">No teams yet</div>
+                        }
+                    </div>
+                </div>
+                }
+                @if (getDeptsByBranch(branch.id).length === 0) {
+                <div class="glass-card empty-card">
+                    <p>No departments in this branch yet.</p>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- Unassigned Departments (if any) -->
+        @if (getDeptsByBranch(null).length > 0) {
+        <div class="branch-container full-width">
+            <div class="branch-header">
+                <h2>Unassigned Departments</h2>
+            </div>
+            <div class="hierarchy-grid nested">
+                @for (dept of getDeptsByBranch(null); track dept.id) {
+                <!-- Same dept card as above -->
+                <div class="glass-card dept-card">
+                    <div class="dept-header">
+                        <i class="bi bi-building"></i>
+                        <h3>{{ dept.name }}</h3>
+                        <button class="icon-btn-sm" title="Add Team" (click)="openTeamModal(dept.id)">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div class="team-list">
+                        @for (team of getTeamsByDept(dept.id); track team.id) {
+                        <div class="team-item">
+                            <span class="team-name">{{ team.name }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Modals (Dept, Team, Role, Org) -->
+
+    <!-- Role Modal -->
+    <div class="modal-overlay" *ngIf="showRoleModal()">
+        <div class="glass-card modal-content small">
+            <h3>Add New Role</h3>
+            <form (ngSubmit)="onAddRole()">
+                <div class="form-group">
+                    <label>Role Name</label>
+                    <input type="text" name="name" [(ngModel)]="newRole.name" required placeholder="e.g. Sales Manager">
+                </div>
+                <div class="form-group">
+                    <label>Parent Role</label>
+                    <select name="parentRole" [(ngModel)]="newRole.parent_role_id">
+                        <option [ngValue]="null">None (Top Level)</option>
+                        @for (role of roles(); track role.id) {
+                        <option [ngValue]="role.id">{{ role.name }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" (click)="showRoleModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dept Modal (existing) -->
+    <div class="modal-overlay" *ngIf="showDeptModal()">
+        <div class="glass-card modal-content small">
+            <h3>Add New Department</h3>
+            <form (ngSubmit)="onAddDept()">
+                <div class="form-group">
+                    <label>Department Name</label>
+                    <input type="text" name="name" [(ngModel)]="newDept.name" required placeholder="e.g. Operations">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" (click)="showDeptModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Team Modal (existing) -->
+    <div class="modal-overlay" *ngIf="showTeamModal()">
+        <div class="glass-card modal-content small">
+            <h3>Add New Team</h3>
+            <form (ngSubmit)="onAddTeam()">
+                <div class="form-group">
+                    <label>Team Name</label>
+                    <input type="text" name="name" [(ngModel)]="newTeam.name" required placeholder="e.g. Night Shift">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary me-3" (click)="showTeamModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Org Modal -->
+    <div class="modal-overlay" *ngIf="showOrgModal()">
+        <div class="glass-card modal-content small">
+            <h3>New Organization</h3>
+            <form (ngSubmit)="onAddOrg()">
+                <div class="form-group">
+                    <label>Organization Name</label>
+                    <input type="text" name="name" [(ngModel)]="newOrg.name" required placeholder="e.g. Acme Corp">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary me-3" (click)="showOrgModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Organization</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Edit Role Modal -->
+    <div class="modal-overlay" *ngIf="showEditRoleModal()">
+        <div class="glass-card modal-content small">
+            <h3>Edit Role</h3>
+            <form (ngSubmit)="onUpdateRole()">
+                <div class="form-group">
+                    <label>Role Name</label>
+                    <input type="text" name="editName" [(ngModel)]="editRoleData.name" required
+                        placeholder="e.g. Sales Manager">
+                </div>
+                <div class="form-group">
+                    <label>Parent Role</label>
+                    <select name="editParentRole" [(ngModel)]="editRoleData.parent_role_id">
+                        <option [ngValue]="null">None (Top Level)</option>
+                        @for (role of roles(); track role.id) {
+                        <option *ngIf="role.id !== editRoleData.id" [ngValue]="role.id">{{ role.name }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary me-3"
+                        (click)="showEditRoleModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Branch Modal -->
+    <div class="modal-overlay" *ngIf="showBranchModal()">
+        <div class="glass-card modal-content small">
+            <h3>Add New Branch</h3>
+            <form (ngSubmit)="onAddBranch()">
+                <div class="form-group">
+                    <label>Branch Name</label>
+                    <input type="text" name="bName" [(ngModel)]="newBranch.name" required
+                        placeholder="e.g. Downtown Office">
+                </div>
+                <div class="form-group">
+                    <label>Address (Optional)</label>
+                    <input type="text" name="bAddress" [(ngModel)]="newBranch.address" placeholder="e.g. 123 Main St">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary me-3"
+                        (click)="showBranchModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Branch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

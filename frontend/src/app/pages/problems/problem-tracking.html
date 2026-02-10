@@ -1,0 +1,85 @@
+<div class="problem-container animate-fade-in">
+    <header class="page-header">
+        <div class="header-info">
+            <h1>Branch Problem Tracker</h1>
+            <p>Monitor and resolve branch-level operational issues</p>
+        </div>
+        <button class="btn-primary" (click)="showModal.set(true)">
+            <i class="bi bi-exclamation-triangle"></i> Report Issue
+        </button>
+    </header>
+
+    <div class="glass-card table-container">
+        <table class="problem-table">
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Assigned Date</th>
+                    <th>Resolution Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (p of problems(); track p.id) {
+                <tr>
+                    <td>{{ p.branch_location }}</td>
+                    <td>{{ p.problem_type }}</td>
+                    <td>
+                        <span class="status-badge" [class]="p.status.toLowerCase().replace(' ', '-')">
+                            {{ p.status }}
+                        </span>
+                    </td>
+                    <td>{{ p.assigned_date | date:'short' }}</td>
+                    <td>{{ p.resolution_time ? (p.resolution_time | number:'1.1-1') + ' hrs' : '-' }}</td>
+                    <td>
+                        @if (p.status !== 'Fixed') {
+                        <button class="btn-sm" (click)="onFix(p.id)">Mark Fixed</button>
+                        }
+                    </td>
+                </tr>
+                }
+                @if (problems().length === 0) {
+                <tr>
+                    <td colspan="6" class="empty-state">No issues reported yet</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Report Problem Modal -->
+    <div class="modal-overlay" *ngIf="showModal()">
+        <div class="glass-card modal-content small">
+            <div class="modal-header">
+                <h2>Report New Issue</h2>
+                <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
+            </div>
+
+            <form (ngSubmit)="onReportProblem()" #problemForm="ngForm">
+                <div class="form-group">
+                    <label>Branch Location</label>
+                    <input type="text" name="location" [(ngModel)]="newProblem.branch_location" required
+                        placeholder="e.g. Downtown Office">
+                </div>
+
+                <div class="form-group">
+                    <label>Problem Type</label>
+                    <select name="type" [(ngModel)]="newProblem.problem_type" required>
+                        <option value="" disabled>Select problem type</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Operational">Operational</option>
+                        <option value="Maintenance">Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary" [disabled]="!problemForm.form.valid">Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

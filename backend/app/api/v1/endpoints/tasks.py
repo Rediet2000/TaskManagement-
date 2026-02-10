@@ -7,7 +7,7 @@ from app.db.base import get_db
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.task.Task])
+@router.get("", response_model=List[schemas.task.Task])
 def read_tasks(
     db: Session = Depends(get_db),
     current_user: models.core.User = Depends(deps.get_current_active_user),
@@ -21,24 +21,35 @@ def read_tasks(
         models.task_tracking.Task.org_id == current_user.org_id
     ).offset(skip).limit(limit).all()
 
-@router.post("/", response_model=schemas.task.Task)
-def create_task(
+@router.post("", response_model=schemas.task.Task)
+async def create_task(
     *,
     db: Session = Depends(get_db),
     task_in: schemas.task.TaskCreate,
     current_user: models.core.User = Depends(deps.get_current_active_user),
+    org_id: int = Depends(deps.get_current_org_id)
 ) -> Any:
     """
     Create new task.
     """
     db_obj = models.task_tracking.Task(
         **task_in.dict(),
-        creator_id=current_user.id,
-        org_id=current_user.org_id
+        org_id=org_id,
+        creator_id=current_user.id
     )
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Notify assignee if exists
+    if db_obj.assignee_id:
+        assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
+        if assignee:
+            from app.core.notifications import notification_service
+            message = f"New Task Assigned: {db_obj.title}"
+            # await notification_service.send_telegram_notification(assignee.telegram_chat_id, message)
+            # notification_service.send_email_notification(assignee.email, "New Task Assigned", message)
+            
     return db_obj
 
 @router.put("/{id}", response_model=schemas.task.Task)

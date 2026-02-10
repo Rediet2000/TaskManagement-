@@ -1,0 +1,44 @@
+# Environment
+.env
+.env.template
+.env.example
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Angular / Node
+node_modules/
+/dist/
+/.angular/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.editorconfig
+
+# Docker
+.dockerignore
+*.db
+*.sqlite3
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local build artifacts
+backend/static/logos/*
+!backend/static/logos/.gitkeep
