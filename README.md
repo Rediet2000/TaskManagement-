@@ -29,7 +29,7 @@ A high-performance, enterprise-grade task management system with organizational 
 ### Deployment
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/task-management.git
+   git clone https://github.com/rediet2000/TaskManagement-.git
    cd task-management
    ```
 
