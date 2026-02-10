@@ -1,0 +1,59 @@
+<div class="signup-container">
+    <div class="glass-card signup-card animate-fade-in">
+        <div class="signup-header">
+            <h1>Create Account</h1>
+            <p>Join an organization to start managing tasks</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #signupForm="ngForm" class="signup-form">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required
+                        placeholder="John Doe">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" [(ngModel)]="email" required
+                        placeholder="name@company.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="organization">Organization</label>
+                <div class="input-wrapper select-wrapper">
+                    <select id="organization" name="organization" [(ngModel)]="orgId" required>
+                        <option [ngValue]="null" disabled selected>Select your organization</option>
+                        @for (org of organizations(); track org.id) {
+                        <option [value]="org.id">{{ org.name }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" [(ngModel)]="password" required
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <div *ngIf="error" class="error-message">
+                {{ error }}
+            </div>
+
+            <button type="submit" class="btn-primary signup-btn" [disabled]="loading || !signupForm.form.valid">
+                <span *ngIf="!loading">Create Account</span>
+                <span *ngIf="loading" class="loader"></span>
+            </button>
+        </form>
+
+        <div class="signup-footer">
+            <p>Already have an account? <a routerLink="/login">Sign In</a></p>
+        </div>
+    </div>
+</div>

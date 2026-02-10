@@ -1,0 +1,46 @@
+<div class="login-container">
+    <div class="glass-card login-card animate-fade-in">
+        <div class="login-header">
+            <h1>Task Management</h1>
+            <p>Enter your credentials to access your workspace</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" [(ngModel)]="email" required
+                        placeholder="name@company.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" [(ngModel)]="password" required
+                        placeholder="••••••••">
+                </div>
+                <div class="field-actions">
+                    <a routerLink="/forgot-password" class="forgot-password-link">Forgot password?</a>
+                </div>
+            </div>
+
+            <div *ngIf="error" class="error-message">
+                {{ error }}
+            </div>
+
+            <div *ngIf="route.snapshot.queryParams['signedUp']" class="success-message">
+                Account created successfully! Please sign in.
+            </div>
+
+            <button type="submit" class="btn-primary login-btn" [disabled]="loading">
+                <span *ngIf="!loading">Sign In</span>
+                <span *ngIf="loading" class="loader"></span>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p>Don't have an account? <a routerLink="/signup">Create One</a></p>
+        </div>
+    </div>
+</div>

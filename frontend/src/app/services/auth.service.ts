@@ -25,8 +25,15 @@ export class AuthService {
         return this.http.post<any>(`${environment.apiUrl}/auth/login/access-token`, formData).pipe(
             tap(response => {
                 localStorage.setItem('token', response.access_token);
-                this.currentUserSubject.next({ email });
-                localStorage.setItem('currentUser', JSON.stringify({ email }));
+            })
+        );
+    }
+
+    getMe(): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/auth/me`).pipe(
+            tap(user => {
+                this.currentUserSubject.next(user);
+                localStorage.setItem('currentUser', JSON.stringify(user));
             })
         );
     }
@@ -39,5 +46,29 @@ export class AuthService {
 
     getToken() {
         return localStorage.getItem('token');
+    }
+
+    signup(userData: any): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/auth/signup`, userData);
+    }
+
+    requestPasswordReset(email: string): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/auth/password-reset-request`, { email });
+    }
+
+    confirmPasswordReset(data: any): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/auth/password-reset-confirm`, data);
+    }
+
+    getUsers(): Observable<any[]> {
+        return this.http.get<any[]>(`${environment.apiUrl}/auth/users`);
+    }
+
+    toggleUserStatus(userId: number): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/auth/users/${userId}/toggle-status`, {});
+    }
+
+    updateUser(userId: number, userData: any): Observable<any> {
+        return this.http.put<any>(`${environment.apiUrl}/auth/users/${userId}`, userData);
     }
 }

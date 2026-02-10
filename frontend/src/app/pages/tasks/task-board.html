@@ -1,0 +1,85 @@
+<div class="board-container animate-fade-in">
+    <header class="board-header">
+        <div class="header-info">
+            <h1>Daily Task Board</h1>
+            <p>Track and manage individual operational tasks</p>
+        </div>
+        <div class="actions">
+            <button class="btn-primary" (click)="showModal.set(true)">
+                <i class="bi bi-plus-lg"></i> Add Task
+            </button>
+        </div>
+    </header>
+
+    <div class="board-columns">
+        @for (column of columns; track column) {
+        <div class="column">
+            <div class="column-header">
+                <h3>{{ column }}</h3>
+                <span class="count">{{ getTasksByStatus(column).length }}</span>
+            </div>
+
+            <div class="task-list">
+                @for (task of getTasksByStatus(column); track task.id) {
+                <div class="glass-card task-card">
+                    <div class="task-priority" [class]="task.priority.toLowerCase()"></div>
+                    <h4>{{ task.title }}</h4>
+                    <p>{{ task.description }}</p>
+                    <div class="task-footer">
+                        <span class="date">{{ task.due_date | date:'shortDate' }}</span>
+                        <div class="avatar-sm">U</div>
+                    </div>
+                </div>
+                }
+                @if (getTasksByStatus(column).length === 0) {
+                <div class="column-empty">No tasks in this stage</div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal-overlay" *ngIf="showModal()">
+        <div class="glass-card modal-content">
+            <div class="modal-header">
+                <h2>Create New Task</h2>
+                <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
+            </div>
+
+            <form (ngSubmit)="onAddTask()" #taskForm="ngForm" class="task-form">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" name="title" [(ngModel)]="newTask.title" required
+                        placeholder="What needs to be done?">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" [(ngModel)]="newTask.description" rows="3"
+                        placeholder="Additional details..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Priority</label>
+                        <select name="priority" [(ngModel)]="newTask.priority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>Due Date</label>
+                        <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary" [disabled]="!taskForm.form.valid">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
