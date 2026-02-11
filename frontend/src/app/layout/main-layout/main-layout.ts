@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, effect } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -15,22 +16,49 @@ export class MainLayout {
     private authService = inject(AuthService);
     private themeService = inject(ThemeService);
     private router = inject(Router);
+    private titleService = inject(Title);
+    private document = inject(DOCUMENT);
 
     isSidebarCollapsed = false;
+    isMobileSidebarActive = signal<boolean>(false);
     currentOrg = this.themeService.currentOrg;
     currentUser = this.authService.currentUser;
+
+    constructor() {
+        effect(() => {
+            const org = this.currentOrg();
+            // Update Title
+            if (org?.name) {
+                this.titleService.setTitle(org.name);
+            } else {
+                this.titleService.setTitle('Task Management System');
+            }
+
+            // Update Favicon
+            const link = this.document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (link) {
+                link.href = org?.logo_url || 'favicon.ico';
+            }
+        });
+    }
 
     navItems = [
         { label: 'Dashboard', route: '/', icon: 'bi-grid-1x2-fill' },
         { label: 'Tasks', route: '/tasks', icon: 'bi-list-check' },
+        { label: 'Agile Board', route: '/agile', icon: 'bi-kanban-fill' },
         { label: 'Problem Areas', route: '/problems', icon: 'bi-exclamation-octagon-fill' },
         { label: 'RBAC & Org', route: '/rbac', icon: 'bi-shield-lock-fill' },
         { label: 'Analytics', route: '/analytics', icon: 'bi-bar-chart-fill' },
+        { label: 'Reports', route: '/reports', icon: 'bi-graph-up-arrow' },
         { label: 'Settings', route: '/settings', icon: 'bi-gear-fill' }
     ];
 
     toggleSidebar() {
-        this.isSidebarCollapsed = !this.isSidebarCollapsed;
+        if (window.innerWidth <= 1024) {
+            this.isMobileSidebarActive.update(v => !v);
+        } else {
+            this.isSidebarCollapsed = !this.isSidebarCollapsed;
+        }
     }
 
     logout() {

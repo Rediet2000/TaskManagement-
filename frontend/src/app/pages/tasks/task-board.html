@@ -11,7 +11,7 @@
         </div>
     </header>
 
-    <div class="board-columns">
+    <div class="board-columns" cdkDropListGroup>
         @for (column of columns; track column) {
         <div class="column">
             <div class="column-header">
@@ -19,15 +19,34 @@
                 <span class="count">{{ getTasksByStatus(column).length }}</span>
             </div>
 
-            <div class="task-list">
+            <div class="task-list" cdkDropList [cdkDropListData]="getTasksByStatus(column)" [id]="column"
+                (cdkDropListDropped)="onDrop($event)">
+
                 @for (task of getTasksByStatus(column); track task.id) {
-                <div class="glass-card task-card">
+                <div class="glass-card task-card" (click)="onSelectTask(task)" cdkDrag [cdkDragData]="task">
                     <div class="task-priority" [class]="task.priority.toLowerCase()"></div>
                     <h4>{{ task.title }}</h4>
                     <p>{{ task.description }}</p>
+
+                    <div class="task-tags" *ngIf="task.tags.length">
+                        @for (tag of task.tags; track tag) {
+                        <span class="tag">{{ tag }}</span>
+                        }
+                    </div>
+
                     <div class="task-footer">
                         <span class="date">{{ task.due_date | date:'shortDate' }}</span>
-                        <div class="avatar-sm">U</div>
+                        <div class="task-meta">
+                            <span *ngIf="task.comments?.length">
+                                <i class="bi bi-chat-dots"></i> {{ task.comments?.length }}
+                            </span>
+                            <span *ngIf="task.attachments?.length">
+                                <i class="bi bi-paperclip"></i> {{ task.attachments?.length }}
+                            </span>
+                        </div>
+                        <div class="avatar-sm" [title]="getUserName(task.assignee_id)">
+                            {{ getUserInitial(task.assignee_id) }}
+                        </div>
                     </div>
                 </div>
                 }
@@ -37,6 +56,119 @@
             </div>
         </div>
         }
+    </div>
+
+    <!-- Task Detail Drawer -->
+    <div class="drawer-overlay" [class.open]="showDetails()" (click)="showDetails.set(false)">
+        <div class="glass-card detail-drawer" (click)="$event.stopPropagation()">
+            <header class="drawer-header">
+                <div class="priority-label" [class]="selectedTask()?.priority?.toLowerCase()">
+                    {{ selectedTask()?.priority }}
+                </div>
+                <h2>{{ selectedTask()?.title }}</h2>
+                <button class="close-btn" (click)="showDetails.set(false)"><i class="bi bi-x"></i></button>
+            </header>
+
+            <div class="drawer-body">
+                <section class="info-section">
+                    <div class="info-item">
+                        <label>Assignee</label>
+                        <div class="assignee-badge">
+                            <span class="avatar-xs">{{ getUserInitial(selectedTask()?.assignee_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.assignee_id) }}</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="description-section">
+                    <label>Description</label>
+                    <p>{{ selectedTask()?.description || 'No description provided.' }}</p>
+                </section>
+
+                <!-- Rating Section -->
+                <section class="rating-section" *ngIf="selectedTask()?.status === 'Completed'">
+                    <label>Performance Rating</label>
+                    <div class="rating-container" [class.readonly]="!canRateTask()">
+                        @if (selectedTask()?.rating) {
+                        <div class="stars">
+                            @for (star of [1,2,3,4,5]; track star) {
+                            <i class="bi text-warning" [class.bi-star-fill]="star <= (selectedTask()?.rating || 0)"
+                                [class.bi-star]="star > (selectedTask()?.rating || 0)">
+                            </i>
+                            }
+                            <span class="rating-value">{{ selectedTask()?.rating }}/5</span>
+                        </div>
+                        } @else {
+                        @if (canRateTask()) {
+                        <div class="stars interact">
+                            @for (star of [1,2,3,4,5]; track star) {
+                            <i class="bi bi-star text-warning" (click)="rateTask(star)"></i>
+                            }
+                        </div>
+                        <p class="text-sm text-muted">Click to rate this task</p>
+                        } @else {
+                        <p class="text-sm text-muted">Not rated yet</p>
+                        }
+                        }
+                    </div>
+                </section>
+
+                <section class="tags-section">
+                    <label>Tags</label>
+                    <div class="tag-manager">
+                        <div class="tag-list">
+                            @for (tag of selectedTask()?.tags; track tag) {
+                            <span class="tag edit">
+                                {{ tag }}
+                                <i class="bi bi-x" (click)="removeTag(tag)"></i>
+                            </span>
+                            }
+                        </div>
+                        <div class="add-tag">
+                            <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()" placeholder="Add tag...">
+                            <button (click)="addTag()"><i class="bi bi-plus"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="attachments-section">
+                    <label>Attachments ({{ selectedTask()?.attachments?.length || 0 }})</label>
+                    <div class="attachment-list">
+                        @for (file of selectedTask()?.attachments; track file.id) {
+                        <a [href]="file.file_path" target="_blank" class="attachment-item">
+                            <i class="bi bi-file-earmark"></i>
+                            <span>{{ file.file_name }}</span>
+                        </a>
+                        }
+                    </div>
+                    <label class="file-upload">
+                        <input type="file" (change)="onUploadFile($event)" style="display: none;">
+                        <i class="bi bi-cloud-upload"></i> Upload File
+                    </label>
+                </section>
+
+                <section class="comments-section">
+                    <label>Comments ({{ selectedTask()?.comments?.length || 0 }})</label>
+                    <div class="comment-list">
+                        @for (comment of selectedTask()?.comments; track comment.id) {
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="author">User {{ comment.author_id }}</span>
+                                <span class="time">{{ comment.created_at | date:'short' }}</span>
+                            </div>
+                            <div class="comment-body">{{ comment.content }}</div>
+                        </div>
+                        }
+                    </div>
+                    <div class="comment-input">
+                        <textarea [(ngModel)]="newComment" placeholder="Write a comment..."></textarea>
+                        <button class="btn-primary" (click)="onAddComment()" [disabled]="!newComment.trim()">
+                            Post Comment
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
     </div>
 
     <!-- Add Task Modal -->
@@ -58,6 +190,16 @@
                     <label>Description</label>
                     <textarea name="description" [(ngModel)]="newTask.description" rows="3"
                         placeholder="Additional details..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Assign To</label>
+                    <select name="assignee" [(ngModel)]="newTask.assignee_id">
+                        <option [ngValue]="undefined">Unassigned</option>
+                        <option *ngFor="let user of users()" [value]="user.id">
+                            {{ user.full_name || user.email }}
+                        </option>
+                    </select>
                 </div>
 
                 <div class="form-row">

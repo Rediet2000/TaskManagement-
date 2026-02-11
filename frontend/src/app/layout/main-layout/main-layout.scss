@@ -1,6 +1,7 @@
 .layout-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--bg-main);
 
     &.collapsed {
@@ -25,6 +26,27 @@
     }
 }
 
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    @media (max-width: 1024px) {
+        &.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+}
+
 .sidebar {
     width: 16rem;
     height: 100vh;
@@ -34,9 +56,17 @@
     border-radius: 0;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10000; // Above everything including the drawer
     border-right: 1px solid var(--glass-border);
+
+    @media (max-width: 1024px) {
+        transform: translateX(-100%);
+
+        &.active {
+            transform: translateX(0);
+        }
+    }
 }
 
 .sidebar-header {
@@ -169,6 +199,11 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    width: 100%;
+
+    @media (max-width: 1024px) {
+        margin-left: 0 !important;
+    }
 }
 
 .layout-container.collapsed .main-content {
@@ -218,6 +253,10 @@
     width: 100%;
     max-width: 400px;
 
+    @media (max-width: 768px) {
+        display: none; // Hide search on mobile to save space
+    }
+
     i {
         color: var(--text-muted);
         font-size: 0.875rem;
@@ -257,4 +296,6 @@
 
 .page-content {
     flex: 1;
+    overflow: hidden;
+    position: relative;
 }

@@ -3,6 +3,24 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
 import enum
+from sqlalchemy.dialects.postgresql import JSONB
+
+class ModuleType(str, enum.Enum):
+    CORE = "core"
+    DEV = "dev"
+    ADMIN = "admin"
+    NET = "net"
+    SALES = "sales"
+    CRM = "crm"
+    HR = "hr"
+    SUPPORT = "support"
+
+class IssueType(str, enum.Enum):
+    TASK = "task"
+    BUG = "bug"
+    STORY = "story"
+    EPIC = "epic"
+    SUBTASK = "subtask"
 
 class TaskStatus(str, enum.Enum):
     NOT_STARTED = "Not Started"
@@ -32,6 +50,18 @@ class Task(Base):
     category = Column(String, nullable=True)
     status = Column(String, default=TaskStatus.NOT_STARTED)
     
+    # New Phase 8 Fields
+    tags = Column(JSONB, default=[], nullable=False)
+    module_type = Column(String, default=ModuleType.CORE)
+    metadata_fields = Column(JSONB, default={}, nullable=False) # flexible storage for industry-specific data
+    
+    # Agile Phase 9 Fields
+    issue_type = Column(String, default=IssueType.TASK)
+    sprint_id = Column(Integer, ForeignKey("sprints.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("tasks.id"), nullable=True) # for epic/subtask relationships
+    story_points = Column(Integer, nullable=True)
+    estimated_hours = Column(Float, nullable=True)
+    
     creator_id = Column(Integer, ForeignKey("users.id"))
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
@@ -41,7 +71,55 @@ class Task(Base):
     due_date = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     
+    # Phase 11: Reports & Performance
+    rating = Column(Integer, nullable=True) # 1-5 stars
+    rating_comment = Column(Text, nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
+    attachments = relationship("Attachment", back_populates="task", cascade="all, delete-orphan")
+
+class Comment(Base):
+    __tablename__ = "task_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    author_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    task = relationship("Task", back_populates="comments")
+    author = relationship("User")
+
+class Attachment(Base):
+    __tablename__ = "task_attachments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_name = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    file_type = Column(String, nullable=True)
+    file_size = Column(Integer, nullable=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    uploader_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    task = relationship("Task", back_populates="attachments")
+    uploader = relationship("User")
+
+class Sprint(Base):
+    __tablename__ = "sprints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    goal = Column(Text, nullable=True)
+    start_date = Column(DateTime(timezone=True))
+    end_date = Column(DateTime(timezone=True))
+    status = Column(String, default="Planning") # Planning, Active, Completed
+    org_id = Column(Integer, ForeignKey("organizations.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tasks = relationship("Task", backref="sprint")
 
 class ProblemArea(Base):
     __tablename__ = "problem_areas"

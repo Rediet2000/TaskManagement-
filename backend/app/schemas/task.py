@@ -1,7 +1,24 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import enum
+
+class ModuleType(str, enum.Enum):
+    CORE = "core"
+    DEV = "dev"
+    ADMIN = "admin"
+    NET = "net"
+    SALES = "sales"
+    CRM = "crm"
+    HR = "hr"
+    SUPPORT = "support"
+
+class IssueType(str, enum.Enum):
+    TASK = "task"
+    BUG = "bug"
+    STORY = "story"
+    EPIC = "epic"
+    SUBTASK = "subtask"
 
 class TaskStatus(str, enum.Enum):
     NOT_STARTED = "Not Started"
@@ -25,17 +42,110 @@ class TaskBase(BaseModel):
     team_id: Optional[int] = None
     due_date: Optional[datetime] = None
 
+    # Phase 8 Fields
+    tags: List[str] = []
+    module_type: ModuleType = ModuleType.CORE
+    metadata_fields: dict = {}
+
+    # Phase 9 Fields
+    issue_type: IssueType = IssueType.TASK
+    sprint_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    story_points: Optional[int] = None
+    estimated_hours: Optional[float] = None
+
 class TaskCreate(TaskBase):
     pass
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    priority: Optional[TaskPriority] = None
+    category: Optional[str] = None
+    status: Optional[TaskStatus] = None
+    assignee_id: Optional[int] = None
+    team_id: Optional[int] = None
+    due_date: Optional[datetime] = None
+    tags: Optional[List[str]] = None
+    module_type: Optional[ModuleType] = None
+    metadata_fields: Optional[dict] = None
+    issue_type: Optional[IssueType] = None
+    sprint_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    story_points: Optional[int] = None
+    story_points: Optional[int] = None
+    estimated_hours: Optional[float] = None
+    
+    # Phase 11
+    rating: Optional[int] = None
+    rating_comment: Optional[str] = None
+
+class CommentBase(BaseModel):
+    content: str
+
+class CommentCreate(CommentBase):
+    task_id: int
+
+class SprintBase(BaseModel):
+    name: str
+    goal: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    status: str = "Planning"
+
+class SprintCreate(SprintBase):
+    pass
+
+class SprintUpdate(BaseModel):
+    name: Optional[str] = None
+    goal: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    status: Optional[str] = None
+
+class Sprint(SprintBase):
+    id: int
+    org_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class Comment(CommentBase):
+    id: int
+    task_id: int
+    author_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class AttachmentBase(BaseModel):
+    file_name: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+
+class AttachmentCreate(AttachmentBase):
+    task_id: int
+    file_path: str
+
+class Attachment(AttachmentBase):
+    id: int
+    task_id: int
+    uploader_id: int
+    file_path: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 class Task(TaskBase):
     id: int
     creator_id: int
     org_id: int
     created_at: datetime
+    comments: List[Comment] = []
+    attachments: List[Attachment] = []
     
-    class Config:
-        from_attributes = True
+    completed_at: Optional[datetime] = None
+    rating: Optional[int] = None
+    rating_comment: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class ProblemAreaBase(BaseModel):
     branch_location: str
@@ -53,5 +163,22 @@ class ProblemArea(ProblemAreaBase):
     fixed_date: Optional[datetime] = None
     resolution_time: Optional[float] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+# Phase 11: Reporting Schemas
+class UserPerformance(BaseModel):
+    user_id: int
+    user_name: str
+    tasks_assigned: int
+    tasks_completed: int
+    tasks_started: int
+    avg_rating: Optional[float] = None
+    on_time_rate: float # percentage
+
+class TaskReportStats(BaseModel):
+    total_tasks: int
+    unassigned: int
+    pending: int
+    completed: int
+    started: int
+    user_performance: List[UserPerformance]

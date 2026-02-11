@@ -1,0 +1,258 @@
+.reports-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    h1 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .tabs {
+        display: flex;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.25rem;
+        border-radius: 0.5rem;
+
+        button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+
+            &.active {
+                background: var(--primary);
+                color: white;
+            }
+
+            &:hover:not(.active) {
+                color: white;
+            }
+        }
+    }
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--glass-border);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+
+    h3 {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+
+        &.success {
+            color: var(--success);
+        }
+
+        &.warning {
+            color: var(--warning);
+        }
+
+        &.error {
+            color: var(--error);
+        }
+    }
+}
+
+.charts-section {
+    padding: 2rem;
+
+    .progress-container {
+        margin-top: 1.5rem;
+
+        .progress-bar {
+            height: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+
+            .progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, var(--primary) 0%, #6366f1 100%);
+                transition: width 1s ease-out;
+            }
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+    }
+}
+
+.performance-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+
+    th,
+    td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    td {
+        color: var(--text-main);
+        font-size: 0.9375rem;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        .avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    }
+
+    .rate-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 150px;
+
+        .rate-fill {
+            height: 6px;
+            border-radius: 9999px;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+
+            &::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: var(--width, 0%);
+                /* Controlled by inline style on parent but need tricky css or just use inline width on this element. Template does [style.width.%] */
+                background: var(--bg, var(--primary));
+                border-radius: 9999px;
+            }
+
+            // Actually template applies width directly to div.rate-fill
+            // So we need:
+            display: block; // it is div
+            min-width: 20px;
+
+            &.high {
+                background: var(--success);
+            }
+
+            &.med {
+                background: var(--warning);
+            }
+
+            &.low {
+                background: var(--error);
+            }
+        }
+    }
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: var(--text-muted);
+
+    .loader {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.text-warning {
+    color: #f59e0b;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}

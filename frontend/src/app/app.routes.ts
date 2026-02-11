@@ -32,6 +32,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/tasks/task-board').then(m => m.TaskBoard)
             },
             {
+                path: 'agile',
+                loadComponent: () => import('./pages/tasks/agile-board').then(m => m.AgileBoard)
+            },
+            {
                 path: 'problems',
                 loadComponent: () => import('./pages/problems/problem-tracking').then(m => m.ProblemTracking)
             },
@@ -46,6 +50,14 @@ export const routes: Routes = [
             {
                 path: 'settings',
                 loadComponent: () => import('./pages/settings/settings').then(m => m.Settings)
+            },
+            {
+                path: 'settings/integrations',
+                loadComponent: () => import('./pages/settings/integrations/integrations').then(m => m.Integrations)
+            },
+            {
+                path: 'reports',
+                loadComponent: () => import('./pages/reports/reports').then(m => m.Reports)
             },
             // Add more feature routes here
         ]

@@ -1,5 +1,8 @@
 <div class="layout-container" [class.collapsed]="isSidebarCollapsed">
-    <aside class="sidebar glass-card">
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" [class.active]="isMobileSidebarActive()" (click)="toggleSidebar()"></div>
+
+    <aside class="sidebar glass-card" [class.active]="isMobileSidebarActive()">
         <div class="sidebar-header">
             <div class="logo">
                 @if (currentOrg()?.logo_url) {

@@ -1,0 +1,127 @@
+<div class="agile-container animate-fade-in">
+    <header class="agile-header">
+        <div class="header-info">
+            <h1>Agile Project Board</h1>
+            <p>Manage Sprints, Backlogs, and Development Progress</p>
+        </div>
+        <div class="actions">
+            <button class="btn-secondary" (click)="showSprintModal.set(true)">
+                <i class="bi bi-calendar-plus"></i> New Sprint
+            </button>
+            <div class="sprint-selector" *ngIf="sprints().length">
+                <select [ngModel]="activeSprint()?.id" (ngModelChange)="onSprintChange($event)">
+                    <option *ngFor="let s of sprints()" [value]="s.id">{{ s.name }} ({{ s.status }})</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <div class="agile-layout" cdkDropListGroup>
+        <!-- Backlog Section -->
+        <div class="agile-column backlog">
+            <div class="column-header">
+                <h2>Product Backlog</h2>
+                <span class="count">{{ getBacklogTasks().length }}</span>
+            </div>
+            <div class="task-bucket" cdkDropList id="backlog" [cdkDropListData]="getBacklogTasks()"
+                [cdkDropListConnectedTo]="['active-sprint']" (cdkDropListDropped)="onDrop($event)">
+                <div *ngFor="let task of getBacklogTasks()" class="glass-card agile-card" cdkDrag [cdkDragData]="task">
+                    <div class="card-type" [class]="task.issue_type">
+                        <i class="bi" [class.bi-bookmark-star]="task.issue_type === 'story'"
+                            [class.bi-bug]="task.issue_type === 'bug'"
+                            [class.bi-lightning]="task.issue_type === 'task'"></i>
+                    </div>
+                    <div class="card-content">
+                        <h4>{{ task.title }}</h4>
+                        <div class="card-footer">
+                            <span class="points" *ngIf="task.story_points">{{ task.story_points }} pts</span>
+                            <button class="btn-icon" (click)="onMoveToSprint(task)" title="Move to Sprint">
+                                <i class="bi bi-arrow-right-short"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="getBacklogTasks().length === 0" class="empty-state">
+                    Backlog is empty
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Sprint Section -->
+        <div class="agile-column active-sprint">
+            <div class="column-header">
+                <div class="sprint-info">
+                    <h2>{{ activeSprint()?.name || 'No Active Sprint' }}</h2>
+                    <p class="sprint-goal" *ngIf="activeSprint()?.goal">{{ activeSprint()?.goal }}</p>
+                </div>
+                <div class="sprint-stats" *ngIf="activeSprint() as sprint">
+                    <span class="badge" [class]="sprint.status.toLowerCase()">{{ sprint.status
+                        }}</span>
+                    <span class="count">{{ getSprintTasks().length }}</span>
+                </div>
+            </div>
+
+            <div class="task-bucket" cdkDropList id="active-sprint" [cdkDropListData]="getSprintTasks()"
+                [cdkDropListConnectedTo]="['backlog']" (cdkDropListDropped)="onDrop($event)">
+                <div *ngFor="let task of getSprintTasks()" class="glass-card agile-card" cdkDrag [cdkDragData]="task">
+                    <div class="card-type" [class]="task.issue_type">
+                        <i class="bi" [class.bi-bookmark-star]="task.issue_type === 'story'"
+                            [class.bi-bug]="task.issue_type === 'bug'"
+                            [class.bi-lightning]="task.issue_type === 'task'"></i>
+                    </div>
+                    <div class="card-content">
+                        <h4>{{ task.title }}</h4>
+                        <div class="card-footer">
+                            <span class="status-indicator">{{ task.status }}</span>
+                            <button class="btn-icon" (click)="onMoveToBacklog(task)" title="Return to Backlog">
+                                <i class="bi bi-arrow-left-short"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="!activeSprint()" class="empty-state">
+                    Select or create a sprint to start planning.
+                </div>
+                <div *ngIf="activeSprint() && getSprintTasks().length === 0" class="empty-state">
+                    Drag or move tasks here to include them in the sprint.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Sprint Modal -->
+    <div class="modal-overlay" *ngIf="showSprintModal()">
+        <div class="glass-card modal-content">
+            <div class="modal-header">
+                <h2>New Sprint</h2>
+                <button class="close-btn" (click)="showSprintModal.set(false)"><i class="bi bi-x"></i></button>
+            </div>
+            <form (ngSubmit)="onCreateSprint()" class="agile-form">
+                <div class="form-group">
+                    <label>Sprint Name</label>
+                    <input type="text" name="name" [(ngModel)]="newSprint.name" required
+                        placeholder="e.g. Sprint 1 - Core UI">
+                </div>
+                <div class="form-group">
+                    <label>Sprint Goal</label>
+                    <textarea name="goal" [(ngModel)]="newSprint.goal" rows="2"
+                        placeholder="What are we achieving?"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Start Date</label>
+                        <input type="date" name="start_date" [(ngModel)]="newSprint.start_date" required>
+                    </div>
+                    <div class="form-group half">
+                        <label>End Date</label>
+                        <input type="date" name="end_date" [(ngModel)]="newSprint.end_date" required>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" (click)="showSprintModal.set(false)">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Sprint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

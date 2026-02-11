@@ -23,6 +23,10 @@
             <button [class.active]="activeTab() === 'security'" (click)="setTab('security')">
                 <i class="bi bi-journal-text"></i> Security & Audit
             </button>
+            <a href="/settings/integrations" class="nav-link" routerLink="/settings/integrations"
+                routerLinkActive="active">
+                <i class="bi bi-plugin"></i> Integrations
+            </a>
         </nav>
     </aside>
 

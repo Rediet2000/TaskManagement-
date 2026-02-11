@@ -1,0 +1,107 @@
+<div class="reports-container animate-fade-in">
+    <div class="reports-header">
+        <h1>Reports & Analytics</h1>
+        <div class="tabs">
+            <button [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">Overview</button>
+            <button [class.active]="activeTab() === 'performance'" (click)="setTab('performance')">Performance</button>
+        </div>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="loader"></div>
+        <p>Gathering performance metrics...</p>
+    </div>
+    } @else {
+    <div class="reports-content">
+        <!-- Overview Tab -->
+        @if (activeTab() === 'overview') {
+        <div class="overview-grid">
+            <div class="stat-card">
+                <h3>Total Tasks</h3>
+                <div class="value">{{ reportData()?.total_tasks || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Completed</h3>
+                <div class="value success">{{ reportData()?.completed || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending</h3>
+                <div class="value warning">{{ reportData()?.pending || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Unassigned</h3>
+                <div class="value error">{{ reportData()?.unassigned || 0 }}</div>
+            </div>
+        </div>
+
+        <div class="charts-section glass-card mt-4">
+            <h2>Completion Progress</h2>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getCompletionPercentage()"></div>
+                </div>
+                <div class="progress-stats">
+                    <span>{{ getCompletionPercentage() }}% Completed</span>
+                    <span>{{ reportData()?.started || 0 }} In Progress</span>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Performance Tab -->
+        @if (activeTab() === 'performance') {
+        <div class="performance-table-container glass-card">
+            <h2>Employee Performance</h2>
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Tasks Assigned</th>
+                        <th>Started</th>
+                        <th>Completed</th>
+                        <th>On-Time Rate</th>
+                        <th>Avg Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (user of reportData()?.user_performance; track user.user_id) {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar">{{ user.user_name.charAt(0) }}</div>
+                                <span>{{ user.user_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.tasks_assigned }}</td>
+                        <td>{{ user.tasks_started }}</td>
+                        <td>{{ user.tasks_completed }}</td>
+                        <td>
+                            <div class="rate-bar">
+                                <div class="rate-fill" [style.width.%]="user.on_time_rate"
+                                    [class.high]="user.on_time_rate >= 80"
+                                    [class.med]="user.on_time_rate >= 50 && user.on_time_rate < 80"
+                                    [class.low]="user.on_time_rate < 50">
+                                </div>
+                                <span>{{ user.on_time_rate }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="star-rating">
+                                @if (user.avg_rating) {
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span>{{ user.avg_rating | number:'1.1-1' }}</span>
+                                } @else {
+                                <span class="text-muted">N/A</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+    }
+</div>
