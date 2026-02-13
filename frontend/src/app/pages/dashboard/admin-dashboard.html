@@ -1,0 +1,143 @@
+<div class="dashboard-container">
+    <div class="header-section">
+        <div>
+            <h1>Vanguard Control</h1>
+            <p>Intelligence overview & infrastructure health.</p>
+        </div>
+        <div class="action-group">
+            <div class="stat-trend" style="color: var(--neon-green); font-size: 0.9rem;">
+                <div class="pulse"></div>
+                System Live
+            </div>
+            <button class="premium-btn" (click)="loadStats()">
+                <i class="bi bi-arrow-clockwise"></i>
+                Sync Intelligence
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="loading()" class="loader-container">
+        <span class="loader"></span>
+    </div>
+
+    <div *ngIf="error()" class="alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error() }}
+    </div>
+
+    <div *ngIf="!loading() && stats()" class="stats-grid">
+        <!-- Users Card -->
+        <div class="stat-card"
+            style="--icon-color: var(--neon-blue); --accent-glow: rgba(59, 130, 246, 0.2); transition-delay: 0.1s;">
+            <div class="stat-header">
+                <div>
+                    <span class="stat-label">User Directory</span>
+                    <div class="stat-main">
+                        <div class="stat-value">{{ stats().users.total }}</div>
+                        <div class="stat-trend">+4% <i class="bi bi-arrow-up-right"></i></div>
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+            </div>
+            <div class="visual-container">
+                <svg class="trend-line" viewBox="0 0 400 60">
+                    <path d="M0,50 Q100,20 200,45 T400,10" />
+                </svg>
+            </div>
+            <div class="stat-footer">
+                <div class="footer-detail">{{ stats().users.active }} <strong>Active</strong></div>
+                <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="(stats().users.active / stats().users.total) * 100">
+                    </div>
+                </div>
+                <div class="footer-detail">{{ stats().users.inactive }} <strong>Inactive</strong></div>
+            </div>
+        </div>
+
+        <!-- Tasks Card -->
+        <div class="stat-card"
+            style="--icon-color: var(--neon-green); --accent-glow: rgba(16, 185, 129, 0.2); transition-delay: 0.2s;">
+            <div class="stat-header">
+                <div>
+                    <span class="stat-label">Ops Efficiency</span>
+                    <div class="stat-main">
+                        <div class="stat-value">{{ stats().tasks.total }}</div>
+                        <div class="stat-trend" style="color: var(--neon-blue);">Active</div>
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-activity"></i>
+                </div>
+            </div>
+            <div class="visual-container">
+                <svg class="trend-line" viewBox="0 0 400 60">
+                    <path d="M0,10 Q50,55 150,30 T400,45" style="stroke: var(--neon-green)" />
+                </svg>
+            </div>
+            <div class="stat-footer">
+                <div class="footer-detail">{{ stats().tasks.completed }} <strong>Fixed</strong></div>
+                <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="(stats().tasks.completed / stats().tasks.total) * 100"
+                        style="background: linear-gradient(90deg, var(--neon-green), #fff)"></div>
+                </div>
+                <div class="footer-detail">{{ stats().tasks.open }} <strong>Critical</strong></div>
+            </div>
+        </div>
+
+        <!-- Storage Card -->
+        <div class="stat-card"
+            style="--icon-color: var(--neon-purple); --accent-glow: rgba(139, 92, 246, 0.2); transition-delay: 0.3s;">
+            <div class="stat-header">
+                <div>
+                    <span class="stat-label">Cloud Matrix</span>
+                    <div class="stat-main">
+                        <div class="stat-value">{{ stats().storage.percent }}<small
+                                style="font-size: 1.5rem; opacity: 0.5;">%</small></div>
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-stack"></i>
+                </div>
+            </div>
+            <div class="visual-container">
+                <svg class="trend-line" viewBox="0 0 400 60">
+                    <path d="M0,45 Q150,10 300,50 T400,20" style="stroke: var(--neon-purple)" />
+                </svg>
+            </div>
+            <div class="stat-footer">
+                <div class="footer-detail"><strong>{{ stats().storage.used_mb }}MB</strong> Used</div>
+                <div class="progress-track" style="margin: 0 0.5rem">
+                    <div class="progress-fill" [style.width.%]="stats().storage.percent"
+                        style="background: linear-gradient(90deg, var(--neon-purple), #fff)"></div>
+                </div>
+                <div class="footer-detail"><strong>10GB</strong> Cap</div>
+            </div>
+        </div>
+
+        <!-- Future Readiness Card -->
+        <div class="stat-card"
+            style="--icon-color: var(--neon-pink); --accent-glow: rgba(236, 72, 153, 0.2); transition-delay: 0.4s;">
+            <div class="stat-header">
+                <div>
+                    <span class="stat-label">Asset Pipeline</span>
+                    <div class="stat-main">
+                        <div class="stat-value">Coming</div>
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+            </div>
+            <div class="visual-container" style="display: flex; align-items: center; justify-content: center;">
+                <span
+                    style="font-size: 0.75rem; color: #475569; letter-spacing: 0.2em; text-transform: uppercase;">Awaiting
+                    Integration</span>
+            </div>
+            <div class="stat-footer">
+                <div class="footer-detail">Next: <strong>Project Tracking</strong></div>
+                <div class="pulse" style="background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink);"></div>
+            </div>
+        </div>
+    </div>
+</div>

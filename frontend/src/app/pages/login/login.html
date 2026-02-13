@@ -1,8 +1,8 @@
 <div class="login-container">
-    <div class="glass-card login-card animate-fade-in">
+    <div class="login-card">
         <div class="login-header">
-            <h1>Task Management</h1>
-            <p>Enter your credentials to access your workspace</p>
+            <h1>LOGIN</h1>
+            <p>Access your workspace</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
@@ -10,7 +10,7 @@
                 <label for="email">Email Address</label>
                 <div class="input-wrapper">
                     <input type="email" id="email" name="email" [(ngModel)]="email" required
-                        placeholder="name@company.com">
+                        placeholder="user@company.com">
                 </div>
             </div>
 
@@ -21,26 +21,29 @@
                         placeholder="••••••••">
                 </div>
                 <div class="field-actions">
-                    <a routerLink="/forgot-password" class="forgot-password-link">Forgot password?</a>
+                    <a routerLink="/forgot-password" class="forgot-password-link">Forgot Password?</a>
                 </div>
             </div>
 
-            <div *ngIf="error" class="error-message">
-                {{ error }}
+            <div *ngIf="error" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error }}
             </div>
 
-            <div *ngIf="route.snapshot.queryParams['signedUp']" class="success-message">
-                Account created successfully! Please sign in.
+            <div *ngIf="route.snapshot.queryParams['signedUp']" class="alert-premium alert-success">
+                <i class="bi bi-check-circle"></i> Account created successfully. Please login.
             </div>
 
-            <button type="submit" class="btn-primary login-btn" [disabled]="loading">
-                <span *ngIf="!loading">Sign In</span>
+            <button type="submit" class="premium-btn login-btn" [disabled]="loading">
+                <span *ngIf="!loading">SIGN IN</span>
                 <span *ngIf="loading" class="loader"></span>
             </button>
         </form>
 
         <div class="login-footer">
-            <p>Don't have an account? <a routerLink="/signup">Create One</a></p>
+            <p>New user? <a routerLink="/signup">Create Account</a></p>
+            <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">
+                Need a workspace? <a routerLink="/register-company">Register Organization</a>
+            </p>
         </div>
     </div>
 </div>

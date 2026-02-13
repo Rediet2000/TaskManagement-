@@ -1,0 +1,115 @@
+<div class="notes-container">
+    <!-- Sidebar: Folders -->
+    <aside class="notes-sidebar glass-card">
+        <div class="sidebar-header">
+            <h3>Knowledge Substrate</h3>
+            <button class="icon-btn" (click)="createFolder()" title="New Folder">
+                <i class="bi bi-folder-plus"></i>
+            </button>
+        </div>
+
+        <div class="folder-list">
+            <button class="folder-item" [class.active]="selectedFolderId() === null" (click)="selectFolder(null)">
+                <i class="bi bi-stack"></i>
+                <span>All Notes</span>
+            </button>
+
+            @for (folder of folders(); track folder.id) {
+            <button class="folder-item" [class.active]="selectedFolderId() === folder.id"
+                (click)="selectFolder(folder.id)">
+                <i class="bi bi-folder2"></i>
+                <span>{{ folder.name }}</span>
+            </button>
+            }
+        </div>
+    </aside>
+
+    <!-- Center: Note List -->
+    <main class="note-list-panel glass-card">
+        <div class="panel-header">
+            <div class="search-bar">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search insights..." (input)="onSearch($event)">
+            </div>
+            <button class="premium-btn small" (click)="createNewNote()">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+        </div>
+
+        <div class="notes-stack">
+            @if (loading()) {
+            <div class="loader-container">
+                <span class="loader"></span>
+            </div>
+            } @else {
+            @for (note of notes(); track note.id) {
+            <div class="note-preview-card" [class.active]="selectedNote()?.id === note.id" (click)="selectNote(note)">
+                <div class="card-content">
+                    <h4>{{ note.title || 'Untitled' }}</h4>
+                    <p>{{ note.content || 'No content...' }}</p>
+                </div>
+                <div class="card-meta">
+                    <span>{{ note.updated_at | date:'MMM d' }}</span>
+                    <i *ngIf="note.reminder_at" class="bi bi-bell-fill ms-2 text-warning"
+                        [title]="note.reminder_at | date:'medium'"></i>
+                </div>
+            </div>
+            } @empty {
+            <div class="empty-state">
+                <i class="bi bi-box-seam"></i>
+                <p>No notes found in this matrix.</p>
+            </div>
+            }
+            }
+        </div>
+    </main>
+
+    <!-- Right: Note Editor -->
+    <section class="note-editor-panel glass-card">
+        @if (selectedNote()) {
+        <div class="editor-header">
+            <input type="text" class="title-input" [(ngModel)]="selectedNote()!.title" (blur)="saveNote()"
+                placeholder="Insight Title">
+            <div class="editor-actions">
+                <div class="reminder-input-wrapper"
+                    [title]="selectedNote()!.reminder_at ? 'Reminder set' : 'Set reminder'">
+                    <i class="bi bi-bell" [class.bi-bell-fill]="selectedNote()?.reminder_at"
+                        [class.active]="selectedNote()?.reminder_at"></i>
+                    <input type="datetime-local" [(ngModel)]="selectedNote()!.reminder_at" (change)="saveNote()">
+                </div>
+                <button class="icon-btn danger" (click)="deleteNote(selectedNote()!.id)">
+                    <i class="bi bi-trash3"></i>
+                </button>
+                <button class="premium-btn small" (click)="saveNote()">Save</button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button (click)="formatText('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+            <button (click)="formatText('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+            <span class="divider"></span>
+            <button (click)="formatText('list')" title="List"><i class="bi bi-list-ul"></i></button>
+            <button (click)="formatText('numlist')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
+        </div>
+
+        <div class="editor-body">
+            <textarea [(ngModel)]="selectedNote()!.content" (input)="saveNote()"
+                placeholder="Start documenting your strategic intelligence..."></textarea>
+        </div>
+
+        <div class="editor-footer">
+            <span>Last updated: {{ selectedNote()!.updated_at | date:'medium' }}</span>
+            <span>Created by Agent #{{ selectedNote()!.created_by }}</span>
+        </div>
+        } @else {
+        <div class="editor-empty">
+            <div class="placeholder-icon">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <h2>Select a module to view or edit</h2>
+            <p>Select a note from the list or create a new one to begin documentation.</p>
+            <button class="premium-btn" (click)="createNewNote()">Initialize New Note</button>
+        </div>
+        }
+    </section>
+</div>

@@ -14,10 +14,14 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+# Initialize Database Schema
+from sync_schema import ensure_schema
+ensure_schema()
+
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Allow all for local network access
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HierarchyService, Department, Team, Organization, OrganizationCreate, Branch } from '../../services/hierarchy.service';
 import { AuthService } from '../../services/auth.service';
-import { RbacService, Role } from '../../services/rbac.service';
+import { RbacService, Role, Permission } from '../../services/rbac.service';
 
 @Component({
     selector: 'app-hierarchy-manager',
@@ -20,6 +20,7 @@ export class HierarchyManager implements OnInit {
     departments = signal<Department[]>([]);
     teams = signal<Team[]>([]);
     roles = signal<Role[]>([]);
+    permissions = signal<Permission[]>([]);
     organizations = signal<Organization[]>([]);
     branches = signal<Branch[]>([]);
 
@@ -32,19 +33,33 @@ export class HierarchyManager implements OnInit {
 
     newDept = { name: '' };
     newTeam = { name: '', dept_id: 0 };
-    newRole: any = { name: '', parent_role_id: null };
-    editRoleData: any = { id: 0, name: '', parent_role_id: null };
+    newRole: any = { name: '', parent_role_id: null, permission_ids: [] };
+    editRoleData: any = { id: 0, name: '', parent_role_id: null, permission_ids: [] };
     newBranch = { name: '', address: '' };
     newOrg = { name: '', primary_color: '#2563eb', secondary_color: '#64748b' };
 
     currentOrgId: number | null = null;
     isSuperAdmin = signal(false);
+    success = signal('');
+    error = signal('');
+
+    private autoDismiss() {
+        setTimeout(() => {
+            this.success.set('');
+            this.error.set('');
+        }, 5000);
+    }
 
     ngOnInit() {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const user = this.authService.currentUser();
+        if (!user) return;
+
         this.currentOrgId = user.org_id;
-        // Simple check for superadmin
-        this.isSuperAdmin.set(user.role_id === 1);
+
+        // Robust check for superadmin/admin status
+        const role = user.role_name || user.role?.name;
+        this.isSuperAdmin.set(role === 'Super Admin' || role === 'Admin');
+
         this.loadData();
     }
 
@@ -53,6 +68,8 @@ export class HierarchyManager implements OnInit {
         this.hierarchyService.getDepartments().subscribe((depts: Department[]) => this.departments.set(depts));
         this.hierarchyService.getTeams().subscribe((teams: Team[]) => this.teams.set(teams));
         this.rbacService.getRoles().subscribe((roles: Role[]) => this.roles.set(roles));
+        this.rbacService.getPermissions().subscribe((perms: Permission[]) => this.permissions.set(perms));
+
         if (this.isSuperAdmin()) {
             this.hierarchyService.getOrganizations().subscribe((orgs: Organization[]) => this.organizations.set(orgs));
         }
@@ -86,11 +103,17 @@ export class HierarchyManager implements OnInit {
             branch_id: (this.newDept as any).branch_id
         }).subscribe({
             next: () => {
+                this.success.set('Department created successfully');
+                this.error.set('');
                 this.loadData();
+                this.autoDismiss();
                 this.showDeptModal.set(false);
                 this.newDept = { name: '' };
             },
-            error: (err: any) => console.error('Failed to create department', err)
+            error: (err: any) => {
+                this.error.set(err.error?.detail || 'Failed to create department');
+                console.error('Failed to create department', err);
+            }
         });
     }
 
@@ -107,11 +130,16 @@ export class HierarchyManager implements OnInit {
             org_id: this.currentOrgId
         }).subscribe({
             next: () => {
+                this.success.set('Team created successfully');
+                this.error.set('');
                 this.loadData();
                 this.showTeamModal.set(false);
                 this.newTeam.name = '';
             },
-            error: (err: any) => console.error('Failed to create team', err)
+            error: (err: any) => {
+                this.error.set(err.error?.detail || 'Failed to create team');
+                console.error('Failed to create team', err);
+            }
         });
     }
 
@@ -128,16 +156,27 @@ export class HierarchyManager implements OnInit {
             org_id: this.currentOrgId
         }).subscribe({
             next: () => {
+                this.success.set('Role created successfully');
+                this.error.set('');
                 this.loadData();
+                this.autoDismiss();
                 this.showRoleModal.set(false);
                 this.newRole = { name: '', parent_role_id: null };
             },
-            error: (err: any) => console.error('Failed to create role', err)
+            error: (err: any) => {
+                this.error.set(err.error?.detail || 'Failed to create role');
+                console.error('Failed to create role', err);
+            }
         });
     }
 
     openEditRoleModal(role: Role) {
-        this.editRoleData = { id: role.id, name: role.name, parent_role_id: role.parent_role_id };
+        this.editRoleData = {
+            id: role.id,
+            name: role.name,
+            parent_role_id: role.parent_role_id,
+            permission_ids: (role as any).permissions?.map((p: any) => p.id) || []
+        };
         this.showEditRoleModal.set(true);
     }
 
@@ -145,21 +184,47 @@ export class HierarchyManager implements OnInit {
         if (!this.editRoleData.name) return;
         this.rbacService.updateRole(this.editRoleData.id, {
             name: this.editRoleData.name,
-            parent_role_id: this.editRoleData.parent_role_id
+            parent_role_id: this.editRoleData.parent_role_id,
+            permission_ids: this.editRoleData.permission_ids
         }).subscribe({
             next: () => {
+                this.success.set('Role updated successfully');
                 this.loadData();
                 this.showEditRoleModal.set(false);
+                this.autoDismiss();
             },
-            error: (err: any) => alert(err.error?.detail || 'Failed to update role')
+            error: (err: any) => {
+                this.error.set(err.error?.detail || 'Failed to update role');
+                console.error('Failed to update role', err);
+            }
         });
+    }
+
+    togglePermission(permId: number) {
+        const index = this.editRoleData.permission_ids.indexOf(permId);
+        if (index > -1) {
+            this.editRoleData.permission_ids.splice(index, 1);
+        } else {
+            this.editRoleData.permission_ids.push(permId);
+        }
+    }
+
+    isPermissionSelected(permId: number): boolean {
+        return this.editRoleData.permission_ids.includes(permId);
     }
 
     onDeleteRole(roleId: number) {
         if (!confirm('Are you sure you want to delete this role?')) return;
         this.rbacService.deleteRole(roleId).subscribe({
-            next: () => this.loadData(),
-            error: (err: any) => alert(err.error?.detail || 'Failed to delete role')
+            next: () => {
+                this.success.set('Role deleted successfully');
+                this.error.set('');
+                this.loadData();
+            },
+            error: (err: any) => {
+                this.error.set(err.error?.detail || 'Failed to delete role');
+                alert(err.error?.detail || 'Failed to delete role');
+            }
         });
     }
 

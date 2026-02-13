@@ -56,6 +56,88 @@ async def create_task(
             
     return db_obj
 
+@router.get("/reports/dashboard", response_model=schemas.task.TaskReportStats)
+def get_reports_dashboard(
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get aggregated task report and performance metrics.
+    """
+    # 1. Base query for org tasks
+    tasks_query = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.org_id == current_user.org_id
+    )
+    all_tasks = tasks_query.all()
+    
+    total = len(all_tasks)
+    unassigned = sum(1 for t in all_tasks if not t.assignee_id)
+    pending = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.PENDING)
+    completed = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.COMPLETED)
+    started = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.STARTED)
+    
+    # 2. Per User Performance
+    users = db.query(models.core.User).filter(models.core.User.org_id == current_user.org_id).all()
+    user_stats = []
+    
+    for u in users:
+        u_tasks = [t for t in all_tasks if t.assignee_id == u.id]
+        u_completed = [t for t in u_tasks if t.status == schemas.task.TaskStatus.COMPLETED]
+        u_started = [t for t in u_tasks if t.status == schemas.task.TaskStatus.STARTED]
+        
+        # On-Time calculation
+        on_time_count = 0
+        for t in u_completed:
+            # If completed_at is set and <= due_date
+            if t.completed_at and t.due_date:
+                if t.completed_at <= t.due_date:
+                    on_time_count += 1
+            elif not t.due_date:
+                on_time_count += 1 # No due date = on time
+        
+        on_time_rate = (on_time_count / len(u_completed)) * 100 if u_completed else 0.0
+        
+        # Avg Rating
+        rated_tasks = [t.rating for t in u_completed if t.rating is not None]
+        avg_rating = sum(rated_tasks) / len(rated_tasks) if rated_tasks else None
+        
+        user_stats.append(schemas.task.UserPerformance(
+            user_id=u.id,
+            user_name=u.full_name or u.email,
+            tasks_assigned=len(u_tasks),
+            tasks_completed=len(u_completed),
+            tasks_started=len(u_started),
+            avg_rating=avg_rating,
+            on_time_rate=round(on_time_rate, 1)
+        ))
+        
+    return schemas.task.TaskReportStats(
+        total_tasks=total,
+        unassigned=unassigned,
+        pending=pending,
+        completed=completed,
+        started=started,
+        user_performance=user_stats
+    )
+
+@router.get("/{id}", response_model=schemas.task.Task)
+def read_task(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get a specific task by ID.
+    """
+    task = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.id == id,
+        models.task_tracking.Task.org_id == current_user.org_id
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
 @router.put("/{id}", response_model=schemas.task.Task)
 def update_task(
     *,
@@ -169,67 +251,3 @@ async def upload_task_attachment(
     db.commit()
     db.refresh(db_obj)
     return db_obj
-
-@router.get("/reports/dashboard", response_model=schemas.task.TaskReportStats)
-def get_reports_dashboard(
-    db: Session = Depends(get_db),
-    current_user: models.core.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Get aggregated task report and performance metrics.
-    """
-    # 1. Base query for org tasks
-    tasks_query = db.query(models.task_tracking.Task).filter(
-        models.task_tracking.Task.org_id == current_user.org_id
-    )
-    all_tasks = tasks_query.all()
-    
-    total = len(all_tasks)
-    unassigned = sum(1 for t in all_tasks if not t.assignee_id)
-    pending = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.PENDING)
-    completed = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.COMPLETED)
-    started = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.STARTED)
-    
-    # 2. Per User Performance
-    users = db.query(models.core.User).filter(models.core.User.org_id == current_user.org_id).all()
-    user_stats = []
-    
-    for u in users:
-        u_tasks = [t for t in all_tasks if t.assignee_id == u.id]
-        u_completed = [t for t in u_tasks if t.status == schemas.task.TaskStatus.COMPLETED]
-        u_started = [t for t in u_tasks if t.status == schemas.task.TaskStatus.STARTED]
-        
-        # On-Time calculation
-        on_time_count = 0
-        for t in u_completed:
-            # If completed_at is set and <= due_date
-            if t.completed_at and t.due_date:
-                if t.completed_at <= t.due_date:
-                    on_time_count += 1
-            elif not t.due_date:
-                on_time_count += 1 # No due date = on time
-        
-        on_time_rate = (on_time_count / len(u_completed)) * 100 if u_completed else 0.0
-        
-        # Avg Rating
-        rated_tasks = [t.rating for t in u_completed if t.rating is not None]
-        avg_rating = sum(rated_tasks) / len(rated_tasks) if rated_tasks else None
-        
-        user_stats.append(schemas.task.UserPerformance(
-            user_id=u.id,
-            user_name=u.full_name or u.email,
-            tasks_assigned=len(u_tasks),
-            tasks_completed=len(u_completed),
-            tasks_started=len(u_started),
-            avg_rating=avg_rating,
-            on_time_rate=round(on_time_rate, 1)
-        ))
-        
-    return schemas.task.TaskReportStats(
-        total_tasks=total,
-        unassigned=unassigned,
-        pending=pending,
-        completed=completed,
-        started=started,
-        user_performance=user_stats
-    )

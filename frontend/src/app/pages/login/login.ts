@@ -33,7 +33,7 @@ export class Login {
                 });
             },
             error: err => {
-                this.error = 'Invalid email or password';
+                this.error = err.error?.detail || 'Invalid email or password';
                 this.loading = false;
             }
         });

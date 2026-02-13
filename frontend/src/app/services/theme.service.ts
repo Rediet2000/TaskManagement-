@@ -15,7 +15,8 @@ export class ThemeService {
     private mediaQueryListener: any = null;
 
     constructor() {
-        this.authService.currentUser.subscribe(user => {
+        effect(() => {
+            const user = this.authService.currentUser();
             if (user && user.org_id) {
                 this.loadTheme(user.org_id);
             } else {

@@ -1,12 +1,12 @@
-<div class="board-container animate-fade-in">
+<div class="board-container">
     <header class="board-header">
         <div class="header-info">
-            <h1>Daily Task Board</h1>
-            <p>Track and manage individual operational tasks</p>
+            <h1>Task Board</h1>
+            <p>Manage and track your operational objectives.</p>
         </div>
         <div class="actions">
-            <button class="btn-primary" (click)="showModal.set(true)">
-                <i class="bi bi-plus-lg"></i> Add Task
+            <button class="premium-btn" (click)="showModal.set(true)" *appHasPermission="'task:create'">
+                <i class="bi bi-plus-circle-fill"></i> New Task
             </button>
         </div>
     </header>
@@ -23,7 +23,7 @@
                 (cdkDropListDropped)="onDrop($event)">
 
                 @for (task of getTasksByStatus(column); track task.id) {
-                <div class="glass-card task-card" (click)="onSelectTask(task)" cdkDrag [cdkDragData]="task">
+                <div class="task-card" (click)="onSelectTask(task)" cdkDrag [cdkDragData]="task">
                     <div class="task-priority" [class]="task.priority.toLowerCase()"></div>
                     <h4>{{ task.title }}</h4>
                     <p>{{ task.description }}</p>
@@ -35,13 +35,15 @@
                     </div>
 
                     <div class="task-footer">
-                        <span class="date">{{ task.due_date | date:'shortDate' }}</span>
+                        <span class="date">{{ task.due_date | date:'MMM dd' }}</span>
                         <div class="task-meta">
                             <span *ngIf="task.comments?.length">
-                                <i class="bi bi-chat-dots"></i> {{ task.comments?.length }}
+                                <i class="bi bi-chat-text-fill" style="color: var(--neon-blue)"></i> {{
+                                task.comments?.length }}
                             </span>
                             <span *ngIf="task.attachments?.length">
-                                <i class="bi bi-paperclip"></i> {{ task.attachments?.length }}
+                                <i class="bi bi-paperclip" style="color: var(--neon-purple)"></i> {{
+                                task.attachments?.length }}
                             </span>
                         </div>
                         <div class="avatar-sm" [title]="getUserName(task.assignee_id)">
@@ -51,7 +53,11 @@
                 </div>
                 }
                 @if (getTasksByStatus(column).length === 0) {
-                <div class="column-empty">No tasks in this stage</div>
+                <div class="column-empty">
+                    <i class="bi bi-inbox"
+                        style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                    No Tasks
+                </div>
                 }
             </div>
         </div>
@@ -60,13 +66,13 @@
 
     <!-- Task Detail Drawer -->
     <div class="drawer-overlay" [class.open]="showDetails()" (click)="showDetails.set(false)">
-        <div class="glass-card detail-drawer" (click)="$event.stopPropagation()">
+        <div class="detail-drawer" (click)="$event.stopPropagation()">
             <header class="drawer-header">
                 <div class="priority-label" [class]="selectedTask()?.priority?.toLowerCase()">
-                    {{ selectedTask()?.priority }}
+                    {{ selectedTask()?.priority }} Priority
                 </div>
                 <h2>{{ selectedTask()?.title }}</h2>
-                <button class="close-btn" (click)="showDetails.set(false)"><i class="bi bi-x"></i></button>
+                <button class="close-btn" (click)="showDetails.set(false)"><i class="bi bi-x-lg"></i></button>
             </header>
 
             <div class="drawer-body">
@@ -74,7 +80,7 @@
                     <div class="info-item">
                         <label>Assignee</label>
                         <div class="assignee-badge">
-                            <span class="avatar-xs">{{ getUserInitial(selectedTask()?.assignee_id) }}</span>
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.assignee_id) }}</span>
                             <span>{{ getUserName(selectedTask()?.assignee_id) }}</span>
                         </div>
                     </div>
@@ -87,7 +93,7 @@
 
                 <!-- Rating Section -->
                 <section class="rating-section" *ngIf="selectedTask()?.status === 'Completed'">
-                    <label>Performance Rating</label>
+                    <label>Performance Evaluation</label>
                     <div class="rating-container" [class.readonly]="!canRateTask()">
                         @if (selectedTask()?.rating) {
                         <div class="stars">
@@ -105,9 +111,9 @@
                             <i class="bi bi-star text-warning" (click)="rateTask(star)"></i>
                             }
                         </div>
-                        <p class="text-sm text-muted">Click to rate this task</p>
+                        <p class="text-xs" style="color: #64748b; margin-top: 0.5rem;">Select evaluation metric</p>
                         } @else {
-                        <p class="text-sm text-muted">Not rated yet</p>
+                        <p class="text-sm text-muted">Field evaluation pending</p>
                         }
                         }
                     </div>
@@ -120,13 +126,14 @@
                             @for (tag of selectedTask()?.tags; track tag) {
                             <span class="tag edit">
                                 {{ tag }}
-                                <i class="bi bi-x" (click)="removeTag(tag)"></i>
+                                <i class="bi bi-x-circle-fill" (click)="removeTag(tag)"
+                                    style="margin-left: 0.5rem; cursor: pointer;"></i>
                             </span>
                             }
                         </div>
                         <div class="add-tag">
-                            <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()" placeholder="Add tag...">
-                            <button (click)="addTag()"><i class="bi bi-plus"></i></button>
+                            <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()" placeholder="New tag...">
+                            <button (click)="addTag()"><i class="bi bi-plus-lg"></i></button>
                         </div>
                     </div>
                 </section>
@@ -136,15 +143,37 @@
                     <div class="attachment-list">
                         @for (file of selectedTask()?.attachments; track file.id) {
                         <a [href]="file.file_path" target="_blank" class="attachment-item">
-                            <i class="bi bi-file-earmark"></i>
+                            <i class="bi bi-file-earmark-zip-fill"></i>
                             <span>{{ file.file_name }}</span>
                         </a>
                         }
                     </div>
                     <label class="file-upload">
                         <input type="file" (change)="onUploadFile($event)" style="display: none;">
-                        <i class="bi bi-cloud-upload"></i> Upload File
+                        <i class="bi bi-cloud-arrow-up-fill"></i> Upload Data
                     </label>
+                </section>
+
+                <section class="developer-activity-section" *ngIf="selectedTask()?.commits?.length">
+                    <label>Developer Activity</label>
+                    <div class="activity-timeline">
+                        @for (commit of selectedTask()?.commits; track commit.id) {
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="commit-hash">{{ commit.hash }}</span>
+                                    <span class="commit-author">{{ commit.author }}</span>
+                                    <span class="commit-time">{{ commit.timestamp | date:'MMM dd, HH:mm' }}</span>
+                                </div>
+                                <div class="commit-message">{{ commit.message }}</div>
+                                <a [href]="commit.url" target="_blank" class="commit-link" *ngIf="commit.url">
+                                    <i class="bi bi-github"></i> View on GitHub
+                                </a>
+                            </div>
+                        </div>
+                        }
+                    </div>
                 </section>
 
                 <section class="comments-section">
@@ -153,16 +182,17 @@
                         @for (comment of selectedTask()?.comments; track comment.id) {
                         <div class="comment-item">
                             <div class="comment-header">
-                                <span class="author">User {{ comment.author_id }}</span>
-                                <span class="time">{{ comment.created_at | date:'short' }}</span>
+                                <span class="author">Agent {{ comment.author_id }}</span>
+                                <span class="time">{{ comment.created_at | date:'HH:mm MMM dd' }}</span>
                             </div>
                             <div class="comment-body">{{ comment.content }}</div>
                         </div>
                         }
                     </div>
                     <div class="comment-input">
-                        <textarea [(ngModel)]="newComment" placeholder="Write a comment..."></textarea>
-                        <button class="btn-primary" (click)="onAddComment()" [disabled]="!newComment.trim()">
+                        <textarea [(ngModel)]="newComment" placeholder="Transmission content..."></textarea>
+                        <button class="premium-btn" (click)="onAddComment()" [disabled]="!newComment.trim()"
+                            style="width: 100%; justify-content: center;">
                             Post Comment
                         </button>
                     </div>
@@ -172,56 +202,6 @@
     </div>
 
     <!-- Add Task Modal -->
-    <div class="modal-overlay" *ngIf="showModal()">
-        <div class="glass-card modal-content">
-            <div class="modal-header">
-                <h2>Create New Task</h2>
-                <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
-            </div>
-
-            <form (ngSubmit)="onAddTask()" #taskForm="ngForm" class="task-form">
-                <div class="form-group">
-                    <label>Task Title</label>
-                    <input type="text" name="title" [(ngModel)]="newTask.title" required
-                        placeholder="What needs to be done?">
-                </div>
-
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="description" [(ngModel)]="newTask.description" rows="3"
-                        placeholder="Additional details..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Assign To</label>
-                    <select name="assignee" [(ngModel)]="newTask.assignee_id">
-                        <option [ngValue]="undefined">Unassigned</option>
-                        <option *ngFor="let user of users()" [value]="user.id">
-                            {{ user.full_name || user.email }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>Priority</label>
-                        <select name="priority" [(ngModel)]="newTask.priority">
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                        </select>
-                    </div>
-                    <div class="form-group half">
-                        <label>Due Date</label>
-                        <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary" [disabled]="!taskForm.form.valid">Create Task</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <app-task-create-modal *ngIf="showModal()" (close)="showModal.set(false)" (taskCreated)="onTaskCreated()">
+    </app-task-create-modal>
 </div>

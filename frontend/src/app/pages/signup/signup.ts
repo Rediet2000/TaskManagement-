@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { Organization } from '../../services/hierarchy.service';
@@ -23,11 +23,34 @@ export class SignUp implements OnInit {
     error = '';
     loading = false;
 
+    invitationToken: string | null = null;
+    isInvited = signal<boolean>(false);
+    invitedOrgName = signal<string>('');
+    roleId: number | null = null;
+
     private authService = inject(AuthService);
     private http = inject(HttpClient);
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
 
     ngOnInit() {
+        this.invitationToken = this.route.snapshot.queryParams['invitation_token'];
+
+        if (this.invitationToken) {
+            this.authService.getInvitation(this.invitationToken).subscribe({
+                next: (inv) => {
+                    this.email = inv.email;
+                    this.orgId = inv.org_id;
+                    this.invitedOrgName.set(inv.org_name);
+                    this.isInvited.set(true);
+                    this.roleId = inv.role_id;
+                },
+                error: (err) => {
+                    this.error = 'Invalid or expired invitation link';
+                }
+            });
+        }
+
         this.http.get<Organization[]>(`${environment.apiUrl}/hierarchy/organizations`).subscribe({
             next: (orgs) => this.organizations.set(orgs),
             error: (err) => console.error('Failed to load organizations', err)
@@ -44,12 +67,15 @@ export class SignUp implements OnInit {
             return;
         }
 
-        const userData = {
+        const userData: any = {
             email: this.email,
             password: this.password,
             full_name: this.fullName,
             org_id: Number(this.orgId)
         };
+
+        if (this.roleId) userData.role_id = this.roleId;
+        if (this.invitationToken) userData.invitation_token = this.invitationToken;
 
         this.authService.signup(userData).subscribe({
             next: () => {

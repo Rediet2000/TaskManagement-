@@ -11,6 +11,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/signup/signup').then(m => m.SignUp)
     },
     {
+        path: 'register-company',
+        loadComponent: () => import('./pages/signup/register-company').then(m => m.RegisterCompany)
+    },
+    {
         path: 'forgot-password',
         loadComponent: () => import('./pages/login/forgot-password').then(m => m.ForgotPassword)
     },
@@ -56,8 +60,20 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/settings/integrations/integrations').then(m => m.Integrations)
             },
             {
+                path: 'profile',
+                loadComponent: () => import('./pages/profile/profile').then(m => m.Profile)
+            },
+            {
                 path: 'reports',
                 loadComponent: () => import('./pages/reports/reports').then(m => m.Reports)
+            },
+            {
+                path: 'admin-dashboard',
+                loadComponent: () => import('./pages/dashboard/admin-dashboard').then(m => m.AdminDashboard)
+            },
+            {
+                path: 'notes',
+                loadComponent: () => import('./pages/notes/notes').then(m => m.NotesPage)
             },
             // Add more feature routes here
         ]

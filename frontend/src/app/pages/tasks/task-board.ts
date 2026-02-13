@@ -6,10 +6,13 @@ import { AuthService } from '../../services/auth.service';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { TaskCreateModal } from '../../components/task-create-modal/task-create-modal';
+
 @Component({
     selector: 'app-task-board',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule],
+    imports: [CommonModule, FormsModule, DragDropModule, HasPermissionDirective, TaskCreateModal],
     templateUrl: './task-board.html',
     styleUrls: ['./task-board.scss']
 })
@@ -17,7 +20,7 @@ export class TaskBoard implements OnInit {
     private taskService = inject(TaskService);
     private authService = inject(AuthService);
 
-    currentUser = toSignal(this.authService.currentUser);
+    currentUser = this.authService.currentUser;
 
     tasks = signal<Task[]>([]);
     columns = ['Not Started', 'Started', 'Pending', 'Completed'];
@@ -28,16 +31,6 @@ export class TaskBoard implements OnInit {
     newComment = '';
     newTag = '';
     users = signal<any[]>([]);
-
-    newTask = {
-        title: '',
-        description: '',
-        priority: 'Medium',
-        status: 'Not Started',
-        due_date: new Date().toISOString().split('T')[0],
-        assignee_id: undefined as number | undefined,
-        tags: [] as string[]
-    };
 
     ngOnInit() {
         this.loadTasks();
@@ -96,33 +89,16 @@ export class TaskBoard implements OnInit {
         return name.charAt(0).toUpperCase();
     }
 
-    onAddTask() {
-        this.taskService.createTask(this.newTask).subscribe({
-            next: () => {
-                this.loadTasks();
-                this.showModal.set(false);
-                this.resetNewTask();
-            },
-            error: (err: any) => console.error('Failed to create task', err)
-        });
-    }
-
-    resetNewTask() {
-        this.newTask = {
-            title: '',
-            description: '',
-            priority: 'Medium',
-            status: 'Not Started',
-            due_date: new Date().toISOString().split('T')[0],
-            assignee_id: undefined,
-            tags: []
-        };
+    onTaskCreated() {
+        this.loadTasks();
     }
 
     onSelectTask(task: Task) {
-        this.selectedTask.set(task);
-        this.showDetails.set(true);
-        this.loadComments(task.id);
+        this.taskService.getTask(task.id).subscribe(fullTask => {
+            this.selectedTask.set(fullTask);
+            this.showDetails.set(true);
+            this.loadComments(task.id);
+        });
     }
 
     loadComments(taskId: number) {
@@ -183,7 +159,7 @@ export class TaskBoard implements OnInit {
 
 
     canRateTask(): boolean {
-        const user = this.currentUser();
+        const user = this.currentUser() as any;
         // Allow Admins and Managers to rate
         // Note: API returns 'role_name', not 'role'
         const role = user?.role_name || user?.role;

@@ -30,6 +30,12 @@ def create_organization(
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Initialize roles and standard hierarchy for the new organization
+    from app.core.rbac import RBACService
+    RBACService.initialize_org_roles(db, db_obj.id)
+    RBACService.setup_standard_hierarchy(db, db_obj.id)
+    
     return db_obj
 
 @router.get("/organizations/{org_id}", response_model=schemas.hierarchy.Organization)
@@ -307,3 +313,72 @@ def test_smtp_connection(
     except Exception as e:
         print(f"SMTP Error encountered: {str(e)}")
         raise HTTPException(status_code=400, detail=f"SMTP Error: {str(e)}")
+
+@router.get("/dashboard/stats")
+def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get dashboard statistics for the current user's organization"""
+    from datetime import datetime
+    from sqlalchemy import func
+    from app.models.task_tracking import Task, ProblemArea
+    
+    org_id = current_user.org_id
+    
+    # Total tasks
+    total_tasks = db.query(func.count(Task.id))\
+        .filter(Task.org_id == org_id)\
+        .scalar() or 0
+    
+    # Active tasks (in_progress status)
+    active_tasks = db.query(func.count(Task.id))\
+        .filter(
+            Task.org_id == org_id,
+            Task.status == 'in_progress'
+        ).scalar() or 0
+    
+    # Overdue tasks (due_date < today and status != completed)
+    today = datetime.now().date()
+    overdue_tasks = db.query(func.count(Task.id))\
+        .filter(
+            Task.org_id == org_id,
+            Task.due_date < today,
+            Task.status != 'completed'
+        ).scalar() or 0
+    
+    # Total problems
+    total_problems = db.query(func.count(ProblemArea.id))\
+        .filter(ProblemArea.org_id == org_id)\
+        .scalar() or 0
+    
+    return {
+        "total_tasks": total_tasks,
+        "active_tasks": active_tasks,
+        "overdue_tasks": overdue_tasks,
+        "total_problems": total_problems
+    }
+
+@router.get("/dashboard/recent-tasks")
+def get_recent_tasks(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get recent tasks for the current user's organization"""
+    from app.models.task_tracking import Task
+    
+    org_id = current_user.org_id
+    
+    tasks = db.query(Task)\
+        .filter(Task.org_id == org_id)\
+        .order_by(Task.created_at.desc())\
+        .limit(limit)\
+        .all()
+    
+    return [{
+        "id": task.id,
+        "title": task.title,
+        "priority": task.priority or "Medium",
+        "status": task.status or "pending"
+    } for task in tasks]

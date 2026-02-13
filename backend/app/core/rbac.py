@@ -54,3 +54,94 @@ class RBACService:
                 
         # Staff/User: Only see their own team or assigned tasks (handled in API)
         return False
+
+    @staticmethod
+    def initialize_org_roles(db: Session, org_id: int):
+        """
+        Initialize standard roles and permissions for a new organization.
+        """
+        # Define Permissions (Same as init_permissions.py)
+        # We assume permissions are GLOBAL and already seeded in the DB.
+        # If not, we should ensure they exist. But typically permissions are system-wide, roles are per-org.
+        
+        # Role Mappings
+        ROLE_MAPPINGS = {
+            "Admin": [
+                "task:view", "task:create", "task:edit_own", "task:edit_all", "task:assign", "task:status", "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
+                "project:view", "project:create", "project:edit", "project:delete", "project:members", "project:visibility",
+                "user:invite", "user:remove", "user:role_assign", "role:manage",
+                "report:view", "report:own", "report:team", "report:export", "report:audit",
+                "settings:manage", "settings:workflow", "settings:tags", "settings:integrations", "settings:billing"
+            ],
+            "Manager": [
+                "task:view", "task:create", "task:edit_all", "task:assign", "task:status", 
+                "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
+                "project:view", "project:create", "project:edit", "project:members", "project:visibility",
+                "user:invite", "user:role_assign",
+                "report:view", "report:own", "report:team", "report:export",
+                "settings:workflow", "settings:tags"
+            ],
+            "Contributor": [
+                "task:view", "task:create", "task:edit_own", "task:status", "task:comment", "task:upload",
+                "project:view",
+                "report:view", "report:own"
+            ],
+            "Viewer": [
+                "task:view", "project:view", "report:view"
+            ]
+        }
+
+        # Cache permissions to avoid repeated queries
+        all_perms = db.query(Permission).all()
+        perm_map = {p.code: p for p in all_perms}
+
+        for role_name, codes in ROLE_MAPPINGS.items():
+            # Check if role exists for this org
+            role = db.query(Role).filter(Role.org_id == org_id, Role.name == role_name).first()
+            if not role:
+                role = Role(name=role_name, org_id=org_id)
+                db.add(role)
+                db.flush() # Populate ID
+            
+            # Assign permissions
+            current_perms = set(role.permissions)
+            target_perms = set([perm_map[c] for c in codes if c in perm_map])
+            
+            # Add missing
+            for p in target_perms:
+                if p not in current_perms:
+                    role.permissions.append(p)
+            
+            # For strict sync, we could remove extras, but let's just add for now to be safe
+            # role.permissions = list(target_perms)
+            
+        db.commit()
+
+    @staticmethod
+    def setup_standard_hierarchy(db: Session, org_id: int):
+        """
+        Create default Branch and Department for a new organization.
+        """
+        from app.models.core import Branch, Department
+        
+        # Check if already exists
+        if db.query(Branch).filter(Branch.org_id == org_id).first():
+            return None
+            
+        branch = Branch(
+            name="Main Headquarters",
+            address="Primary Location",
+            org_id=org_id
+        )
+        db.add(branch)
+        db.flush()
+        
+        dept = Department(
+            name="Operations",
+            org_id=org_id,
+            branch_id=branch.id
+        )
+        db.add(dept)
+        db.flush()
+        db.commit()
+        return dept

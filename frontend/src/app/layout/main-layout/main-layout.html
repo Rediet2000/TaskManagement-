@@ -15,7 +15,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            @for (item of navItems; track item.label) {
+            @for (item of navItems(); track item.label) {
             <a [routerLink]="item.route" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact: item.route === '/'}" class="nav-item">
                 <i [class]="'bi ' + item.icon"></i>
@@ -25,15 +25,10 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="avatar">RS</div>
-                <div class="user-info">
-                    <span class="name">Rediet Solomon</span>
-                    <span class="role">Administrator</span>
-                </div>
-            </div>
-            <button class="logout-btn" title="Logout" (click)="logout()">
+            <button class="logout-btn" title="Logout" (click)="logout()"
+                style="width: 100%; display: flex; justify-content: center; gap: 0.75rem; align-items: center;">
                 <i class="bi bi-box-arrow-right"></i>
+                <span class="logout-text">Logout</span>
             </button>
         </div>
     </aside>
@@ -51,6 +46,18 @@
                 </div>
             </div>
             <div class="navbar-right">
+                <div class="user-profile header-profile" routerLink="/profile" style="cursor: pointer;">
+                    <div class="avatar small">
+                        <img *ngIf="currentUser()?.profile_photo_url" [src]="currentUser()?.profile_photo_url"
+                            alt="User">
+                        <span *ngIf="!currentUser()?.profile_photo_url">{{ currentUser()?.full_name?.charAt(0) || 'U'
+                            }}</span>
+                    </div>
+                    <div class="user-info hide-mobile">
+                        <span class="name">{{ currentUser()?.full_name || 'Operational Agent' }}</span>
+                        <span class="role">{{ currentUser()?.role_name || 'Member' }}</span>
+                    </div>
+                </div>
                 <button class="icon-btn"><i class="bi bi-bell-fill"></i></button>
                 <button class="icon-btn"><i class="bi bi-question-circle-fill"></i></button>
             </div>

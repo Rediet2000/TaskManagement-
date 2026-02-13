@@ -40,6 +40,12 @@ export interface Organization {
     show_dashboard_map?: boolean;
     show_dashboard_stats?: boolean;
     show_dashboard_tasks?: boolean;
+
+    dashboard_layout?: string;
+    dashboard_refresh_rate?: number;
+    dashboard_clock_type?: string;
+    dashboard_metrics_config?: string;
+    dashboard_compact_mode?: boolean;
 }
 
 export interface OrganizationCreate {
@@ -150,5 +156,14 @@ export class HierarchyService {
 
     testSmtp(smtpData: any): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/test-smtp`, smtpData);
+    }
+
+    // Dashboard Data
+    getDashboardStats(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard/stats`);
+    }
+
+    getRecentTasks(limit: number = 10): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/recent-tasks?limit=${limit}`);
     }
 }

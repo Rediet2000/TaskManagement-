@@ -1,37 +1,51 @@
-<div class="dashboard-wrapper animate-fade-in">
-    <header class="page-header">
+<div class="dashboard-wrapper animate-fade-in" [class.compact-mode]="currentOrg()?.dashboard_compact_mode">
+    <!-- Page Header -->
+    <header class="page-header" style="order: -1; width: 100%;">
         <div class="header-content">
             <div class="title-row">
                 <h1>Performance Hub</h1>
-                <!-- Analog Clock -->
-                @if (currentOrg()?.show_dashboard_clock) {
-                <div class="analog-clock-container">
-                    <div class="clock-face">
-                        <div class="hand hour" [style.transform]="'rotate(' + hourRotation() + 'deg)'"></div>
-                        <div class="hand minute" [style.transform]="'rotate(' + minuteRotation() + 'deg)'"></div>
-                        <div class="hand second" [style.transform]="'rotate(' + secondRotation() + 'deg)'"></div>
-                        <div class="center-dot"></div>
-                        <!-- Clock markings -->
-                        <div class="mark twelve"></div>
-                        <div class="mark three"></div>
-                        <div class="mark six"></div>
-                        <div class="mark nine"></div>
-                    </div>
-                </div>
-                }
             </div>
             <p>Overview of system health and task efficiency across all branches.</p>
         </div>
         <div class="header-actions">
-            <button class="btn-primary">
+            <button class="btn-primary" (click)="showTaskModal.set(true)">
                 <i class="bi bi-plus-lg"></i> New Task
             </button>
         </div>
     </header>
 
+    <!-- Create Task Modal -->
+    <app-task-create-modal *ngIf="showTaskModal()" (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
+    </app-task-create-modal>
+
+    <!-- Analog Clock Widget -->
+    @if (currentOrg()?.show_dashboard_clock && currentOrg()?.dashboard_clock_type === 'analog') {
+    <div class="analog-clock-container widget" [style.order]="getWidgetOrder('clock')">
+        <div class="clock-face">
+            <div class="hand hour" [style.transform]="'rotate(' + hourRotation() + 'deg)'"></div>
+            <div class="hand minute" [style.transform]="'rotate(' + minuteRotation() + 'deg)'"></div>
+            <div class="hand second" [style.transform]="'rotate(' + secondRotation() + 'deg)'"></div>
+            <div class="center-dot"></div>
+            <div class="mark twelve"></div>
+            <div class="mark three"></div>
+            <div class="mark six"></div>
+            <div class="mark nine"></div>
+        </div>
+    </div>
+    }
+
+    <!-- Digital Clock Widget -->
+    @if (currentOrg()?.show_dashboard_clock && currentOrg()?.dashboard_clock_type === 'digital') {
+    <div class="digital-clock-container widget" [style.order]="getWidgetOrder('clock')">
+        <div class="time">{{ currentTime() | date:'HH:mm:ss' }}</div>
+        <div class="date">{{ currentTime() | date:'EEEE, MMM d, y' }}</div>
+    </div>
+    }
+
+    <!-- Stats Grid Widget -->
     @if (currentOrg()?.show_dashboard_stats) {
-    <div class="stats-grid">
-        @for (stat of stats(); track stat.label) {
+    <div class="stats-grid widget" [style.order]="getWidgetOrder('stats')">
+        @for (stat of filteredStats(); track stat.label) {
         <div class="glass-card stat-card">
             <div class="stat-icon">
                 <i [class]="stat.icon"></i>
@@ -48,68 +62,55 @@
     </div>
     }
 
-    <div class="dashboard-content">
-        @if (currentOrg()?.show_dashboard_tasks) {
-        <div class="glass-card content-section recent-tasks">
-            <div class="section-header">
-                <h2>Recent Critical Tasks</h2>
-                <a href="#">View All</a>
-            </div>
-            <div class="task-list">
-                @for (task of recentTasks(); track task.id) {
-                <div class="task-item">
-                    <div class="task-title">{{ task.title }}</div>
-                    <div class="task-meta">
-                        <span class="badge" [class]="'priority-' + task.priority.toLowerCase()">{{ task.priority
-                            }}</span>
-                        <span class="status">{{ task.status }}</span>
-                    </div>
-                </div>
-                }
-            </div>
+    <!-- Recent Tasks Widget -->
+    @if (currentOrg()?.show_dashboard_tasks) {
+    <div class="glass-card content-section recent-tasks widget" [style.order]="getWidgetOrder('tasks')">
+        <div class="section-header">
+            <h2>Recent Critical Tasks</h2>
+            <a href="#">View All</a>
         </div>
-        }
-
-        @if (currentOrg()?.show_dashboard_map) {
-        <div class="glass-card content-section org-map">
-            <div class="section-header">
-                <h2>Organizational Map</h2>
-            </div>
-            <div class="map-container">
-                <div class="map-visualization">
-                    <div class="company-hq">
-                        <i class="bi bi-building"></i>
-                        <span>HQ</span>
-                    </div>
-                    <div class="branch-pins">
-                        @for (branch of branches(); track branch.id) {
-                        <div class="branch-pin pulse-animate">
-                            <i class="bi bi-geo-alt-fill"></i>
-                            <span class="pin-label">{{ branch.name }}</span>
-                        </div>
-                        }
-                        @if (branches().length === 0) {
-                        <div class="map-empty">
-                            <i class="bi bi-map"></i>
-                            <p>No branches registered yet</p>
-                        </div>
-                        }
-                    </div>
+        <div class="task-list">
+            @for (task of recentTasks(); track task.id) {
+            <div class="task-item">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-meta">
+                    <span class="badge" [class]="'priority-' + task.priority.toLowerCase()">{{ task.priority }}</span>
+                    <span class="status">{{ task.status }}</span>
                 </div>
             </div>
+            }
         </div>
-        }
+    </div>
+    }
 
-        <div class="glass-card content-section branch-distribution" *ngIf="!currentOrg()?.show_dashboard_map">
-            <div class="section-header">
-                <h2>Branch Performance</h2>
-            </div>
-            <div class="placeholder-chart">
-                <div class="empty-state">
-                    <div class="visual-placeholder"></div>
-                    <p>Chart data will be available after first branch sync</p>
+    <!-- Organizational Map Widget -->
+    @if (currentOrg()?.show_dashboard_map) {
+    <div class="glass-card content-section org-map widget" [style.order]="getWidgetOrder('map')">
+        <div class="section-header">
+            <h2>Organizational Map</h2>
+        </div>
+        <div class="map-container">
+            <div class="map-visualization">
+                <div class="company-hq">
+                    <i class="bi bi-building"></i>
+                    <span>HQ</span>
+                </div>
+                <div class="branch-pins">
+                    @for (branch of branches(); track branch.id) {
+                    <div class="branch-pin pulse-animate">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span class="pin-label">{{ branch.name }}</span>
+                    </div>
+                    }
+                    @if (branches().length === 0) {
+                    <div class="map-empty">
+                        <i class="bi bi-map"></i>
+                        <p>No branches registered yet</p>
+                    </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
+    }
 </div>

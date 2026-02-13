@@ -79,6 +79,20 @@ class Task(Base):
 
     comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="task", cascade="all, delete-orphan")
+    commits = relationship("GitCommit", back_populates="task", cascade="all, delete-orphan")
+
+class GitCommit(Base):
+    __tablename__ = "task_commits_git"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hash = Column(String, index=True)
+    message = Column(Text)
+    author = Column(String)
+    url = Column(String, nullable=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    task = relationship("Task", back_populates="commits")
 
 class Comment(Base):
     __tablename__ = "task_comments"

@@ -40,11 +40,25 @@ class Organization(Base):
     system_page_title = Column(String, default="Task Management System")
     theme_mode = Column(String, default="system") # system, light, dark
     
+    # Company Profile (Phase 15)
+    industry = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    timezone = Column(String, default="UTC")
+    default_language = Column(String, default="en")
+    contact_phone = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
+    
     # Dashboard Settings
     show_dashboard_clock = Column(Boolean, default=True)
     show_dashboard_map = Column(Boolean, default=False)
     show_dashboard_stats = Column(Boolean, default=True)
     show_dashboard_tasks = Column(Boolean, default=True)
+    
+    dashboard_layout = Column(String, default="clock,stats,tasks,map")
+    dashboard_refresh_rate = Column(Integer, default=30)
+    dashboard_clock_type = Column(String, default="analog")
+    dashboard_metrics_config = Column(String, default="tasks,active,overdue,problems")
+    dashboard_compact_mode = Column(Boolean, default=False)
     
     users = relationship("User", back_populates="organization")
     departments = relationship("Department", back_populates="organization")
@@ -130,9 +144,37 @@ class User(Base):
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Profile Information
+    profile_photo_url = Column(String, nullable=True)
+    username = Column(String, nullable=True, unique=True)
+    job_title = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    timezone = Column(String, default="UTC")
+    language = Column(String, default="en")
+    auth_method = Column(String, default="email_password")  # email_password, google, microsoft
+    
+    # Work Preferences
+    task_view_preference = Column(String, default="board")  # list, board, calendar
+    default_task_sort = Column(String, default="due_date")  # due_date, priority, status, created_at
+    start_of_week = Column(String, default="monday")  # monday, sunday
+    date_format = Column(String, default="YYYY-MM-DD")
+    time_format = Column(String, default="24h")  # 12h, 24h
+    
+    # Notification Settings (JSON stored as string)
+    email_notifications = Column(String, default='{"task_assigned":true,"status_changes":true,"mentions":true,"daily_summary":false,"weekly_summary":false}')
+    in_app_notifications = Column(String, default='{"task_assigned":true,"status_changes":true,"mentions":true}')
+    dnd_schedule = Column(String, nullable=True)  # JSON: {"enabled":false,"start":"22:00","end":"08:00"}
+    
+    # Security
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String, nullable=True)
+    last_login = Column(DateTime(timezone=True), nullable=True)
 
     organization = relationship("Organization", back_populates="users")
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
+    role = relationship("Role")
 
 class AllowedDomain(Base):
     __tablename__ = "allowed_domains"
@@ -151,3 +193,18 @@ class MailList(Base):
     is_active = Column(Boolean, default=True)
     
     organization = relationship("Organization", backref="mail_lists")
+
+class Invitation(Base):
+    __tablename__ = "invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True)
+    email = Column(String, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True))
+    is_used = Column(Boolean, default=False)
+
+    organization = relationship("Organization")
+    role = relationship("Role")

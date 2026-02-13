@@ -12,29 +12,22 @@ def migrate():
     with engine.connect() as conn:
         print("Checking for missing columns...")
         
-        # Add rating column
-        try:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN rating INTEGER NULL"))
-            print("Added 'rating' column.")
-        except Exception as e:
-            print(f"Skipping 'rating' (probably exists): {e}")
-            
-        # Add rating_comment column
-        try:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN rating_comment TEXT NULL"))
-            print("Added 'rating_comment' column.")
-        except Exception as e:
-            print(f"Skipping 'rating_comment' (probably exists): {e}")
+        def add_column_if_missing(table, column, type_def):
+            try:
+                # SQLAlchemy text() for raw SQL
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {type_def}"))
+                conn.commit()
+                print(f"Added '{column}' column to '{table}'.")
+            except Exception as e:
+                conn.rollback()
+                print(f"Skipping '{column}' in '{table}' (might exist or error): {e}")
 
-        # Add completed_at column
-        try:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN completed_at TIMESTAMP WITH TIME ZONE NULL"))
-            print("Added 'completed_at' column.")
-        except Exception as e:
-            print(f"Skipping 'completed_at' (probably exists): {e}")
-            
-        conn.commit()
-        print("Migration completed.")
+        add_column_if_missing("tasks", "rating", "INTEGER NULL")
+        add_column_if_missing("tasks", "rating_comment", "TEXT NULL")
+        add_column_if_missing("tasks", "completed_at", "TIMESTAMP WITH TIME ZONE NULL")
+        add_column_if_missing("notes", "reminder_at", "TIMESTAMP WITH TIME ZONE NULL")
+        
+        print("Migration process finished.")
 
 if __name__ == "__main__":
     migrate()

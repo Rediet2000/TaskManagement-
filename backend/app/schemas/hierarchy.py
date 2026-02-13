@@ -32,11 +32,25 @@ class OrganizationBase(BaseModel):
     system_page_title: str = "Task Management System"
     theme_mode: str = "system"
     
+    # Company Profile (Phase 15)
+    industry: Optional[str] = None
+    address: Optional[str] = None
+    timezone: str = "UTC"
+    default_language: str = "en"
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+
     # Dashboard Settings
     show_dashboard_clock: bool = True
     show_dashboard_map: bool = False
     show_dashboard_stats: bool = True
     show_dashboard_tasks: bool = True
+    
+    dashboard_layout: str = "clock,stats,tasks,map"
+    dashboard_refresh_rate: int = 30
+    dashboard_clock_type: str = "analog"
+    dashboard_metrics_config: str = "tasks,active,overdue,problems"
+    dashboard_compact_mode: bool = False
 
 class OrganizationCreate(OrganizationBase):
     pass
@@ -52,6 +66,14 @@ class OrganizationUpdate(BaseModel):
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
     smtp_from_email: Optional[str] = None
+    
+    # Company Profile (Phase 15)
+    industry: Optional[str] = None
+    address: Optional[str] = None
+    timezone: Optional[str] = None
+    default_language: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
     
     password_min_length: Optional[int] = None
     password_require_special: Optional[bool] = None
@@ -72,6 +94,12 @@ class OrganizationUpdate(BaseModel):
     show_dashboard_map: Optional[bool] = None
     show_dashboard_stats: Optional[bool] = None
     show_dashboard_tasks: Optional[bool] = None
+    
+    dashboard_layout: Optional[str] = None
+    dashboard_refresh_rate: Optional[int] = None
+    dashboard_clock_type: Optional[str] = None
+    dashboard_metrics_config: Optional[str] = None
+    dashboard_compact_mode: Optional[bool] = None
 
 class Organization(OrganizationBase):
     id: int

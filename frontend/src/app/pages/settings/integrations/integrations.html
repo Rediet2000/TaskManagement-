@@ -1,96 +1,104 @@
-<div class="integrations-container animate-fade-in">
+<div class="integrations-container">
     <div class="page-header">
         <h1>Integrations</h1>
-        <p>Connect your favorite tools to streamline your workflow.</p>
+        <p>Connect and synchronize with external services.</p>
     </div>
 
     <div class="integration-cards">
         <!-- GitHub -->
-        <div class="glass-card integration-card" [class.connected]="githubConnected()">
+        <div class="integration-card" [class.connected]="githubConnected()">
             <div class="card-header">
                 <div class="icon-wrapper github">
                     <i class="bi bi-github"></i>
                 </div>
                 <div class="info">
-                    <h3>GitHub</h3>
+                    <h3>GitHub Integration</h3>
                     <p>Link commits to tasks and sync issues.</p>
                 </div>
-                <div class="status-badge" [class.active]="githubConnected()">
-                    {{ githubConnected() ? 'Connected' : 'Disconnected' }}
+                <div class="status-badge">
+                    {{ githubConnected() ? 'CONNECTED' : 'DISCONNECTED' }}
                 </div>
             </div>
 
             <div class="card-body">
                 <div *ngIf="!githubConnected()">
                     <div class="form-group">
-                        <label>Personal Access Token</label>
+                        <label>Authorization Token</label>
                         <input type="password" [(ngModel)]="githubToken" placeholder="ghp_XXXXXXXXXXXXXXXXXXXX">
                     </div>
-                    <button class="btn-primary" (click)="connectGithub()">Connect GitHub</button>
+                    <button class="premium-btn" (click)="connectGithub()">CONNECT</button>
                 </div>
                 <div *ngIf="githubConnected()" class="connected-state">
-                    <p><i class="bi bi-check-circle-fill"></i> Repository sync active</p>
-                    <button class="btn-danger-outline" (click)="disconnectGithub()">Disconnect</button>
+                    <p><i class="bi bi-broadcast-pin"></i> Integration active</p>
+                    <div class="test-connection-box">
+                        <label>Simulate Activity (Task ID)</label>
+                        <div class="test-input-group">
+                            <input type="text" [(ngModel)]="testTaskId" placeholder="#123">
+                            <button class="premium-btn-sm" (click)="testGithub()">TEST CONNECTION</button>
+                        </div>
+                        <p class="test-status" *ngIf="testStatus()">{{ testStatus() }}</p>
+                    </div>
+                    <button class="premium-btn-secondary" (click)="disconnectGithub()">DISCONNECT</button>
                 </div>
             </div>
         </div>
 
         <!-- GitLab -->
-        <div class="glass-card integration-card" [class.connected]="gitlabConnected()">
+        <div class="integration-card" [class.connected]="gitlabConnected()">
             <div class="card-header">
                 <div class="icon-wrapper gitlab">
                     <i class="bi bi-git"></i>
                 </div>
                 <div class="info">
-                    <h3>GitLab</h3>
-                    <p>Track merge requests and CI/CD pipelines.</p>
+                    <h3>GitLab Integration</h3>
+                    <p>Track merge requests and CI/CD status.</p>
                 </div>
-                <div class="status-badge" [class.active]="gitlabConnected()">
-                    {{ gitlabConnected() ? 'Connected' : 'Disconnected' }}
+                <div class="status-badge">
+                    {{ gitlabConnected() ? 'CONNECTED' : 'DISCONNECTED' }}
                 </div>
             </div>
 
             <div class="card-body">
                 <div *ngIf="!gitlabConnected()">
                     <div class="form-group">
-                        <label>Access Token</label>
+                        <label>Authorization Token</label>
                         <input type="password" [(ngModel)]="gitlabToken" placeholder="glpat-XXXXXXXXXXXXXXXXXXXX">
                     </div>
-                    <button class="btn-primary" (click)="connectGitlab()">Connect GitLab</button>
+                    <button class="premium-btn" (click)="connectGitlab()">CONNECT</button>
                 </div>
                 <div *ngIf="gitlabConnected()" class="connected-state">
-                    <p><i class="bi bi-check-circle-fill"></i> Project sync active</p>
-                    <button class="btn-danger-outline" (click)="disconnectGitlab()">Disconnect</button>
+                    <p><i class="bi bi-broadcast-pin"></i> Integration active</p>
+                    <button class="premium-btn-secondary" (click)="disconnectGitlab()">DISCONNECT</button>
                 </div>
             </div>
         </div>
 
-        <!-- Jira (Placeholder) -->
-        <div class="glass-card integration-card" [class.connected]="jiraConnected()">
+        <!-- Jira -->
+        <div class="integration-card" [class.connected]="jiraConnected()">
             <div class="card-header">
                 <div class="icon-wrapper jira">
                     <i class="bi bi-kanban"></i>
                 </div>
                 <div class="info">
-                    <h3>Jira Software</h3>
-                    <p>Sync tickets and project status.</p>
+                    <h3>Jira Integration</h3>
+                    <p>Bridge tickets and project status.</p>
                 </div>
-                <div class="status-badge" [class.active]="jiraConnected()">
-                    {{ jiraConnected() ? 'Connected' : 'Disconnected' }}
+                <div class="status-badge">
+                    {{ jiraConnected() ? 'CONNECTED' : 'DISCONNECTED' }}
                 </div>
             </div>
 
             <div class="card-body">
                 <div *ngIf="!jiraConnected()">
                     <div class="form-group">
-                        <label>Instance URL</label>
-                        <input type="text" [(ngModel)]="jiraUrl" placeholder="https://your-domain.atlassian.net">
+                        <label>Endpoint URL</label>
+                        <input type="text" [(ngModel)]="jiraUrl" placeholder="https://your-node.atlassian.net">
                     </div>
-                    <button class="btn-primary" (click)="connectJira()">Connect Jira</button>
+                    <button class="premium-btn" (click)="connectJira()">CONNECT</button>
                 </div>
                 <div *ngIf="jiraConnected()" class="connected-state">
-                    <p><i class="bi bi-check-circle-fill"></i> Issue tracking active</p>
-                    <button class="btn-danger-outline" (click)="disconnectJira()">Disconnect</button>
+                    <p><i class="bi bi-broadcast-pin"></i> Integration active</p>
+                    <button class="premium-btn-secondary" (click)="disconnectJira()">DISCONNECT</button>
                 </div>
             </div>
         </div>

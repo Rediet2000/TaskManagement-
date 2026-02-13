@@ -1,4 +1,5 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
@@ -42,16 +43,30 @@ export class MainLayout {
         });
     }
 
-    navItems = [
-        { label: 'Dashboard', route: '/', icon: 'bi-grid-1x2-fill' },
-        { label: 'Tasks', route: '/tasks', icon: 'bi-list-check' },
-        { label: 'Agile Board', route: '/agile', icon: 'bi-kanban-fill' },
-        { label: 'Problem Areas', route: '/problems', icon: 'bi-exclamation-octagon-fill' },
-        { label: 'RBAC & Org', route: '/rbac', icon: 'bi-shield-lock-fill' },
-        { label: 'Analytics', route: '/analytics', icon: 'bi-bar-chart-fill' },
-        { label: 'Reports', route: '/reports', icon: 'bi-graph-up-arrow' },
-        { label: 'Settings', route: '/settings', icon: 'bi-gear-fill' }
-    ];
+    navItems = computed(() => {
+        const user = this.currentUser();
+        const role = (user?.role_name || '').toLowerCase();
+        const isAdmin = role.includes('admin') || role.includes('super');
+
+        const items = [
+            { label: 'Dashboard', route: '/', icon: 'bi-grid-1x2-fill' },
+            { label: 'Tasks', route: '/tasks', icon: 'bi-list-check' },
+            { label: 'Agile Board', route: '/agile', icon: 'bi-kanban-fill' },
+            { label: 'Problem Areas', route: '/problems', icon: 'bi-exclamation-octagon-fill' },
+            { label: 'RBAC & Org', route: '/rbac', icon: 'bi-shield-lock-fill' },
+            { label: 'Analytics', route: '/analytics', icon: 'bi-bar-chart-fill' },
+            { label: 'Reports', route: '/reports', icon: 'bi-graph-up-arrow' },
+            { label: 'Knowledge Base', route: '/notes', icon: 'bi-journal-text' },
+            { label: 'Settings', route: '/settings', icon: 'bi-gear-fill' }
+        ];
+
+        if (isAdmin) {
+            // Insert Admin Dashboard after regular Dashboard
+            items.splice(1, 0, { label: 'Admin Overview', route: '/admin-dashboard', icon: 'bi-speedometer' });
+        }
+
+        return items;
+    });
 
     toggleSidebar() {
         if (window.innerWidth <= 1024) {

@@ -1,8 +1,11 @@
 <div class="signup-container">
-    <div class="glass-card signup-card animate-fade-in">
+    <div class="signup-card">
         <div class="signup-header">
-            <h1>Create Account</h1>
-            <p>Join an organization to start managing tasks</p>
+            <h1>SIGN UP</h1>
+            <p *ngIf="!isInvited()">Join an existing organization</p>
+            <p *ngIf="isInvited()" style="color: #4ade80; font-weight: 700;">
+                You've been invited to join {{ invitedOrgName() }}
+            </p>
         </div>
 
         <form (ngSubmit)="onSubmit()" #signupForm="ngForm" class="signup-form">
@@ -10,7 +13,7 @@
                 <label for="fullName">Full Name</label>
                 <div class="input-wrapper">
                     <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required
-                        placeholder="John Doe">
+                        placeholder="Your full name">
                 </div>
             </div>
 
@@ -18,15 +21,15 @@
                 <label for="email">Email Address</label>
                 <div class="input-wrapper">
                     <input type="email" id="email" name="email" [(ngModel)]="email" required
-                        placeholder="name@company.com">
+                        placeholder="user@company.com" [disabled]="isInvited()">
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" [style.display]="isInvited() ? 'none' : 'block'">
                 <label for="organization">Organization</label>
                 <div class="input-wrapper select-wrapper">
                     <select id="organization" name="organization" [(ngModel)]="orgId" required>
-                        <option [ngValue]="null" disabled selected>Select your organization</option>
+                        <option [ngValue]="null" disabled selected>Select organization</option>
                         @for (org of organizations(); track org.id) {
                         <option [value]="org.id">{{ org.name }}</option>
                         }
@@ -42,18 +45,21 @@
                 </div>
             </div>
 
-            <div *ngIf="error" class="error-message">
-                {{ error }}
+            <div *ngIf="error" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error }}
             </div>
 
-            <button type="submit" class="btn-primary signup-btn" [disabled]="loading || !signupForm.form.valid">
-                <span *ngIf="!loading">Create Account</span>
+            <button type="submit" class="premium-btn signup-btn" [disabled]="loading || !signupForm.form.valid">
+                <span *ngIf="!loading">CREATE ACCOUNT</span>
                 <span *ngIf="loading" class="loader"></span>
             </button>
         </form>
 
         <div class="signup-footer">
             <p>Already have an account? <a routerLink="/login">Sign In</a></p>
+            <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">
+                Need a new workspace? <a routerLink="/register-company">Register Organization</a>
+            </p>
         </div>
     </div>
 </div>

@@ -22,6 +22,15 @@ export interface Attachment {
     created_at: string;
 }
 
+export interface GitCommit {
+    id: number;
+    hash: string;
+    message: string;
+    author: string;
+    url?: string;
+    timestamp: string;
+}
+
 export interface Task {
     id: number;
     title: string;
@@ -37,6 +46,7 @@ export interface Task {
     metadata_fields: any;
     comments?: Comment[];
     attachments?: Attachment[];
+    commits?: GitCommit[];
 
     // Agile Fields
     issue_type: string;
@@ -82,6 +92,10 @@ export class TaskService {
         return this.http.get<Task[]>(this.apiUrl);
     }
 
+    getTask(id: number): Observable<Task> {
+        return this.http.get<Task>(`${this.apiUrl}/${id}`);
+    }
+
     getTaskReports(): Observable<TaskReportStats> {
         return this.http.get<TaskReportStats>(`${this.apiUrl}/reports/dashboard`);
     }
@@ -106,5 +120,19 @@ export class TaskService {
         const formData = new FormData();
         formData.append('file', file);
         return this.http.post<Attachment>(`${this.apiUrl}/${taskId}/attachments`, formData);
+    }
+
+    testGitHubConnection(taskId: number): Observable<any> {
+        const mockPayload = {
+            commits: [
+                {
+                    id: Math.random().toString(36).substring(7),
+                    message: `Initial push verifying Vanguard sync for mission #${taskId}`,
+                    author: { name: 'Vanguard Agent' },
+                    url: 'https://github.com/vanguard/ops-control/commit/test'
+                }
+            ]
+        };
+        return this.http.post(`${environment.apiUrl}/webhooks/github`, mockPayload);
     }
 }

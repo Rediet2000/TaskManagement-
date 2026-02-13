@@ -10,6 +10,13 @@ export interface Role {
     parent_role_id?: number | null;
 }
 
+export interface Permission {
+    id: number;
+    name: string;
+    code: string;
+    description?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -17,6 +24,10 @@ export class RbacService {
     private apiUrl = `${environment.apiUrl}/rbac`;
 
     constructor(private http: HttpClient) { }
+
+    getPermissions(): Observable<Permission[]> {
+        return this.http.get<Permission[]>(`${this.apiUrl}/permissions`);
+    }
 
     getRoles(): Observable<Role[]> {
         return this.http.get<Role[]>(`${this.apiUrl}/roles`);

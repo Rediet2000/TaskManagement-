@@ -1,16 +1,16 @@
-<div class="agile-container animate-fade-in">
+<div class="agile-container">
     <header class="agile-header">
         <div class="header-info">
-            <h1>Agile Project Board</h1>
-            <p>Manage Sprints, Backlogs, and Development Progress</p>
+            <h1>Strategic Board</h1>
+            <p>Intelligence cycle, backlog management & tactical execution.</p>
         </div>
         <div class="actions">
-            <button class="btn-secondary" (click)="showSprintModal.set(true)">
-                <i class="bi bi-calendar-plus"></i> New Sprint
+            <button class="premium-btn" (click)="showSprintModal.set(true)">
+                <i class="bi bi-calendar-check-fill"></i> Initialize Cycle
             </button>
             <div class="sprint-selector" *ngIf="sprints().length">
                 <select [ngModel]="activeSprint()?.id" (ngModelChange)="onSprintChange($event)">
-                    <option *ngFor="let s of sprints()" [value]="s.id">{{ s.name }} ({{ s.status }})</option>
+                    <option *ngFor="let s of sprints()" [value]="s.id">{{ s.name }} [{{ s.status }}]</option>
                 </select>
             </div>
         </div>
@@ -19,30 +19,43 @@
     <div class="agile-layout" cdkDropListGroup>
         <!-- Backlog Section -->
         <div class="agile-column backlog">
-            <div class="column-header">
-                <h2>Product Backlog</h2>
-                <span class="count">{{ getBacklogTasks().length }}</span>
+            <div class="column-header" style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <h2>Project Archive</h2>
+                    <span class="count">{{ getBacklogTasks().length }}</span>
+                </div>
+                <button class="btn-icon" (click)="showTaskModal.set(true)" title="Quick Deploy">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
             </div>
             <div class="task-bucket" cdkDropList id="backlog" [cdkDropListData]="getBacklogTasks()"
                 [cdkDropListConnectedTo]="['active-sprint']" (cdkDropListDropped)="onDrop($event)">
-                <div *ngFor="let task of getBacklogTasks()" class="glass-card agile-card" cdkDrag [cdkDragData]="task">
-                    <div class="card-type" [class]="task.issue_type">
-                        <i class="bi" [class.bi-bookmark-star]="task.issue_type === 'story'"
-                            [class.bi-bug]="task.issue_type === 'bug'"
-                            [class.bi-lightning]="task.issue_type === 'task'"></i>
-                    </div>
+                <div *ngFor="let task of getBacklogTasks()" class="agile-card" cdkDrag [cdkDragData]="task">
+                    <div class="card-type" [class]="task.issue_type"></div>
                     <div class="card-content">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <i class="bi" [class.bi-bookmark-star-fill]="task.issue_type === 'story'"
+                                [class.bi-bug-fill]="task.issue_type === 'bug'"
+                                [class.bi-lightning-charge-fill]="task.issue_type === 'task'"
+                                [style.color]="task.issue_type === 'bug' ? '#ef4444' : task.issue_type === 'story' ? '#10b981' : '#3b82f6'"></i>
+                            <span class="points" *ngIf="task.story_points"
+                                style="font-size: 0.65rem; font-weight: 800; color: #64748b;">{{ task.story_points }}
+                                SP</span>
+                        </div>
                         <h4>{{ task.title }}</h4>
                         <div class="card-footer">
-                            <span class="points" *ngIf="task.story_points">{{ task.story_points }} pts</span>
-                            <button class="btn-icon" (click)="onMoveToSprint(task)" title="Move to Sprint">
-                                <i class="bi bi-arrow-right-short"></i>
+                            <span class="status-indicator">UNASSIGNED DATA</span>
+                            <button class="btn-icon" (click)="onMoveToSprint(task)" title="Deploy to Active Cycle">
+                                <i class="bi bi-chevron-right"></i>
                             </button>
                         </div>
                     </div>
                 </div>
                 <div *ngIf="getBacklogTasks().length === 0" class="empty-state">
-                    Backlog is empty
+                    <i class="bi bi-check-circle"
+                        style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.4;"></i>
+                    Archive Optimized
                 </div>
             </div>
         </div>
@@ -51,39 +64,48 @@
         <div class="agile-column active-sprint">
             <div class="column-header">
                 <div class="sprint-info">
-                    <h2>{{ activeSprint()?.name || 'No Active Sprint' }}</h2>
+                    <h2>{{ activeSprint()?.name || 'Inert Cycle' }}</h2>
                     <p class="sprint-goal" *ngIf="activeSprint()?.goal">{{ activeSprint()?.goal }}</p>
                 </div>
                 <div class="sprint-stats" *ngIf="activeSprint() as sprint">
-                    <span class="badge" [class]="sprint.status.toLowerCase()">{{ sprint.status
-                        }}</span>
+                    <span class="badge" [class]="sprint.status.toLowerCase()">{{ sprint.status }}</span>
                     <span class="count">{{ getSprintTasks().length }}</span>
                 </div>
             </div>
 
             <div class="task-bucket" cdkDropList id="active-sprint" [cdkDropListData]="getSprintTasks()"
                 [cdkDropListConnectedTo]="['backlog']" (cdkDropListDropped)="onDrop($event)">
-                <div *ngFor="let task of getSprintTasks()" class="glass-card agile-card" cdkDrag [cdkDragData]="task">
-                    <div class="card-type" [class]="task.issue_type">
-                        <i class="bi" [class.bi-bookmark-star]="task.issue_type === 'story'"
-                            [class.bi-bug]="task.issue_type === 'bug'"
-                            [class.bi-lightning]="task.issue_type === 'task'"></i>
-                    </div>
+                <div *ngFor="let task of getSprintTasks()" class="agile-card" cdkDrag [cdkDragData]="task">
+                    <div class="card-type" [class]="task.issue_type"></div>
                     <div class="card-content">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <i class="bi" [class.bi-bookmark-star-fill]="task.issue_type === 'story'"
+                                [class.bi-bug-fill]="task.issue_type === 'bug'"
+                                [class.bi-lightning-charge-fill]="task.issue_type === 'task'"
+                                [style.color]="task.issue_type === 'bug' ? '#ef4444' : task.issue_type === 'story' ? '#10b981' : '#3b82f6'"></i>
+                            <span class="points" *ngIf="task.story_points"
+                                style="font-size: 0.65rem; font-weight: 800; color: #64748b;">{{ task.story_points }}
+                                SP</span>
+                        </div>
                         <h4>{{ task.title }}</h4>
                         <div class="card-footer">
                             <span class="status-indicator">{{ task.status }}</span>
-                            <button class="btn-icon" (click)="onMoveToBacklog(task)" title="Return to Backlog">
-                                <i class="bi bi-arrow-left-short"></i>
+                            <button class="btn-icon" (click)="onMoveToBacklog(task)" title="Return to Archive">
+                                <i class="bi bi-chevron-left"></i>
                             </button>
                         </div>
                     </div>
                 </div>
                 <div *ngIf="!activeSprint()" class="empty-state">
-                    Select or create a sprint to start planning.
+                    <i class="bi bi-cpu"
+                        style="font-size: 2rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    Initialize a strategic cycle to begin tactical processing.
                 </div>
                 <div *ngIf="activeSprint() && getSprintTasks().length === 0" class="empty-state">
-                    Drag or move tasks here to include them in the sprint.
+                    <i class="bi bi-layers"
+                        style="font-size: 2rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    Drag assets here to prioritize intelligence execution.
                 </div>
             </div>
         </div>
@@ -91,37 +113,42 @@
 
     <!-- Create Sprint Modal -->
     <div class="modal-overlay" *ngIf="showSprintModal()">
-        <div class="glass-card modal-content">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
             <div class="modal-header">
-                <h2>New Sprint</h2>
-                <button class="close-btn" (click)="showSprintModal.set(false)"><i class="bi bi-x"></i></button>
+                <h2>Initialize Strategic Cycle</h2>
+                <button class="close-btn" (click)="showSprintModal.set(false)"><i class="bi bi-x-lg"></i></button>
             </div>
-            <form (ngSubmit)="onCreateSprint()" class="agile-form">
+            <form (ngSubmit)="onCreateSprint()" class="agile-form" style="padding: 2rem;">
                 <div class="form-group">
-                    <label>Sprint Name</label>
+                    <label>Cycle Identification</label>
                     <input type="text" name="name" [(ngModel)]="newSprint.name" required
-                        placeholder="e.g. Sprint 1 - Core UI">
+                        placeholder="Cycle identifier (e.g. ALPHA-PHASE-1)">
                 </div>
-                <div class="form-group">
-                    <label>Sprint Goal</label>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>Operational Objective</label>
                     <textarea name="goal" [(ngModel)]="newSprint.goal" rows="2"
-                        placeholder="What are we achieving?"></textarea>
+                        placeholder="Define core mission targets..."></textarea>
                 </div>
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>Start Date</label>
+                <div class="form-row" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <div class="form-group half" style="flex: 1;">
+                        <label>Engagement Date</label>
                         <input type="date" name="start_date" [(ngModel)]="newSprint.start_date" required>
                     </div>
-                    <div class="form-group half">
-                        <label>End Date</label>
+                    <div class="form-group half" style="flex: 1;">
+                        <label>Termination Date</label>
                         <input type="date" name="end_date" [(ngModel)]="newSprint.end_date" required>
                     </div>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showSprintModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Sprint</button>
+                <div class="modal-actions"
+                    style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn-secondary" (click)="showSprintModal.set(false)">Abort</button>
+                    <button type="submit" class="premium-btn">Authorize Cycle</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Create Task Modal -->
+    <app-task-create-modal *ngIf="showTaskModal()" (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
+    </app-task-create-modal>
 </div>

@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../services/task.service';
 import { SprintService, Sprint } from '../../services/sprint.service';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
+import { TaskCreateModal } from '../../components/task-create-modal/task-create-modal';
 
 @Component({
     selector: 'app-agile-board',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule],
+    imports: [CommonModule, FormsModule, DragDropModule, TaskCreateModal],
     templateUrl: './agile-board.html',
     styleUrls: ['./agile-board.scss']
 })
@@ -19,6 +20,7 @@ export class AgileBoard implements OnInit {
     loading = signal(false);
 
     showSprintModal = signal(false);
+    showTaskModal = signal(false);
     newSprint = {
         name: '',
         goal: '',
@@ -75,6 +77,10 @@ export class AgileBoard implements OnInit {
             this.loadData();
             this.showSprintModal.set(false);
         });
+    }
+
+    onTaskCreated() {
+        this.loadTasks();
     }
 
     onMoveToSprint(task: Task) {

@@ -73,7 +73,6 @@ class TaskUpdate(BaseModel):
     sprint_id: Optional[int] = None
     parent_id: Optional[int] = None
     story_points: Optional[int] = None
-    story_points: Optional[int] = None
     estimated_hours: Optional[float] = None
     
     # Phase 11
@@ -133,6 +132,16 @@ class Attachment(AttachmentBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class GitCommit(BaseModel):
+    id: int
+    hash: str
+    message: str
+    author: str
+    url: Optional[str] = None
+    task_id: int
+    timestamp: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class Task(TaskBase):
     id: int
     creator_id: int
@@ -140,6 +149,7 @@ class Task(TaskBase):
     created_at: datetime
     comments: List[Comment] = []
     attachments: List[Attachment] = []
+    commits: List[GitCommit] = []
     
     completed_at: Optional[datetime] = None
     rating: Optional[int] = None

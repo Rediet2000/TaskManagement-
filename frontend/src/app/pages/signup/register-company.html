@@ -1,0 +1,58 @@
+<div class="signup-container">
+    <div class="signup-card">
+        <div class="signup-header">
+            <h1>REGISTER</h1>
+            <p>Create a new organization workspace</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #regForm="ngForm" class="signup-form">
+            <div class="form-group">
+                <label for="orgName">Organization Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="orgName" name="orgName" [(ngModel)]="orgName" required
+                        placeholder="Your company or team name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="adminFullName">Admin Full Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="adminFullName" name="adminFullName" [(ngModel)]="adminFullName" required
+                        placeholder="e.g. John Doe">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="adminEmail">Admin Email Address</label>
+                <div class="input-wrapper">
+                    <input type="email" id="adminEmail" name="adminEmail" [(ngModel)]="adminEmail" required
+                        placeholder="admin@company.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="adminPassword">Admin Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="adminPassword" name="adminPassword" [(ngModel)]="adminPassword" required
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <div *ngIf="error" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error }}
+            </div>
+
+            <button type="submit" class="premium-btn signup-btn" [disabled]="loading || !regForm.form.valid">
+                <span *ngIf="!loading">REGISTER ORGANIZATION</span>
+                <span *ngIf="loading" class="loader"></span>
+            </button>
+        </form>
+
+        <div class="signup-footer">
+            <p>Already have an account? <a routerLink="/login">Sign In</a></p>
+            <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">
+                Join an existing organization? <a routerLink="/signup">Sign Up</a>
+            </p>
+        </div>
+    </div>
+</div>
