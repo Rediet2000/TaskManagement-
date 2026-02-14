@@ -1,7 +1,7 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TaskService } from '../../../services/task.service';
+import { IntegrationsService, GitHubIntegration, GitHubRepo, GitHubActivity } from '../../../services/integrations.service';
 
 @Component({
     selector: 'app-integrations',
@@ -10,83 +10,73 @@ import { TaskService } from '../../../services/task.service';
     templateUrl: './integrations.html',
     styleUrls: ['./integrations.scss']
 })
-export class Integrations {
-    private taskService = inject(TaskService);
-    private storageKeyPrefix = 'integration_connected_';
+export class Integrations implements OnInit {
+    private integrationsService = inject(IntegrationsService);
 
-    githubToken = '';
-    gitlabToken = '';
-    jiraUrl = '';
+    integration = signal<GitHubIntegration | null>(null);
+    newRepo = { github_id: 0, name: '', full_name: '', html_url: '', is_private: false };
+    activities = signal<GitHubActivity[]>([]);
 
-    githubConnected = signal(false);
-    gitlabConnected = signal(false);
-    jiraConnected = signal(false);
+    webhookSecret = '';
+    installationId = '';
 
-    testTaskId = '';
-    testStatus = signal('');
+    loading = signal(false);
+    error = signal('');
 
-    constructor() {
-        this.githubConnected.set(localStorage.getItem(this.storageKeyPrefix + 'github') === 'true');
-        this.gitlabConnected.set(localStorage.getItem(this.storageKeyPrefix + 'gitlab') === 'true');
-        this.jiraConnected.set(localStorage.getItem(this.storageKeyPrefix + 'jira') === 'true');
+    ngOnInit() {
+        this.loadIntegration();
+        this.loadActivity();
     }
 
-    connectGithub() {
-        // Placeholder for actual API call
-        if (this.githubToken.trim()) {
-            this.githubConnected.set(true);
-            localStorage.setItem(this.storageKeyPrefix + 'github', 'true');
-            this.githubToken = '';
-        }
-    }
-
-    disconnectGithub() {
-        this.githubConnected.set(false);
-        localStorage.removeItem(this.storageKeyPrefix + 'github');
-    }
-
-    testGithub() {
-        if (!this.testTaskId) {
-            this.testStatus.set('Error: Task ID required');
-            return;
-        }
-
-        this.testStatus.set('Transmitting mock webhook...');
-        this.taskService.testGitHubConnection(parseInt(this.testTaskId)).subscribe({
-            next: (res) => {
-                this.testStatus.set(`Success: Processed ${res.processed_commits} commits.`);
-                this.testTaskId = '';
-            },
+    loadIntegration() {
+        this.integrationsService.getGitHubIntegration().subscribe({
+            next: (data) => this.integration.set(data),
             error: (err) => {
-                this.testStatus.set('Error: Webhook transmission failed');
-                console.error(err);
+                if (err.status !== 404) this.error.set('Failed to load GitHub integration');
             }
         });
     }
 
-    connectGitlab() {
-        if (this.gitlabToken.trim()) {
-            this.gitlabConnected.set(true);
-            localStorage.setItem(this.storageKeyPrefix + 'gitlab', 'true');
-            this.gitlabToken = '';
-        }
+    loadActivity() {
+        this.integrationsService.getGitHubActivity().subscribe({
+            next: (data) => this.activities.set(data),
+            error: () => console.error('Failed to load activities')
+        });
     }
 
-    disconnectGitlab() {
-        this.gitlabConnected.set(false);
-        localStorage.removeItem(this.storageKeyPrefix + 'gitlab');
+    setupIntegration() {
+        this.loading.set(true);
+        this.integrationsService.setupGitHubIntegration({
+            webhook_secret: this.webhookSecret,
+            installation_id: this.installationId
+        }).subscribe({
+            next: (data) => {
+                this.integration.set(data);
+                this.loading.set(false);
+                this.webhookSecret = '';
+                this.installationId = '';
+            },
+            error: () => {
+                this.error.set('Failed to setup integration');
+                this.loading.set(false);
+            }
+        });
     }
 
-    connectJira() {
-        if (this.jiraUrl.trim()) {
-            this.jiraConnected.set(true);
-            localStorage.setItem(this.storageKeyPrefix + 'jira', 'true');
-            this.jiraUrl = '';
-        }
-    }
+    addRepo() {
+        if (!this.newRepo.github_id || !this.newRepo.full_name) return;
 
-    disconnectJira() {
-        this.jiraConnected.set(false);
-        localStorage.removeItem(this.storageKeyPrefix + 'jira');
+        this.integrationsService.registerRepository(this.newRepo).subscribe({
+            next: (repo) => {
+                if (this.integration()) {
+                    this.integration.set({
+                        ...this.integration()!,
+                        repositories: [...this.integration()!.repositories, repo]
+                    });
+                }
+                this.newRepo = { github_id: 0, name: '', full_name: '', html_url: '', is_private: false };
+            },
+            error: () => this.error.set('Failed to add repository')
+        });
     }
 }

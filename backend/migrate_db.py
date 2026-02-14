@@ -25,6 +25,12 @@ def migrate():
         add_column_if_missing("tasks", "rating", "INTEGER NULL")
         add_column_if_missing("tasks", "rating_comment", "TEXT NULL")
         add_column_if_missing("tasks", "completed_at", "TIMESTAMP WITH TIME ZONE NULL")
+        add_column_if_missing("tasks", "assigner_id", "INTEGER NULL REFERENCES users(id)")
+        add_column_if_missing("tasks", "accountable_id", "INTEGER NULL REFERENCES users(id)")
+        add_column_if_missing("tasks", "board_id", "INTEGER NULL REFERENCES boards(id)")
+        add_column_if_missing("tasks", "board_column_id", "INTEGER NULL REFERENCES board_columns(id)")
+        add_column_if_missing("tasks", "checklist", "JSONB NOT NULL DEFAULT '[]'::jsonb")
+        add_column_if_missing("sprints", "board_id", "INTEGER NULL REFERENCES boards(id)")
         add_column_if_missing("notes", "reminder_at", "TIMESTAMP WITH TIME ZONE NULL")
         
         print("Migration process finished.")

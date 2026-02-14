@@ -115,27 +115,41 @@
             </div>
         </div>
 
-        <!-- Future Readiness Card -->
+        <!-- Infrastructure Health Card -->
         <div class="stat-card"
             style="--icon-color: var(--neon-pink); --accent-glow: rgba(236, 72, 153, 0.2); transition-delay: 0.4s;">
             <div class="stat-header">
                 <div>
-                    <span class="stat-label">Asset Pipeline</span>
+                    <span class="stat-label">Infrastructure Sync</span>
                     <div class="stat-main">
-                        <div class="stat-value">Coming</div>
+                        <div class="stat-value">{{ stats().resources.network }}</div>
                     </div>
                 </div>
                 <div class="stat-icon-wrapper">
-                    <i class="bi bi-lightning-charge-fill"></i>
+                    <i class="bi bi-shield-shaded"></i>
                 </div>
             </div>
-            <div class="visual-container" style="display: flex; align-items: center; justify-content: center;">
-                <span
-                    style="font-size: 0.75rem; color: #475569; letter-spacing: 0.2em; text-transform: uppercase;">Awaiting
-                    Integration</span>
+
+            <div class="resource-meters" style="margin: 1.5rem 0;">
+                <div class="meter-item">
+                    <div class="meter-label">CPU {{ stats().resources.cpu }}%</div>
+                    <div class="progress-track">
+                        <div class="progress-fill" [style.width.%]="stats().resources.cpu"
+                            style="background: var(--neon-pink);"></div>
+                    </div>
+                </div>
+                <div class="meter-item">
+                    <div class="meter-label">RAM {{ stats().resources.ram }}%</div>
+                    <div class="progress-track">
+                        <div class="progress-fill" [style.width.%]="stats().resources.ram"
+                            style="background: var(--neon-pink);"></div>
+                    </div>
+                </div>
             </div>
+
             <div class="stat-footer">
-                <div class="footer-detail">Next: <strong>Project Tracking</strong></div>
+                <div class="footer-detail"><strong>{{ stats().security.allowed_domains }}</strong> Domains Authorized
+                </div>
                 <div class="pulse" style="background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink);"></div>
             </div>
         </div>

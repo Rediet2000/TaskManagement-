@@ -4,6 +4,7 @@ from app.db.base import Base, engine
 from app.models.task_tracking import GitCommit # Ensure it's imported for metadata
 from app.models.core import User # Ensure core models are also in metadata
 from app.models.notes import Note # Ensure notes models are in metadata
+from app.models.integrations import GitHubIntegration # Ensure integration models are in metadata
 
 def ensure_schema():
     print("Waiting for database to be ready...")

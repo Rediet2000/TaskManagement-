@@ -32,15 +32,23 @@ export class TaskCreateModal implements OnInit {
         priority: 'Medium',
         status: 'Not Started',
         due_date: new Date().toISOString().split('T')[0],
-        assignee_id: undefined as number | undefined,
+        assignee_id: null as number | null,
+        assigner_id: null as number | null,
+        accountable_id: null as number | null,
         module_type: 'core',
-        sprint_id: undefined as number | undefined
+        sprint_id: null as number | null
     };
 
     ngOnInit() {
         this.loadUsers();
         if (this.sprintId) {
             this.newTask.sprint_id = this.sprintId;
+        }
+
+        // Default assigner to current user
+        const user = this.authService.getCurrentUser();
+        if (user) {
+            this.newTask.assigner_id = user.id;
         }
     }
 

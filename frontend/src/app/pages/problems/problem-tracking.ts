@@ -16,7 +16,10 @@ export class ProblemTracking implements OnInit {
 
     newProblem = {
         branch_location: '',
+        component: '',
+        device_id: '',
         problem_type: '',
+        severity: 'Medium'
     };
 
     constructor(private problemService: ProblemService) { }
@@ -36,7 +39,13 @@ export class ProblemTracking implements OnInit {
             next: () => {
                 this.loadProblems();
                 this.showModal.set(false);
-                this.newProblem = { branch_location: '', problem_type: '' };
+                this.newProblem = {
+                    branch_location: '',
+                    component: '',
+                    device_id: '',
+                    problem_type: '',
+                    severity: 'Medium'
+                };
             },
             error: (err: any) => console.error('Failed to report problem', err)
         });

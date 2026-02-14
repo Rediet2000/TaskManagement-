@@ -215,6 +215,22 @@ import { ReportsService } from '../../services/reports.service';
             position: relative;
         }
 
+        .resource-meters {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            
+            .meter-item {
+                .meter-label {
+                    font-size: 0.75rem;
+                    color: #475569;
+                    margin-bottom: 0.4rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+            }
+        }
+
         .trend-line {
             width: 100%;
             height: 100%;

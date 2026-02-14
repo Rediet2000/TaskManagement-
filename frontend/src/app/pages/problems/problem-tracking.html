@@ -14,10 +14,11 @@
             <thead>
                 <tr>
                     <th>Location</th>
-                    <th>Type</th>
+                    <th>System Component</th>
+                    <th>Device ID</th>
+                    <th>Severity</th>
                     <th>Status</th>
-                    <th>Assigned Date</th>
-                    <th>Resolution Time</th>
+                    <th>Assigned</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -25,24 +26,31 @@
                 @for (p of problems(); track p.id) {
                 <tr>
                     <td>{{ p.branch_location }}</td>
-                    <td>{{ p.problem_type }}</td>
+                    <td><span class="component-text">{{ p.component || '-' }}</span></td>
+                    <td><code class="device-id">{{ p.device_id || '-' }}</code></td>
+                    <td>
+                        <span class="severity-badge" [class]="(p.severity || '').toLowerCase()">
+                            {{ p.severity }}
+                        </span>
+                    </td>
                     <td>
                         <span class="status-badge" [class]="p.status.toLowerCase().replace(' ', '-')">
                             {{ p.status }}
                         </span>
                     </td>
-                    <td>{{ p.assigned_date | date:'short' }}</td>
-                    <td>{{ p.resolution_time ? (p.resolution_time | number:'1.1-1') + ' hrs' : '-' }}</td>
+                    <td>{{ p.assigned_date | date:'shortDate' }}</td>
                     <td>
                         @if (p.status !== 'Fixed') {
-                        <button class="btn-sm" (click)="onFix(p.id)">Mark Fixed</button>
+                        <button class="icon-btn-sm" (click)="onFix(p.id)" title="Resolve Issue">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </button>
                         }
                     </td>
                 </tr>
                 }
                 @if (problems().length === 0) {
                 <tr>
-                    <td colspan="6" class="empty-state">No issues reported yet</td>
+                    <td colspan="7" class="empty-state">No issues reported yet</td>
                 </tr>
                 }
             </tbody>
@@ -51,33 +59,52 @@
 
     <!-- Report Problem Modal -->
     <div class="modal-overlay" *ngIf="showModal()">
-        <div class="glass-card modal-content small">
+        <div class="glass-card modal-content">
             <div class="modal-header">
-                <h2>Report New Issue</h2>
+                <h2>Diagnostic Report Entry</h2>
                 <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
             </div>
 
             <form (ngSubmit)="onReportProblem()" #problemForm="ngForm">
-                <div class="form-group">
-                    <label>Branch Location</label>
-                    <input type="text" name="location" [(ngModel)]="newProblem.branch_location" required
-                        placeholder="Operational unit location (e.g. Sector-7 HQ)">
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Sector Location</label>
+                        <input type="text" name="location" [(ngModel)]="newProblem.branch_location" required
+                            placeholder="HQ, Factory, etc.">
+                    </div>
+                    <div class="form-group half">
+                        <label>System Component</label>
+                        <input type="text" name="component" [(ngModel)]="newProblem.component"
+                            placeholder="Network, Power, etc.">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Device ID</label>
+                        <input type="text" name="deviceId" [(ngModel)]="newProblem.device_id"
+                            placeholder="Unit ID / Serial">
+                    </div>
+                    <div class="form-group half">
+                        <label>Priority Severity</label>
+                        <select name="severity" [(ngModel)]="newProblem.severity">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Problem Type</label>
-                    <select name="type" [(ngModel)]="newProblem.problem_type" required>
-                        <option value="" disabled>Select problem type</option>
-                        <option value="Hardware">Hardware</option>
-                        <option value="Software">Software</option>
-                        <option value="Operational">Operational</option>
-                        <option value="Maintenance">Maintenance</option>
-                    </select>
+                    <label>Brief Protocol Description</label>
+                    <textarea name="type" [(ngModel)]="newProblem.problem_type" required
+                        placeholder="Describe the anomaly..."></textarea>
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary" [disabled]="!problemForm.form.valid">Report</button>
+                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Aborted</button>
+                    <button type="submit" class="btn-primary" [disabled]="!problemForm.form.valid">Commence Fix</button>
                 </div>
             </form>
         </div>

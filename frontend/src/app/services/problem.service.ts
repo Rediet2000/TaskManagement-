@@ -6,7 +6,10 @@ import { environment } from '../../environments/environment';
 export interface ProblemArea {
     id: number;
     branch_location: string;
+    component?: string;
+    device_id?: string;
     problem_type: string;
+    severity?: string;
     status: string;
     assigned_date: string;
     resolution_time?: number;

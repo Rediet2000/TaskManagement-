@@ -64,6 +64,8 @@ class Organization(Base):
     departments = relationship("Department", back_populates="organization")
     roles = relationship("Role", back_populates="organization")
     branches = relationship("Branch", back_populates="organization")
+    tasks = relationship("Task", back_populates="organization")
+    problem_areas = relationship("ProblemArea", back_populates="organization")
 
 class Branch(Base):
     __tablename__ = "branches"
@@ -75,6 +77,7 @@ class Branch(Base):
 
     organization = relationship("Organization", back_populates="branches")
     departments = relationship("Department", back_populates="branch")
+    problem_areas = relationship("ProblemArea", back_populates="branch")
 
 class Department(Base):
     __tablename__ = "departments"
@@ -173,8 +176,14 @@ class User(Base):
     last_login = Column(DateTime(timezone=True), nullable=True)
 
     organization = relationship("Organization", back_populates="users")
+    department = relationship("Department")
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     role = relationship("Role")
+
+    created_tasks = relationship("Task", foreign_keys="Task.creator_id", back_populates="creator")
+    assigned_tasks = relationship("Task", foreign_keys="Task.assignee_id", back_populates="assignee")
+    comments = relationship("Comment", back_populates="author")
+    attachments = relationship("Attachment", back_populates="uploader")
 
 class AllowedDomain(Base):
     __tablename__ = "allowed_domains"

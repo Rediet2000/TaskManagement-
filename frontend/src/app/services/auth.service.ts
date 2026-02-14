@@ -10,20 +10,27 @@ import { toObservable } from '@angular/core/rxjs-interop';
 })
 export class AuthService {
     public currentUser = signal<any>(null);
+    public isInitialized = signal<boolean>(false);
     public currentUser$ = toObservable(this.currentUser);
 
     constructor(private http: HttpClient) {
         const user = localStorage.getItem('currentUser');
         const token = localStorage.getItem('token');
+
         if (user) {
             this.currentUser.set(JSON.parse(user));
         }
 
-        // Refresh user data if token exists to ensure roles are up to date
         if (token) {
             this.getMe().subscribe({
-                error: () => this.logout() // Auto-logout if token is invalid
+                next: () => this.isInitialized.set(true),
+                error: () => {
+                    this.logout();
+                    this.isInitialized.set(true);
+                }
             });
+        } else {
+            this.isInitialized.set(true);
         }
     }
 

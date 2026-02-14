@@ -1,0 +1,63 @@
+<div class="security-container">
+    <header class="page-header">
+        <h1>Vanguard Security Protocols</h1>
+        <p>Real-time audit logs and security event monitoring.</p>
+    </header>
+
+    <div class="glass-card status-overview">
+        <div class="status-item">
+            <label>Firewall Status</label>
+            <span class="active">ACTIVE PROTOCOL</span>
+        </div>
+        <div class="status-item">
+            <label>Neural Link Encryption</label>
+            <span class="active">AES-256 SYNCED</span>
+        </div>
+        <div class="status-item">
+            <label>Authorized Domains Only</label>
+            <span class="active">ENFORCED</span>
+        </div>
+    </div>
+
+    <div class="glass-card logs-container">
+        <div class="logs-header">
+            <h3>System Audit Stream</h3>
+            <button class="btn-sm" (click)="loadLogs()">
+                <i class="bi bi-arrow-clockwise"></i> Synchronize
+            </button>
+        </div>
+
+        <div class="logs-table-wrapper">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Subject (Agent ID)</th>
+                        <th>Action Protocol</th>
+                        <th>Signal Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (log of logs(); track log.id) {
+                    <tr>
+                        <td class="time">{{ log.timestamp | date:'HH:mm:ss MMM dd, yyyy' }}</td>
+                        <td><span class="agent-id">AGENT-{{ log.user_id }}</span></td>
+                        <td><span class="action-badge">{{ log.action }}</span></td>
+                        <td class="details">{{ log.details }}</td>
+                    </tr>
+                    }
+                    @if (logs().length === 0 && !loading()) {
+                    <tr>
+                        <td colspan="4" class="empty-state">No security anomalies detected in the current cycle.</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="loading-overlay" *ngIf="loading()">
+            <div class="spinner"></div>
+            <span>Synchronizing Security Stream...</span>
+        </div>
+    </div>
+</div>

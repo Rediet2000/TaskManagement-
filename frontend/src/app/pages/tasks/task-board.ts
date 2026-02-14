@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../services/task.service';
 import { AuthService } from '../../services/auth.service';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, ActivatedRoute } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -19,6 +20,8 @@ import { TaskCreateModal } from '../../components/task-create-modal/task-create-
 export class TaskBoard implements OnInit {
     private taskService = inject(TaskService);
     private authService = inject(AuthService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
 
     currentUser = this.authService.currentUser;
 
@@ -31,14 +34,37 @@ export class TaskBoard implements OnInit {
     newComment = '';
     newTag = '';
     users = signal<any[]>([]);
+    canEditTask = computed(() => this.authService.hasPermission('task.edit'));
+    modules = ['core', 'dev', 'admin', 'net', 'sales', 'crm', 'hr', 'support'];
+
+    updateTaskField(field: string, value: any) {
+        if (!this.selectedTask()) return;
+        const taskId = this.selectedTask()!.id;
+
+        const updatePayload = { [field]: value };
+
+        // Optimistic update
+        this.selectedTask.set({ ...this.selectedTask()!, ...updatePayload });
+        this.tasks.update(tasks => tasks.map(t => t.id === taskId ? { ...t, ...updatePayload } : t));
+
+        this.taskService.updateTask(taskId, updatePayload).subscribe({
+            error: (err) => {
+                console.error('Failed to update task field', err);
+                this.loadTasks(); // Revive on error
+            }
+        });
+    }
 
     ngOnInit() {
-        this.loadTasks();
+        this.route.queryParamMap.subscribe(params => {
+            const searchTerm = params.get('search');
+            this.loadTasks(searchTerm || undefined);
+        });
         this.loadUsers();
     }
 
-    loadTasks() {
-        this.taskService.getTasks().subscribe((tasks: Task[]) => {
+    loadTasks(search?: string) {
+        this.taskService.getTasks(search).subscribe((tasks: Task[]) => {
             this.tasks.set(tasks);
         });
     }
@@ -75,13 +101,13 @@ export class TaskBoard implements OnInit {
         }
     }
 
-    getUserName(userId?: number): string {
+    getUserName(userId?: number | null): string {
         if (!userId) return 'Unassigned';
         const user = this.users().find(u => u.id === userId);
         return user ? (user.full_name || user.email) : 'Unknown User';
     }
 
-    getUserInitial(userId?: number): string {
+    getUserInitial(userId?: number | null): string {
         if (!userId) return '?';
         const user = this.users().find(u => u.id === userId);
         if (!user) return '?';

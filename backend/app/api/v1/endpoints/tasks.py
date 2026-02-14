@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 from app import schemas, models
 from app.api import deps
 from app.db.base import get_db
+from app.db.utils import create_audit_log
 
 router = APIRouter()
 
@@ -17,13 +18,21 @@ def read_tasks(
     current_user: models.core.User = Depends(deps.get_current_active_user),
     skip: int = 0,
     limit: int = 100,
+    search: str = None,
 ) -> Any:
     """
     Retrieve tasks for the current organization.
     """
-    return db.query(models.task_tracking.Task).filter(
+    query = db.query(models.task_tracking.Task).filter(
         models.task_tracking.Task.org_id == current_user.org_id
-    ).offset(skip).limit(limit).all()
+    )
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (models.task_tracking.Task.title.ilike(search_filter)) |
+            (models.task_tracking.Task.description.ilike(search_filter))
+        )
+    return query.offset(skip).limit(limit).all()
 
 @router.post("", response_model=schemas.task.Task)
 async def create_task(
@@ -45,6 +54,8 @@ async def create_task(
     db.commit()
     db.refresh(db_obj)
     
+    create_audit_log(db, current_user.id, "TASK_CREATE", f"Task '{db_obj.title}' created.")
+
     # Notify assignee if exists
     if db_obj.assignee_id:
         assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
@@ -156,6 +167,16 @@ def update_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    # Access Rights Model: Only Assigner, Accountable, Assignee or Admin can update
+    is_admin = current_user.role and current_user.role.name in ["Admin", "Super Admin"]
+    is_owner = current_user.id in [task.creator_id, task.assigner_id, task.accountable_id, task.assignee_id]
+    
+    if not (is_admin or is_owner):
+        raise HTTPException(
+            status_code=403, 
+            detail="Strategic access denied. You are not authorized for this specific task sector."
+        )
+    
     update_data = task_in.dict(exclude_unset=True)
     print(f"DEBUG: update_task {id} data: {update_data}")
     
@@ -174,6 +195,7 @@ def update_task(
     db.add(task)
     db.commit()
     db.refresh(task)
+    create_audit_log(db, current_user.id, "TASK_UPDATE", f"Task '{task.title}' updated.")
     return task
 
 @router.post("/{id}/comments", response_model=schemas.task.Comment)

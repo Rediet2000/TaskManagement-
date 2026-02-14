@@ -31,6 +31,16 @@ export interface GitCommit {
     timestamp: string;
 }
 
+export interface PullRequest {
+    id: number;
+    number: number;
+    title: string;
+    state: string;
+    html_url: string;
+    author: string;
+    merged_at?: string;
+}
+
 export interface Task {
     id: number;
     title: string;
@@ -38,7 +48,9 @@ export interface Task {
     priority: string;
     status: string;
     category?: string;
-    assignee_id?: number;
+    assignee_id?: number | null;
+    assigner_id?: number | null;
+    accountable_id?: number | null;
     due_date?: string;
     created_at: string;
     tags: string[];
@@ -47,13 +59,17 @@ export interface Task {
     comments?: Comment[];
     attachments?: Attachment[];
     commits?: GitCommit[];
+    pull_requests?: PullRequest[];
 
     // Agile Fields
     issue_type: string;
     sprint_id?: number | null;
+    board_id?: number | null;
+    board_column_id?: number | null;
     parent_id?: number;
     story_points?: number;
     estimated_hours?: number;
+    checklist: { id: string; text: string; is_completed: boolean }[];
 
     // Phase 11
     completed_at?: string;
@@ -88,8 +104,10 @@ export class TaskService {
 
     constructor(private http: HttpClient) { }
 
-    getTasks(): Observable<Task[]> {
-        return this.http.get<Task[]>(this.apiUrl);
+    getTasks(search?: string): Observable<Task[]> {
+        const params: any = {};
+        if (search) params.search = search;
+        return this.http.get<Task[]>(this.apiUrl, { params });
     }
 
     getTask(id: number): Observable<Task> {

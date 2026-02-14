@@ -1,10 +1,11 @@
-import { Component, inject, signal, effect, computed } from '@angular/core';
+import { Component, inject, signal, effect, computed, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
     selector: 'app-main-layout',
@@ -13,17 +14,25 @@ import { ThemeService } from '../../services/theme.service';
     templateUrl: './main-layout.html',
     styleUrls: ['./main-layout.scss']
 })
-export class MainLayout {
+export class MainLayout implements OnInit {
     private authService = inject(AuthService);
     private themeService = inject(ThemeService);
+    public notificationService = inject(NotificationService);
     private router = inject(Router);
     private titleService = inject(Title);
     private document = inject(DOCUMENT);
 
     isSidebarCollapsed = false;
     isMobileSidebarActive = signal<boolean>(false);
+    showNotifications = signal<boolean>(false);
     currentOrg = this.themeService.currentOrg;
     currentUser = this.authService.currentUser;
+
+    ngOnInit() {
+        this.notificationService.loadNotifications();
+        // Poll for notifications every 60s
+        setInterval(() => this.notificationService.loadNotifications(), 60000);
+    }
 
     constructor() {
         effect(() => {
@@ -63,6 +72,7 @@ export class MainLayout {
         if (isAdmin) {
             // Insert Admin Dashboard after regular Dashboard
             items.splice(1, 0, { label: 'Admin Overview', route: '/admin-dashboard', icon: 'bi-speedometer' });
+            items.splice(2, 0, { label: 'Security Logs', route: '/security', icon: 'bi-shield-check' });
         }
 
         return items;
@@ -73,6 +83,14 @@ export class MainLayout {
             this.isMobileSidebarActive.update(v => !v);
         } else {
             this.isSidebarCollapsed = !this.isSidebarCollapsed;
+        }
+    }
+
+    onSearch(query: string) {
+        if (!query.trim()) {
+            this.router.navigate(['/tasks'], { queryParams: { search: null }, queryParamsHandling: 'merge' });
+        } else {
+            this.router.navigate(['/tasks'], { queryParams: { search: query } });
         }
     }
 

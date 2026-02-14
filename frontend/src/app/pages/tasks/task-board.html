@@ -20,7 +20,7 @@
             </div>
 
             <div class="task-list" cdkDropList [cdkDropListData]="getTasksByStatus(column)" [id]="column"
-                (cdkDropListDropped)="onDrop($event)">
+                (cdkDropListDropped)="onDrop($event)" [cdkDropListDisabled]="!canEditTask()">
 
                 @for (task of getTasksByStatus(column); track task.id) {
                 <div class="task-card" (click)="onSelectTask(task)" cdkDrag [cdkDragData]="task">
@@ -69,26 +69,114 @@
         <div class="detail-drawer" (click)="$event.stopPropagation()">
             <header class="drawer-header">
                 <div class="priority-label" [class]="selectedTask()?.priority?.toLowerCase()">
+                    @if (canEditTask()) {
+                    <select [ngModel]="selectedTask()?.priority" (ngModelChange)="updateTaskField('priority', $event)">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                    } @else {
                     {{ selectedTask()?.priority }} Priority
+                    }
                 </div>
+                @if (canEditTask()) {
+                <input type="text" [ngModel]="selectedTask()?.title"
+                    (blur)="updateTaskField('title', $any($event.target).value)" class="edit-title">
+                } @else {
                 <h2>{{ selectedTask()?.title }}</h2>
+                }
                 <button class="close-btn" (click)="showDetails.set(false)"><i class="bi bi-x-lg"></i></button>
             </header>
 
             <div class="drawer-body">
-                <section class="info-section">
+                <section class="info-section grid-3">
                     <div class="info-item">
-                        <label>Assignee</label>
+                        <label>Category (Worker)</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.assignee_id"
+                            (ngModelChange)="updateTaskField('assignee_id', $event)">
+                            <option [ngValue]="null">Unassigned</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
+                        </select>
+                        } @else {
                         <div class="assignee-badge">
                             <span class="avatar-sm">{{ getUserInitial(selectedTask()?.assignee_id) }}</span>
                             <span>{{ getUserName(selectedTask()?.assignee_id) }}</span>
                         </div>
+                        }
+                    </div>
+
+                    <div class="info-item">
+                        <label>Status</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.status" (ngModelChange)="updateTaskField('status', $event)">
+                            <option *ngFor="let s of columns" [value]="s">{{ s }}</option>
+                        </select>
+                        } @else {
+                        <span class="status-indicator">{{ selectedTask()?.status }}</span>
+                        }
+                    </div>
+
+                    <div class="info-item">
+                        <label>Module / Domain</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.module_type"
+                            (ngModelChange)="updateTaskField('module_type', $event)">
+                            <option *ngFor="let m of modules" [value]="m">{{ m | uppercase }}</option>
+                        </select>
+                        } @else {
+                        <span class="module-tag">{{ selectedTask()?.module_type | uppercase }}</span>
+                        }
+                    </div>
+                </section>
+
+                <section class="info-section grid-2">
+                    <div class="info-item">
+                        <label>Assigner (Who Assigned)</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.assigner_id"
+                            (ngModelChange)="updateTaskField('assigner_id', $event)">
+                            <option [ngValue]="null">Not Specified</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
+                        </select>
+                        } @else {
+                        <div class="assignee-badge">
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.assigner_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.assigner_id) }}</span>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="info-item">
+                        <label>Accountable (Responsible)</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.accountable_id"
+                            (ngModelChange)="updateTaskField('accountable_id', $event)">
+                            <option [ngValue]="null">Not Specified</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
+                        </select>
+                        } @else {
+                        <div class="assignee-badge">
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.accountable_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.accountable_id) }}</span>
+                        </div>
+                        }
                     </div>
                 </section>
 
                 <section class="description-section">
-                    <label>Description</label>
+                    <label>Tactical Description</label>
+                    @if (canEditTask()) {
+                    <textarea [ngModel]="selectedTask()?.description"
+                        (blur)="updateTaskField('description', $any($event.target).value)" rows="4"
+                        class="edit-desc"></textarea>
+                    } @else {
                     <p>{{ selectedTask()?.description || 'No description provided.' }}</p>
+                    }
                 </section>
 
                 <!-- Rating Section -->
@@ -126,12 +214,12 @@
                             @for (tag of selectedTask()?.tags; track tag) {
                             <span class="tag edit">
                                 {{ tag }}
-                                <i class="bi bi-x-circle-fill" (click)="removeTag(tag)"
+                                <i *ngIf="canEditTask()" class="bi bi-x-circle-fill" (click)="removeTag(tag)"
                                     style="margin-left: 0.5rem; cursor: pointer;"></i>
                             </span>
                             }
                         </div>
-                        <div class="add-tag">
+                        <div class="add-tag" *ngIf="canEditTask()">
                             <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()" placeholder="New tag...">
                             <button (click)="addTag()"><i class="bi bi-plus-lg"></i></button>
                         </div>
@@ -154,9 +242,29 @@
                     </label>
                 </section>
 
-                <section class="developer-activity-section" *ngIf="selectedTask()?.commits?.length">
-                    <label>Developer Activity</label>
+                <section class="developer-activity-section"
+                    *ngIf="selectedTask()?.commits?.length || selectedTask()?.pull_requests?.length">
+                    <label>Neural Sync: GitHub Activity</label>
                     <div class="activity-timeline">
+                        <!-- Pull Requests First -->
+                        @for (pr of selectedTask()?.pull_requests; track pr.id) {
+                        <div class="activity-item pr" [ngClass]="pr.state">
+                            <div class="activity-dot"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="type-badge">PR #{{ pr.number }}</span>
+                                    <span class="status-badge">{{ pr.state }}</span>
+                                    <span class="commit-author">{{ pr.author }}</span>
+                                </div>
+                                <div class="commit-message">{{ pr.title }}</div>
+                                <a [href]="pr.html_url" target="_blank" class="commit-link">
+                                    <i class="bi bi-github"></i> View Pull Request
+                                </a>
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Then Commits -->
                         @for (commit of selectedTask()?.commits; track commit.id) {
                         <div class="activity-item">
                             <div class="activity-dot"></div>
@@ -168,7 +276,7 @@
                                 </div>
                                 <div class="commit-message">{{ commit.message }}</div>
                                 <a [href]="commit.url" target="_blank" class="commit-link" *ngIf="commit.url">
-                                    <i class="bi bi-github"></i> View on GitHub
+                                    <i class="bi bi-github"></i> View Commit
                                 </a>
                             </div>
                         </div>

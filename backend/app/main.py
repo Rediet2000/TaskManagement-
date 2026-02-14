@@ -38,5 +38,10 @@ app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 def root():
     return {"message": "Task Management API is running"}
 
+from app.core.tasks import start_background_tasks
+@app.on_event("startup")
+async def startup_event():
+    start_background_tasks()
+
 from app.api.v1.api import api_router
 app.include_router(api_router, prefix=settings.API_V1_STR)

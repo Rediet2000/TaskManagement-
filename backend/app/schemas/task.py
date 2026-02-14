@@ -39,6 +39,8 @@ class TaskBase(BaseModel):
     category: Optional[str] = None
     status: TaskStatus = TaskStatus.NOT_STARTED
     assignee_id: Optional[int] = None
+    assigner_id: Optional[int] = None
+    accountable_id: Optional[int] = None
     team_id: Optional[int] = None
     due_date: Optional[datetime] = None
 
@@ -50,9 +52,12 @@ class TaskBase(BaseModel):
     # Phase 9 Fields
     issue_type: IssueType = IssueType.TASK
     sprint_id: Optional[int] = None
+    board_id: Optional[int] = None
+    board_column_id: Optional[int] = None
     parent_id: Optional[int] = None
     story_points: Optional[int] = None
     estimated_hours: Optional[float] = None
+    checklist: List[dict] = [] # list of {id: str, text: str, is_completed: bool}
 
 class TaskCreate(TaskBase):
     pass
@@ -64,6 +69,8 @@ class TaskUpdate(BaseModel):
     category: Optional[str] = None
     status: Optional[TaskStatus] = None
     assignee_id: Optional[int] = None
+    assigner_id: Optional[int] = None
+    accountable_id: Optional[int] = None
     team_id: Optional[int] = None
     due_date: Optional[datetime] = None
     tags: Optional[List[str]] = None
@@ -74,6 +81,9 @@ class TaskUpdate(BaseModel):
     parent_id: Optional[int] = None
     story_points: Optional[int] = None
     estimated_hours: Optional[float] = None
+    board_id: Optional[int] = None
+    board_column_id: Optional[int] = None
+    checklist: Optional[List[dict]] = None
     
     # Phase 11
     rating: Optional[int] = None
@@ -93,7 +103,7 @@ class SprintBase(BaseModel):
     status: str = "Planning"
 
 class SprintCreate(SprintBase):
-    pass
+    board_id: Optional[int] = None
 
 class SprintUpdate(BaseModel):
     name: Optional[str] = None
@@ -101,6 +111,7 @@ class SprintUpdate(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: Optional[str] = None
+    board_id: Optional[int] = None
 
 class Sprint(SprintBase):
     id: int
@@ -142,6 +153,16 @@ class GitCommit(BaseModel):
     timestamp: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class PullRequest(BaseModel):
+    id: int
+    number: int
+    title: str
+    state: str
+    html_url: str
+    author: str
+    merged_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
 class Task(TaskBase):
     id: int
     creator_id: int
@@ -150,6 +171,7 @@ class Task(TaskBase):
     comments: List[Comment] = []
     attachments: List[Attachment] = []
     commits: List[GitCommit] = []
+    pull_requests: List[PullRequest] = []
     
     completed_at: Optional[datetime] = None
     rating: Optional[int] = None
@@ -159,9 +181,13 @@ class Task(TaskBase):
 
 class ProblemAreaBase(BaseModel):
     branch_location: str
+    component: Optional[str] = None
+    device_id: Optional[str] = None
     problem_type: str
+    severity: str = "Medium"
     customer_name: Optional[str] = None
     assigned_person_id: int
+    branch_id: Optional[int] = None
 
 class ProblemAreaCreate(ProblemAreaBase):
     pass
@@ -173,6 +199,22 @@ class ProblemArea(ProblemAreaBase):
     fixed_date: Optional[datetime] = None
     resolution_time: Optional[float] = None
     
+    model_config = ConfigDict(from_attributes=True)
+
+class NotificationOut(BaseModel):
+    id: int
+    message: str
+    status: str
+    trigger_event: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class AuditLog(BaseModel):
+    id: int
+    user_id: int
+    action: str
+    details: Optional[str] = None
+    timestamp: datetime
     model_config = ConfigDict(from_attributes=True)
 
 # Phase 11: Reporting Schemas

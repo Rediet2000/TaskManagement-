@@ -1,0 +1,36 @@
+name: task-management-prod
+
+services:
+  db:
+    image: postgres:17
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-taskmanagement}
+    restart: always
+
+  backend:
+    build: ./backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-taskmanagement}
+      - SECRET_KEY=${SECRET_KEY}
+      - FIRST_SUPERADMIN_EMAIL=${FIRST_SUPERADMIN_EMAIL}
+      - FIRST_SUPERADMIN_PASSWORD=${FIRST_SUPERADMIN_PASSWORD}
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data_prod:

@@ -75,6 +75,10 @@ export const routes: Routes = [
                 path: 'notes',
                 loadComponent: () => import('./pages/notes/notes').then(m => m.NotesPage)
             },
+            {
+                path: 'security',
+                loadComponent: () => import('./pages/security/security-logs').then(m => m.SecurityLogs)
+            },
             // Add more feature routes here
         ]
     },

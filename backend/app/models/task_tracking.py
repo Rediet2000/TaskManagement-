@@ -58,11 +58,16 @@ class Task(Base):
     # Agile Phase 9 Fields
     issue_type = Column(String, default=IssueType.TASK)
     sprint_id = Column(Integer, ForeignKey("sprints.id"), nullable=True)
+    board_id = Column(Integer, ForeignKey("boards.id"), nullable=True)
+    board_column_id = Column(Integer, ForeignKey("board_columns.id"), nullable=True)
     parent_id = Column(Integer, ForeignKey("tasks.id"), nullable=True) # for epic/subtask relationships
     story_points = Column(Integer, nullable=True)
     estimated_hours = Column(Float, nullable=True)
+    checklist = Column(JSONB, default=[], nullable=False)
     
     creator_id = Column(Integer, ForeignKey("users.id"))
+    assigner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    accountable_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     org_id = Column(Integer, ForeignKey("organizations.id"))
@@ -80,6 +85,17 @@ class Task(Base):
     comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="task", cascade="all, delete-orphan")
     commits = relationship("GitCommit", back_populates="task", cascade="all, delete-orphan")
+    pull_requests = relationship("GitHubPullRequest", back_populates="task")
+    
+    creator = relationship("User", foreign_keys=[creator_id])
+    assigner = relationship("User", foreign_keys=[assigner_id])
+    accountable = relationship("User", foreign_keys=[accountable_id])
+    assignee = relationship("User", foreign_keys=[assignee_id])
+    team = relationship("Team")
+    organization = relationship("Organization", back_populates="tasks")
+    sprint = relationship("Sprint", back_populates="tasks")
+    board = relationship("Board", back_populates="tasks")
+    board_column = relationship("BoardColumn", back_populates="tasks")
 
 class GitCommit(Base):
     __tablename__ = "task_commits_git"
@@ -104,7 +120,7 @@ class Comment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     task = relationship("Task", back_populates="comments")
-    author = relationship("User")
+    author = relationship("User", back_populates="comments")
 
 class Attachment(Base):
     __tablename__ = "task_attachments"
@@ -119,7 +135,7 @@ class Attachment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     task = relationship("Task", back_populates="attachments")
-    uploader = relationship("User")
+    uploader = relationship("User", back_populates="attachments")
 
 class Sprint(Base):
     __tablename__ = "sprints"
@@ -131,25 +147,35 @@ class Sprint(Base):
     end_date = Column(DateTime(timezone=True))
     status = Column(String, default="Planning") # Planning, Active, Completed
     org_id = Column(Integer, ForeignKey("organizations.id"))
+    board_id = Column(Integer, ForeignKey("boards.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    tasks = relationship("Task", backref="sprint")
+    tasks = relationship("Task", back_populates="sprint")
+    board = relationship("Board", back_populates="sprints")
 
 class ProblemArea(Base):
     __tablename__ = "problem_areas"
 
     id = Column(Integer, primary_key=True, index=True)
     branch_location = Column(String, index=True)
+    component = Column(String, index=True, nullable=True) # e.g. Network, Server, Elevator, etc.
+    device_id = Column(String, nullable=True)
     problem_type = Column(String)
+    severity = Column(String, default="Medium") # Low, Medium, High, Critical
     customer_name = Column(String, nullable=True)
     status = Column(String, default="Open") # Open, In Progress, Fixed
     
     assigned_person_id = Column(Integer, ForeignKey("users.id"))
     org_id = Column(Integer, ForeignKey("organizations.id"))
+    branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     
     assigned_date = Column(DateTime(timezone=True), server_default=func.now())
     fixed_date = Column(DateTime(timezone=True), nullable=True)
     resolution_time = Column(Float, nullable=True) # in hours or minutes
+
+    assigned_person = relationship("User")
+    organization = relationship("Organization", back_populates="problem_areas")
+    branch = relationship("Branch", back_populates="problem_areas")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -159,6 +185,8 @@ class AuditLog(Base):
     action = Column(String)
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -170,6 +198,8 @@ class Notification(Base):
     status = Column(String, default="Pending") # Pending, Sent, Failed
     trigger_event = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
 
 class TaskReport(Base):
     __tablename__ = "task_reports"

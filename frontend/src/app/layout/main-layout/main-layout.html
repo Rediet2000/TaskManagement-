@@ -42,7 +42,8 @@
                 </button>
                 <div class="search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" placeholder="Search for tasks, branches...">
+                    <input type="text" #searchInput (keyup.enter)="onSearch(searchInput.value)"
+                        placeholder="Search for tasks, branches...">
                 </div>
             </div>
             <div class="navbar-right">
@@ -58,7 +59,40 @@
                         <span class="role">{{ currentUser()?.role_name || 'Member' }}</span>
                     </div>
                 </div>
-                <button class="icon-btn"><i class="bi bi-bell-fill"></i></button>
+                <div class="notification-wrapper">
+                    <button class="icon-btn" (click)="showNotifications.set(!showNotifications())">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="badge" *ngIf="notificationService.unreadCount() > 0">
+                            {{ notificationService.unreadCount() }}
+                        </span>
+                    </button>
+
+                    <!-- Notification Dropdown -->
+                    <div class="notification-dropdown glass-card" *ngIf="showNotifications()">
+                        <div class="dropdown-header">
+                            <h3>Notifications</h3>
+                            <button (click)="notificationService.markAllRead()">Mark all as read</button>
+                        </div>
+                        <div class="notification-list">
+                            @for (notif of notificationService.notifications(); track notif.id) {
+                            <div class="notification-item" [class.unread]="notif.status === 'Pending'"
+                                (click)="notificationService.markAsRead(notif.id)">
+                                <div class="notif-icon">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </div>
+                                <div class="notif-content">
+                                    <p>{{ notif.message }}</p>
+                                    <span>{{ notif.created_at | date:'short' }}</span>
+                                </div>
+                            </div>
+                            } @empty {
+                            <div class="empty-notif">
+                                <p>You're all caught up!</p>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
                 <button class="icon-btn"><i class="bi bi-question-circle-fill"></i></button>
             </div>
         </header>

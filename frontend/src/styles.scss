@@ -101,7 +101,7 @@ button {
 
 .btn-primary,
 .premium-btn {
-  background: #1d72d2;
+  background: var(--primary);
   /* Clean operational blue */
   color: white;
   padding: 0.6rem 1.25rem;
@@ -116,9 +116,9 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   &:hover {
-    background: #1565c0;
+    background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(29, 114, 210, 0.25);
+    box-shadow: 0 4px 12px rgba(var(--primary-h), 70%, 50%, 0.25);
   }
 
   &:active {
@@ -239,11 +239,11 @@ button {
   textarea,
   select {
     width: 100%;
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--bg-input);
     border: 1px solid var(--glass-border);
     border-radius: 0.75rem;
     padding: 0.75rem 1rem;
-    color: #fff;
+    color: var(--text-main);
     font-family: inherit;
     font-size: 0.9375rem;
     transition: all 0.2s ease;
