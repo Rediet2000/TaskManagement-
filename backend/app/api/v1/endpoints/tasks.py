@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from app import schemas, models
 from app.api import deps
-from app.db.base import get_db
-from app.db.utils import create_audit_log
+from app.core.utils import create_audit_log
+from app.core.notifications import notification_service
+import asyncio
 
 router = APIRouter()
 
@@ -19,6 +20,7 @@ def read_tasks(
     skip: int = 0,
     limit: int = 100,
     search: str = None,
+    include_archived: bool = False,
 ) -> Any:
     """
     Retrieve tasks for the current organization.
@@ -26,6 +28,8 @@ def read_tasks(
     query = db.query(models.task_tracking.Task).filter(
         models.task_tracking.Task.org_id == current_user.org_id
     )
+    if not include_archived:
+        query = query.filter(models.task_tracking.Task.is_archived == False)
     if search:
         search_filter = f"%{search}%"
         query = query.filter(
@@ -54,16 +58,19 @@ async def create_task(
     db.commit()
     db.refresh(db_obj)
     
-    create_audit_log(db, current_user.id, "TASK_CREATE", f"Task '{db_obj.title}' created.")
+    create_audit_log(db, current_user.id, "TASK_CREATE", f"Task '{db_obj.title}' created.", org_id=org_id)
 
     # Notify assignee if exists
     if db_obj.assignee_id:
         assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
         if assignee:
-            from app.core.notifications import notification_service
-            message = f"New Task Assigned: {db_obj.title}"
-            # await notification_service.send_telegram_notification(assignee.telegram_chat_id, message)
-            # notification_service.send_email_notification(assignee.email, "New Task Assigned", message)
+            message = f"🚀 New Task Assigned: {db_obj.title}\nPriority: {db_obj.priority}\nBy: {current_user.full_name}"
+            asyncio.create_task(notification_service.send_telegram_notification(
+                db, 
+                current_user.org_id, 
+                message
+            ))
+            notification_service.send_email_notification(db, current_user.org_id, assignee.email, "New Task Assigned", message)
             
     return db_obj
 
@@ -195,7 +202,7 @@ def update_task(
     db.add(task)
     db.commit()
     db.refresh(task)
-    create_audit_log(db, current_user.id, "TASK_UPDATE", f"Task '{task.title}' updated.")
+    create_audit_log(db, current_user.id, "TASK_UPDATE", f"Task '{task.title}' updated.", org_id=current_user.org_id)
     return task
 
 @router.post("/{id}/comments", response_model=schemas.task.Comment)

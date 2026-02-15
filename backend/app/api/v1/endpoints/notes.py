@@ -6,6 +6,8 @@ from sqlalchemy import or_
 from app import schemas, models
 from app.api import deps
 from app.db.base import get_db
+from app.core.notifications import notification_service
+import asyncio
 
 router = APIRouter()
 
@@ -99,6 +101,14 @@ def create_note(
     db.add(note)
     db.commit()
     db.refresh(note)
+    
+    # Notify via Telegram
+    asyncio.create_task(notification_service.send_telegram_notification(
+        db, 
+        current_user.org_id, 
+        f"📝 New Note: {note.title}\nBy: {current_user.full_name}"
+    ))
+
     return note
 
 @router.get("/{id}", response_model=schemas.notes.NoteOut)

@@ -217,4 +217,16 @@ export class TaskBoard implements OnInit {
             console.warn('DEBUG: No task selected');
         }
     }
+
+    onArchiveTask() {
+        if (!this.selectedTask()) return;
+        const taskId = this.selectedTask()!.id;
+        this.taskService.archiveTask(taskId).subscribe({
+            next: () => {
+                this.showDetails.set(false);
+                this.loadTasks();
+            },
+            error: (err) => console.error('Failed to archive task', err)
+        });
+    }
 }

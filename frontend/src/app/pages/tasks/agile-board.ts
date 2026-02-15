@@ -202,4 +202,11 @@ export class AgileBoard implements OnInit {
             this.loadTasks();
         }
     }
+
+    onArchiveTask(task: Task) {
+        this.taskService.archiveTask(task.id).subscribe({
+            next: () => this.loadTasks(),
+            error: (err) => console.error('Failed to archive task', err)
+        });
+    }
 }

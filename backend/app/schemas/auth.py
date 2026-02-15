@@ -127,6 +127,8 @@ class OrganizationUpdate(OrganizationBase):
     
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_enabled: Optional[bool] = None
+    email_notifications_enabled: Optional[bool] = None
     
     system_page_title: Optional[str] = None
     theme_mode: Optional[str] = None

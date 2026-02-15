@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from app import schemas, models
 from app.api import deps
 from app.db.base import get_db
+import httpx
 
 router = APIRouter()
 
@@ -313,6 +314,39 @@ def test_smtp_connection(
     except Exception as e:
         print(f"SMTP Error encountered: {str(e)}")
         raise HTTPException(status_code=400, detail=f"SMTP Error: {str(e)}")
+
+@router.post("/test-telegram")
+async def test_telegram_connection(
+    *,
+    bot_token: str,
+    chat_id: str,
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Test Telegram bot connection and chat availability.
+    """
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": "Task Management System: Operational status confirmed. Bot connection active."
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=10.0)
+            
+            if response.status_code != 200:
+                error_data = response.json()
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Telegram API Error: {error_data.get('description', 'Unknown error')}"
+                )
+                
+            return {"status": "success", "message": "Test message sent successfully."}
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=400, detail=f"Telegram connection failed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error testing Telegram: {str(e)}")
 
 @router.get("/dashboard/stats")
 def get_dashboard_stats(

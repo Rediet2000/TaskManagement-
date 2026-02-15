@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
 import { HierarchyService, Branch } from '../../services/hierarchy.service';
 import { TaskCreateModal } from '../../components/task-create-modal/task-create-modal';
+import { CalendarComponent } from '../../components/calendar/calendar';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, TaskCreateModal],
+    imports: [CommonModule, TaskCreateModal, CalendarComponent, TranslatePipe],
     templateUrl: './dashboard.html',
     styleUrls: ['./dashboard.scss']
 })
@@ -20,8 +22,62 @@ export class Dashboard implements OnInit, OnDestroy {
     currentTime = signal(new Date());
     branches = signal<Branch[]>([]);
     showTaskModal = signal(false);
+    showCustomizer = false;
+    isEditMode = signal(false);
+
     private timer: any;
     private refreshTimer: any;
+
+    // Widget Visibility Signals (Personal Customization)
+    showClock = signal<boolean>(localStorage.getItem('dash_show_clock') !== 'false');
+    showStats = signal<boolean>(localStorage.getItem('dash_show_stats') !== 'false');
+    showTasks = signal<boolean>(localStorage.getItem('dash_show_tasks') !== 'false');
+    showCalendar = signal<boolean>(localStorage.getItem('dash_show_calendar') !== 'false');
+
+    // Local Widget Order (Personal Customization)
+    localWidgetOrder = signal<string[]>(
+        localStorage.getItem('dash_widget_order')
+            ? JSON.parse(localStorage.getItem('dash_widget_order')!)
+            : []
+    );
+
+    toggleEditMode() {
+        this.isEditMode.update(v => !v);
+        if (!this.isEditMode()) {
+            this.showCustomizer = false;
+        }
+    }
+
+    moveWidget(widget: string, direction: 'up' | 'down') {
+        const order = [...this.orderedWidgets()];
+        const index = order.indexOf(widget);
+        if (index === -1) return;
+
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= order.length) return;
+
+        // Swap
+        [order[index], order[newIndex]] = [order[newIndex], order[index]];
+
+        this.localWidgetOrder.set(order);
+        localStorage.setItem('dash_widget_order', JSON.stringify(order));
+    }
+
+    toggleWidget(widget: string) {
+        if (widget === 'clock') {
+            this.showClock.update(v => !v);
+            localStorage.setItem('dash_show_clock', this.showClock().toString());
+        } else if (widget === 'stats') {
+            this.showStats.update(v => !v);
+            localStorage.setItem('dash_show_stats', this.showStats().toString());
+        } else if (widget === 'tasks') {
+            this.showTasks.update(v => !v);
+            localStorage.setItem('dash_show_tasks', this.showTasks().toString());
+        } else if (widget === 'calendar') {
+            this.showCalendar.update(v => !v);
+            localStorage.setItem('dash_show_calendar', this.showCalendar().toString());
+        }
+    }
 
     // Analog clock rotations
     secondRotation = computed(() => this.currentTime().getSeconds() * 6);
@@ -30,28 +86,28 @@ export class Dashboard implements OnInit, OnDestroy {
 
     stats = computed(() => [
         {
-            label: 'Total Tasks',
+            label: 'TOTAL_TASKS',
             value: this.rawStats().total_tasks.toString(),
             icon: 'bi-list-task',
             trend: '+12%',
             trendUp: true
         },
         {
-            label: 'Active Tasks',
+            label: 'ACTIVE_TASKS',
             value: this.rawStats().active_tasks.toString(),
             icon: 'bi-play-circle',
             trend: '+5%',
             trendUp: true
         },
         {
-            label: 'Overdue',
+            label: 'OVERDUE',
             value: this.rawStats().overdue_tasks.toString(),
             icon: 'bi-exclamation-triangle',
             trend: '-2%',
             trendUp: false
         },
         {
-            label: 'Total Problems',
+            label: 'TOTAL_PROBLEMS',
             value: this.rawStats().total_problems.toString(),
             icon: 'bi-bug',
             trend: '+18%',
@@ -86,7 +142,10 @@ export class Dashboard implements OnInit, OnDestroy {
     });
 
     orderedWidgets = computed(() => {
-        const layout = this.currentOrg()?.dashboard_layout || 'clock,stats,tasks,map';
+        if (this.localWidgetOrder().length > 0) {
+            return this.localWidgetOrder();
+        }
+        const layout = this.currentOrg()?.dashboard_layout || 'clock,stats,tasks,map,calendar';
         return layout.split(',').map(s => s.trim().toLowerCase());
     });
 

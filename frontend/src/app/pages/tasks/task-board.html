@@ -305,6 +305,14 @@
                         </button>
                     </div>
                 </section>
+
+                <!-- NEW: Archive Action -->
+                <section class="archive-action" *ngIf="canEditTask()">
+                    <button class="btn-danger-outline" (click)="onArchiveTask()"
+                        style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px dashed #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-weight: 700; cursor: pointer;">
+                        <i class="bi bi-archive"></i> Archive Mission (Decommission)
+                    </button>
+                </section>
             </div>
         </div>
     </div>

@@ -2,31 +2,31 @@
     <aside class="settings-sidebar">
         <div class="sidebar-header">
             <i class="bi bi-gear-wide-connected"></i>
-            <h3>System Settings</h3>
+            <h3>{{ 'SYSTEM_SETTINGS' | translate }}</h3>
         </div>
         <nav class="settings-nav">
             <button [class.active]="activeTab() === 'user-access'" (click)="setTab('user-access')">
-                <i class="bi bi-shield-lock-fill"></i> User & Access
+                <i class="bi bi-shield-lock-fill"></i> {{ 'USER_ACCESS' | translate }}
             </button>
             <button [class.active]="activeTab() === 'organization'" (click)="setTab('organization')">
-                <i class="bi bi-building-fill"></i> Organization
+                <i class="bi bi-building-fill"></i> {{ 'ORGANIZATION' | translate }}
             </button>
             <button [class.active]="activeTab() === 'communication'" (click)="setTab('communication')">
-                <i class="bi bi-broadcast-pin"></i> Communication
+                <i class="bi bi-broadcast-pin"></i> {{ 'COMMUNICATION' | translate }}
             </button>
             <button [class.active]="activeTab() === 'branding'" (click)="setTab('branding')">
-                <i class="bi bi-palette-fill"></i> Branding
+                <i class="bi bi-palette-fill"></i> {{ 'BRANDING' | translate }}
             </button>
             <button [class.active]="activeTab() === 'dashboard'" (click)="setTab('dashboard')">
-                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                <i class="bi bi-grid-1x2-fill"></i> {{ 'DASHBOARD' | translate }}
             </button>
             <button [class.active]="activeTab() === 'security'" (click)="setTab('security')">
-                <i class="bi bi-shield-fill-exclamation"></i> Security
+                <i class="bi bi-shield-fill-exclamation"></i> {{ 'SECURITY' | translate }}
             </button>
             <a href="/settings/integrations" class="nav-link" routerLink="/settings/integrations"
                 routerLinkActive="active"
                 style="display: flex; align-items: center; gap: 1.25rem; padding: 1rem 1.5rem; text-decoration: none; color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 700;">
-                <i class="bi bi-plugin"></i> Integrations
+                <i class="bi bi-plugin"></i> {{ 'INTEGRATIONS' | translate }}
             </a>
         </nav>
     </aside>
@@ -46,7 +46,7 @@
                 <div class="section-header">
                     <i class="bi" [class.bi-send-fill]="!isEditingUser()"
                         [class.bi-person-gear-fill]="isEditingUser()"></i>
-                    <h2>{{ isEditingUser() ? 'Modify User' : 'Invite New Team Member' }}</h2>
+                    <h2>{{ isEditingUser() ? ('MODIFY_USER' | translate) : ('INVITE_MEMBER' | translate) }}</h2>
                 </div>
 
                 <!-- User specific alerts -->
@@ -60,18 +60,18 @@
                 <form (ngSubmit)="onCreateUser()" class="settings-form">
                     <div class="form-row">
                         <div class="form-group flex-2">
-                            <label>Full Name</label>
+                            <label>{{ 'FULL_NAME' | translate }}</label>
                             <input type="text" name="fullName" [(ngModel)]="newUser.fullName"
-                                placeholder="Full name (e.g. John Doe)">
+                                placeholder="{{ 'FULL_NAME' | translate }}">
                         </div>
                         <div class="form-group flex-2">
-                            <label>Email Address</label>
+                            <label>{{ 'EMAIL_ADDRESS' | translate }}</label>
                             <input type="email" name="email" [(ngModel)]="newUser.email" placeholder="user@company.com">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group flex-2" *ngIf="isEditingUser()">
-                            <label>Password (Leave blank to maintain current)</label>
+                            <label>{{ 'PASSWORD' | translate }}</label>
                             <input type="password" name="password" [(ngModel)]="newUser.password">
                         </div>
                         <div class="form-group flex-1">
@@ -85,10 +85,11 @@
                     <div class="form-actions gap-2">
                         <button *ngIf="isEditingUser()" type="button" class="btn-secondary" (click)="onCancelEdit()"
                             style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
-                            Cancel
+                            {{ 'CANCEL' | translate }}
                         </button>
                         <button type="submit" class="premium-btn" [disabled]="userLoading">
-                            <span *ngIf="!userLoading">{{ isEditingUser() ? 'Update User' : 'Send Invitation'
+                            <span *ngIf="!userLoading">{{ isEditingUser() ? ('UPDATE_USER' | translate) :
+                                ('SEND_INVITATION' | translate)
                                 }}</span>
                             <span *ngIf="userLoading" class="loader small"></span>
                         </button>
@@ -99,7 +100,7 @@
             <section class="settings-section mt-4">
                 <div class="section-header">
                     <i class="bi bi-people-fill"></i>
-                    <h2>User Management</h2>
+                    <h2>{{ 'USER_MANAGEMENT' | translate }}</h2>
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
@@ -156,13 +157,13 @@
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi bi-globe-central-south-line"></i>
-                    <h2>Domain Restrictions</h2>
+                    <h2>{{ 'DOMAIN_RESTRICTIONS' | translate }}</h2>
                 </div>
                 <div class="domain-management">
                     <div class="domain-add-group" style="display: flex; gap: 1rem;">
                         <input type="text" [(ngModel)]="newDomain" placeholder="company.com"
                             style="flex: 1; min-width: 0;">
-                        <button class="premium-btn" (click)="onAddDomain()">Add Domain</button>
+                        <button class="premium-btn" (click)="onAddDomain()">{{ 'ADD' | translate }}</button>
                     </div>
                     <div class="domain-list mt-4"
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
@@ -182,7 +183,7 @@
             <section class="settings-section mt-4">
                 <div class="section-header">
                     <i class="bi bi-building-fill-gear"></i>
-                    <h2>Company Profile</h2>
+                    <h2>{{ 'COMPANY_PROFILE' | translate }}</h2>
                 </div>
                 <div class="settings-form">
                     <div class="form-row">
@@ -226,52 +227,105 @@
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi bi-broadcast"></i>
-                    <h2>Email Server (SMTP)</h2>
+                    <h2>{{ 'SMTP_SERVER' | translate }}</h2>
                 </div>
 
 
                 <div class="settings-form">
                     <div class="form-row">
-                        <div class="form-group flex-3">
+                        <div class="form-group flex-2">
                             <label>SMTP Host</label>
-                            <input type="text" [(ngModel)]="smtp.host" placeholder="smtp.company.com">
+                            <input type="text" [(ngModel)]="smtp.host" placeholder="smtp.example.com">
                         </div>
                         <div class="form-group flex-1">
                             <label>SMTP Port</label>
-                            <input type="number" [(ngModel)]="smtp.port">
+                            <input type="number" [(ngModel)]="smtp.port" placeholder="587">
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group flex-1">
                             <label>SMTP User</label>
-                            <input type="text" [(ngModel)]="smtp.user" placeholder="Username">
+                            <input type="text" [(ngModel)]="smtp.user" placeholder="user@example.com">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group flex-1">
                             <label>SMTP Password</label>
-                            <input type="password" [(ngModel)]="smtp.password" placeholder="Password">
+                            <input type="password" [(ngModel)]="smtp.password" placeholder="••••••••">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>From Email</label>
-                        <input type="email" [(ngModel)]="smtp.from_email" placeholder="noreply@company.com">
+                        <input type="email" [(ngModel)]="smtp.from_email" placeholder="noreply@example.com">
                     </div>
+
                     <div class="form-actions gap-2"
                         style="display: flex; flex-direction: column; align-items: flex-start;">
                         <!-- Test results alerts near the action button -->
-                        <div *ngIf="testSuccess()" class="alert-premium alert-success"
+                        <div *ngIf="testSuccess() && activeTab() === 'communication'"
+                            class="alert-premium alert-success"
                             style="position: static; transform: none; width: 100%; margin-bottom: 1rem;">
                             <i class="bi bi-check-circle"></i> {{ testSuccess() }}
                         </div>
-                        <div *ngIf="testError()" class="alert-premium alert-error"
+                        <div *ngIf="testError() && activeTab() === 'communication'" class="alert-premium alert-error"
                             style="position: static; transform: none; width: 100%; margin-bottom: 1rem;">
                             <i class="bi bi-shield-exclamation"></i> {{ testError() }}
                         </div>
 
                         <button type="button" class="btn-secondary" (click)="onTestSmtp()" [disabled]="testLoading"
                             style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
-                            <span *ngIf="!testLoading">Test Connection</span>
+                            <span *ngIf="!testLoading">Test SMTP Connection</span>
                             <span *ngIf="testLoading" class="loader small"></span>
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section mt-4">
+                <div class="section-header">
+                    <i class="bi bi-telegram"></i>
+                    <h2>{{ 'TELEGRAM_INTEGRATION' | translate }} (RemainderD)</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group checkbox-group mb-4">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="notifications.telegramEnabled">
+                            Enable Organization-wide Telegram Notifications
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>Bot Token</label>
+                            <input type="text" [(ngModel)]="notifications.telegramBotToken"
+                                placeholder="123456789:ABCDefgh-IJKLmnop...">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Default Chat ID</label>
+                            <input type="text" [(ngModel)]="notifications.telegramChatId" placeholder="-100123456789">
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3">
+                        <button type="button" class="btn-secondary" (click)="onTestTelegram()" [disabled]="testLoading"
+                            style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
+                            <span *ngIf="!testLoading">Test Telegram Connection</span>
+                            <span *ngIf="testLoading" class="loader small"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section mt-4">
+                <div class="section-header">
+                    <i class="bi bi-envelope-paper-fill"></i>
+                    <h2>{{ 'EMAIL_MGMT' | translate }}</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="notifications.emailNotificationsEnabled">
+                            Enable Global Email Notifications
+                        </label>
+                        <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; margin-left: 2rem;">
+                            When disabled, all automated email communications will be suspended organization-wide.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -282,7 +336,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi bi-display-fill"></i>
-                    <h2>Branding</h2>
+                    <h2>{{ 'BRANDING' | translate }}</h2>
                 </div>
                 <div class="logo-upload-box">
                     <div class="logo-preview-container">
@@ -329,7 +383,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi bi-sliders2"></i>
-                    <h2>Dashboard Configuration</h2>
+                    <h2>{{ 'DASH_CONFIG' | translate }}</h2>
                 </div>
                 <div class="settings-form">
                     <div class="form-group checkbox-group">
@@ -409,7 +463,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi bi-bank2"></i>
-                    <h2>Audit Logs</h2>
+                    <h2>{{ 'AUDIT_LOGS' | translate }}</h2>
                 </div>
                 <p style="color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 500; margin-bottom: 2rem;">
                     View and download a history of system activities and user actions.</p>
@@ -429,7 +483,7 @@
         <div class="settings-footer">
             <button class="premium-btn" (click)="onUpdateSettings()" [disabled]="loading"
                 style="padding: 1rem 3rem; font-size: 1.125rem;">
-                <span *ngIf="!loading">Save Changes</span>
+                <span *ngIf="!loading">{{ 'SAVE_CHANGES' | translate }}</span>
                 <span *ngIf="loading" class="loader small"></span>
             </button>
         </div>

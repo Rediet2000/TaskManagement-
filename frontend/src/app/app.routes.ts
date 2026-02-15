@@ -79,6 +79,10 @@ export const routes: Routes = [
                 path: 'security',
                 loadComponent: () => import('./pages/security/security-logs').then(m => m.SecurityLogs)
             },
+            {
+                path: 'archive',
+                loadComponent: () => import('./pages/tasks/archive-management').then(m => m.ArchiveManagement)
+            },
             // Add more feature routes here
         ]
     },

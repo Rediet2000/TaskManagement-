@@ -27,6 +27,8 @@ class OrganizationBase(BaseModel):
     # Notification Settings
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_enabled: bool = False
+    email_notifications_enabled: bool = True
     
     # Branding Settings
     system_page_title: str = "Task Management System"
@@ -86,6 +88,8 @@ class OrganizationUpdate(BaseModel):
     
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_enabled: Optional[bool] = None
+    email_notifications_enabled: Optional[bool] = None
     
     system_page_title: Optional[str] = None
     theme_mode: Optional[str] = None

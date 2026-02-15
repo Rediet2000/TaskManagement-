@@ -30,6 +30,8 @@ export interface Organization {
     // Notification Settings
     telegram_bot_token?: string;
     telegram_chat_id?: string;
+    telegram_enabled?: boolean;
+    email_notifications_enabled?: boolean;
 
     // Branding Settings
     system_page_title?: string;
@@ -156,6 +158,10 @@ export class HierarchyService {
 
     testSmtp(smtpData: any): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/test-smtp`, smtpData);
+    }
+
+    testTelegram(botToken: string, chatId: string): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/test-telegram?bot_token=${botToken}&chat_id=${chatId}`, {});
     }
 
     // Dashboard Data

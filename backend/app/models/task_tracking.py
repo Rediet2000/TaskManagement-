@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -80,6 +80,7 @@ class Task(Base):
     rating = Column(Integer, nullable=True) # 1-5 stars
     rating_comment = Column(Text, nullable=True)
     
+    is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
@@ -182,6 +183,7 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     action = Column(String)
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

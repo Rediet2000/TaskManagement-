@@ -1,0 +1,18 @@
+Fix-Bug
+1. login - not loged firest the firest user name and password, it loged after second login attemnpt.
+2. Theam effect not work for all, button color should be responsive on theam change theam change effect will be affect all borad when team lighted some board not clear to watch.
+3. knowledge base note remainder is not work.
+4. security logs not work
+5. anlytics is not functional
+6. Problem areas should be based on the system
+7. Task will be editable based RBAC 
+8, Admin Overview should show about system resource, network, allowed domain setting .. 
+
+
+Add feature 
+- RemainderD feature will work work, can try to integrate with telegram. (R)
+- Email message will manageable i need email message mamangement setting 
+- Domain setting 
+- Add lanaguage Amharic and Oromia add language selection option on beside profile 
+- Add calander on dashboard - calander have the following features like Task based on the day, note remainder 
+

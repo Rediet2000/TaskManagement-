@@ -35,6 +35,10 @@ class Organization(Base):
     # Notification Settings
     telegram_bot_token = Column(String, nullable=True)
     telegram_chat_id = Column(String, nullable=True)
+    telegram_enabled = Column(Boolean, default=False)
+    
+    # Email Notification Settings
+    email_notifications_enabled = Column(Boolean, default=True)
     
     # Branding Settings
     system_page_title = Column(String, default="Task Management System")

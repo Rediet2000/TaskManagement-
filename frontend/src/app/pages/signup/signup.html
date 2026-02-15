@@ -1,8 +1,8 @@
 <div class="signup-container">
     <div class="signup-card">
         <div class="signup-header">
-            <h1>SIGN UP</h1>
-            <p *ngIf="!isInvited()">Join an existing organization</p>
+            <h1>{{ 'SIGN_UP' | translate }}</h1>
+            <p *ngIf="!isInvited()">{{ 'JOIN_ORG' | translate }}</p>
             <p *ngIf="isInvited()" style="color: #4ade80; font-weight: 700;">
                 You've been invited to join {{ invitedOrgName() }}
             </p>
@@ -10,7 +10,7 @@
 
         <form (ngSubmit)="onSubmit()" #signupForm="ngForm" class="signup-form">
             <div class="form-group">
-                <label for="fullName">Full Name</label>
+                <label for="fullName">{{ 'FULL_NAME' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required
                         placeholder="Your full name">
@@ -18,7 +18,7 @@
             </div>
 
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">{{ 'EMAIL_ADDRESS' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="email" id="email" name="email" [(ngModel)]="email" required
                         placeholder="user@company.com" [disabled]="isInvited()">
@@ -26,10 +26,10 @@
             </div>
 
             <div class="form-group" [style.display]="isInvited() ? 'none' : 'block'">
-                <label for="organization">Organization</label>
+                <label for="organization">{{ 'ORGANIZATION' | translate }}</label>
                 <div class="input-wrapper select-wrapper">
                     <select id="organization" name="organization" [(ngModel)]="orgId" required>
-                        <option [ngValue]="null" disabled selected>Select organization</option>
+                        <option [ngValue]="null" disabled selected>{{ 'SELECT_ORG' | translate }}</option>
                         @for (org of organizations(); track org.id) {
                         <option [value]="org.id">{{ org.name }}</option>
                         }
@@ -38,7 +38,7 @@
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">{{ 'PASSWORD' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="password" id="password" name="password" [(ngModel)]="password" required
                         placeholder="••••••••">
@@ -50,15 +50,16 @@
             </div>
 
             <button type="submit" class="premium-btn signup-btn" [disabled]="loading || !signupForm.form.valid">
-                <span *ngIf="!loading">CREATE ACCOUNT</span>
+                <span *ngIf="!loading">{{ 'CREATE_ACCOUNT' | translate }}</span>
                 <span *ngIf="loading" class="loader"></span>
             </button>
         </form>
 
         <div class="signup-footer">
-            <p>Already have an account? <a routerLink="/login">Sign In</a></p>
+            <p>{{ 'ALREADY_HAVE_ACCOUNT' | translate }} <a routerLink="/login">{{ 'SIGN_IN' | translate }}</a></p>
             <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">
-                Need a new workspace? <a routerLink="/register-company">Register Organization</a>
+                {{ 'NEED_WORKSPACE' | translate }} <a routerLink="/register-company">{{ 'REGISTER_ORG' | translate
+                    }}</a>
             </p>
         </div>
     </div>

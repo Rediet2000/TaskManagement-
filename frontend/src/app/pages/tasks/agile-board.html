@@ -35,7 +35,7 @@
         <div class="agile-column backlog">
             <div class="column-header">
                 <div class="header-main">
-                    <h2>Mission Archive</h2>
+                    <h2>Project Backlog</h2>
                     <span class="count">{{ getBacklogTasks().length }}</span>
                 </div>
                 <button class="btn-icon" (click)="showTaskModal.set(true)" title="Quick Deploy">
@@ -61,6 +61,10 @@
                             <span class="status-indicator">STANDBY</span>
                             <button class="btn-icon mini" (click)="onMoveToSprint(task)" title="Deploy to Cycle">
                                 <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button class="btn-icon mini archive"
+                                (click)="onArchiveTask(task); $event.stopPropagation()" title="Archive Mission">
+                                <i class="bi bi-archive-fill"></i>
                             </button>
                         </div>
                     </div>
@@ -133,6 +137,12 @@
                                     <span>{{ task.checklist.length }} items</span>
                                 </div>
                                 }
+                                <div class="card-actions-hover">
+                                    <button class="btn-icon mini archive"
+                                        (click)="onArchiveTask(task); $event.stopPropagation()" title="Archive Mission">
+                                        <i class="bi bi-archive-fill"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         }
@@ -235,6 +245,7 @@
     </div>
 
     <!-- Create Task Modal -->
-    <app-task-create-modal *ngIf="showTaskModal()" (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
+    <app-task-create-modal *ngIf="showTaskModal()" [sprintId]="activeSprint()?.id || null"
+        (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
     </app-task-create-modal>
 </div>

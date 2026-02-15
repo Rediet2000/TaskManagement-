@@ -43,6 +43,7 @@ class TaskBase(BaseModel):
     accountable_id: Optional[int] = None
     team_id: Optional[int] = None
     due_date: Optional[datetime] = None
+    is_archived: bool = False
 
     # Phase 8 Fields
     tags: List[str] = []
@@ -84,6 +85,7 @@ class TaskUpdate(BaseModel):
     board_id: Optional[int] = None
     board_column_id: Optional[int] = None
     checklist: Optional[List[dict]] = None
+    is_archived: Optional[bool] = None
     
     # Phase 11
     rating: Optional[int] = None
@@ -212,6 +214,7 @@ class NotificationOut(BaseModel):
 class AuditLog(BaseModel):
     id: int
     user_id: int
+    org_id: Optional[int] = None
     action: str
     details: Optional[str] = None
     timestamp: datetime

@@ -104,9 +104,10 @@ export class TaskService {
 
     constructor(private http: HttpClient) { }
 
-    getTasks(search?: string): Observable<Task[]> {
+    getTasks(search?: string, includeArchived: boolean = false): Observable<Task[]> {
         const params: any = {};
         if (search) params.search = search;
+        if (includeArchived) params.include_archived = 'true';
         return this.http.get<Task[]>(this.apiUrl, { params });
     }
 
@@ -124,6 +125,14 @@ export class TaskService {
 
     updateTask(id: number, task: Partial<Task>): Observable<Task> {
         return this.http.put<Task>(`${this.apiUrl}/${id}`, task);
+    }
+
+    archiveTask(id: number): Observable<Task> {
+        return this.http.put<Task>(`${this.apiUrl}/${id}`, { is_archived: true });
+    }
+
+    unarchiveTask(id: number): Observable<Task> {
+        return this.http.put<Task>(`${this.apiUrl}/${id}`, { is_archived: false });
     }
 
     addComment(taskId: number, content: string): Observable<Comment> {

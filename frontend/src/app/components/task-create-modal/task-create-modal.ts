@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../services/task.service';
 import { AuthService } from '../../services/auth.service';
+import { SprintService, Sprint } from '../../services/sprint.service';
 
 @Component({
     selector: 'app-task-create-modal',
@@ -14,12 +15,14 @@ import { AuthService } from '../../services/auth.service';
 export class TaskCreateModal implements OnInit {
     private taskService = inject(TaskService);
     private authService = inject(AuthService);
+    private sprintService = inject(SprintService);
 
     @Input() sprintId: number | null = null;
     @Output() close = new EventEmitter<void>();
     @Output() taskCreated = new EventEmitter<Task>();
 
     users = signal<any[]>([]);
+    sprints = signal<Sprint[]>([]);
     loading = signal(false);
     success = signal('');
     error = signal('');
@@ -41,6 +44,7 @@ export class TaskCreateModal implements OnInit {
 
     ngOnInit() {
         this.loadUsers();
+        this.loadSprints();
         if (this.sprintId) {
             this.newTask.sprint_id = this.sprintId;
         }
@@ -55,6 +59,12 @@ export class TaskCreateModal implements OnInit {
     loadUsers() {
         this.authService.getUsers().subscribe(users => {
             this.users.set(users);
+        });
+    }
+
+    loadSprints() {
+        this.sprintService.getSprints().subscribe(sprints => {
+            this.sprints.set(sprints);
         });
     }
 

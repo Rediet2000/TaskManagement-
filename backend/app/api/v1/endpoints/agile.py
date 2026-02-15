@@ -6,6 +6,8 @@ from app.models.agile import Board, BoardColumn
 from app.models.task_tracking import Task, Sprint
 from app.schemas.agile import Board as BoardSchema, BoardCreate, BoardUpdate, BoardColumn as ColumnSchema, BoardColumnCreate, BoardColumnUpdate
 from app.db.base import get_db
+from app.core.notifications import notification_service
+import asyncio
 
 router = APIRouter()
 
@@ -47,6 +49,14 @@ def create_board(
     
     db.commit()
     db.refresh(board)
+    
+    # Notify via Telegram
+    asyncio.create_task(notification_service.send_telegram_notification(
+        db, 
+        current_user.org_id, 
+        f"📋 New Agile Board: {board.name}\nBy: {current_user.full_name}"
+    ))
+
     return board
 
 @router.get("/{board_id}", response_model=BoardSchema)

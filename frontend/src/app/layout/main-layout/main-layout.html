@@ -19,7 +19,7 @@
             <a [routerLink]="item.route" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact: item.route === '/'}" class="nav-item">
                 <i [class]="'bi ' + item.icon"></i>
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
             </a>
             }
         </nav>
@@ -28,7 +28,7 @@
             <button class="logout-btn" title="Logout" (click)="logout()"
                 style="width: 100%; display: flex; justify-content: center; gap: 0.75rem; align-items: center;">
                 <i class="bi bi-box-arrow-right"></i>
-                <span class="logout-text">Logout</span>
+                <span class="logout-text">{{ 'LOGOUT' | translate }}</span>
             </button>
         </div>
     </aside>
@@ -43,10 +43,19 @@
                 <div class="search-box">
                     <i class="bi bi-search"></i>
                     <input type="text" #searchInput (keyup.enter)="onSearch(searchInput.value)"
-                        placeholder="Search for tasks, branches...">
+                        [placeholder]="'SEARCH_PLACEHOLDER' | translate">
                 </div>
             </div>
             <div class="navbar-right">
+                <!-- Language Selector -->
+                <div class="language-selector mr-3">
+                    <select [ngModel]="currentLanguage()" (ngModelChange)="setLanguage($event)" class="lang-select">
+                        <option value="en">EN</option>
+                        <option value="am">አማ</option>
+                        <option value="om">ORM</option>
+                    </select>
+                </div>
+
                 <div class="user-profile header-profile" routerLink="/profile" style="cursor: pointer;">
                     <div class="avatar small">
                         <img *ngIf="currentUser()?.profile_photo_url" [src]="currentUser()?.profile_photo_url"
@@ -70,8 +79,9 @@
                     <!-- Notification Dropdown -->
                     <div class="notification-dropdown glass-card" *ngIf="showNotifications()">
                         <div class="dropdown-header">
-                            <h3>Notifications</h3>
-                            <button (click)="notificationService.markAllRead()">Mark all as read</button>
+                            <h3>{{ 'NOTIFICATIONS' | translate }}</h3>
+                            <button (click)="notificationService.markAllRead()">{{ 'MARK_ALL_READ' | translate
+                                }}</button>
                         </div>
                         <div class="notification-list">
                             @for (notif of notificationService.notifications(); track notif.id) {
@@ -87,7 +97,7 @@
                             </div>
                             } @empty {
                             <div class="empty-notif">
-                                <p>You're all caught up!</p>
+                                <p>{{ 'ALL_CAUGHT_UP' | translate }}</p>
                             </div>
                             }
                         </div>

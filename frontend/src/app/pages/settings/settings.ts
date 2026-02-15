@@ -6,10 +6,13 @@ import { AuthService } from '../../services/auth.service';
 import { RbacService, Role as RbacRole } from '../../services/rbac.service';
 import { ThemeService } from '../../services/theme.service';
 
+import { TranslationService } from '../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+
 @Component({
     selector: 'app-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './settings.html',
     styleUrls: ['./settings.scss']
 })
@@ -63,7 +66,9 @@ export class Settings implements OnInit {
 
     notifications = {
         telegramBotToken: '',
-        telegramChatId: ''
+        telegramChatId: '',
+        telegramEnabled: false,
+        emailNotificationsEnabled: true
     };
 
     branding = {
@@ -304,6 +309,12 @@ export class Settings implements OnInit {
                 this.dashboard.clockType = orgAny.dashboard_clock_type || 'analog';
                 this.dashboard.metricsConfig = orgAny.dashboard_metrics_config || 'tasks,active,overdue,problems';
                 this.dashboard.compactMode = orgAny.dashboard_compact_mode ?? false;
+
+                // Notifications
+                this.notifications.telegramBotToken = orgAny.telegram_bot_token || '';
+                this.notifications.telegramChatId = orgAny.telegram_chat_id || '';
+                this.notifications.telegramEnabled = orgAny.telegram_enabled ?? false;
+                this.notifications.emailNotificationsEnabled = orgAny.email_notifications_enabled ?? true;
             },
             error: (err) => console.error('Failed to load org settings', err)
         });
@@ -341,6 +352,8 @@ export class Settings implements OnInit {
             ldap_base_dn: this.ldap.baseDn,
             telegram_bot_token: this.notifications.telegramBotToken,
             telegram_chat_id: this.notifications.telegramChatId,
+            telegram_enabled: this.notifications.telegramEnabled,
+            email_notifications_enabled: this.notifications.emailNotificationsEnabled,
             system_page_title: this.branding.systemPageTitle,
             theme_mode: this.branding.themeMode,
             show_dashboard_clock: this.dashboard.showClock,
@@ -466,6 +479,34 @@ export class Settings implements OnInit {
             },
             error: (err) => {
                 this.testError.set(err.error?.detail || 'SMTP test failed');
+                this.testLoading = false;
+                this.autoDismiss('test');
+            }
+        });
+    }
+
+    onTestTelegram() {
+        if (!this.notifications.telegramBotToken || !this.notifications.telegramChatId) {
+            this.testError.set('Bot Token and Chat ID are required for testing.');
+            this.autoDismiss('test');
+            return;
+        }
+
+        this.testLoading = true;
+        this.testSuccess.set('');
+        this.testError.set('');
+
+        this.hierarchyService.testTelegram(
+            this.notifications.telegramBotToken,
+            this.notifications.telegramChatId
+        ).subscribe({
+            next: (res) => {
+                this.testSuccess.set(res.message);
+                this.testLoading = false;
+                this.autoDismiss('test');
+            },
+            error: (err) => {
+                this.testError.set(err.error?.detail || 'Telegram test failed');
                 this.testLoading = false;
                 this.autoDismiss('test');
             }

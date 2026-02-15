@@ -18,7 +18,9 @@ def get_security_logs(
     if current_user.role.name not in ["Admin", "Super Admin"]:
         raise HTTPException(status_code=403, detail="Not authorized")
         
-    return db.query(models.task_tracking.AuditLog).order_by(
+    return db.query(models.task_tracking.AuditLog).filter(
+        models.task_tracking.AuditLog.org_id == current_user.org_id
+    ).order_by(
         models.task_tracking.AuditLog.timestamp.desc()
     ).offset(skip).limit(limit).all()
 
@@ -31,6 +33,7 @@ def create_security_log(
 ) -> Any:
     db_obj = models.task_tracking.AuditLog(
         user_id=current_user.id,
+        org_id=current_user.org_id,
         action=action,
         details=details
     )

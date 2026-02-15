@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { Organization } from '../../services/hierarchy.service';
@@ -10,7 +11,7 @@ import { environment } from '../../../environments/environment';
 @Component({
     selector: 'app-signup',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
     templateUrl: './signup.html',
     styleUrls: ['./signup.scss']
 })

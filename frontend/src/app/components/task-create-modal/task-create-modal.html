@@ -76,9 +76,19 @@
                     </select>
                 </div>
                 <div class="form-group half">
-                    <label>Deadline</label>
-                    <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
+                    <label>Assigned Cycle (Sprint)</label>
+                    <select name="sprint_id" [(ngModel)]="newTask.sprint_id">
+                        <option [ngValue]="null">Project Backlog</option>
+                        <option *ngFor="let s of sprints()" [value]="s.id">
+                            {{ s.name }} ({{ s.status }})
+                        </option>
+                    </select>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Deadline</label>
+                <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
             </div>
 
             <div class="modal-actions">

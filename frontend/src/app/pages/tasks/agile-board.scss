@@ -8,7 +8,19 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+    }
 
     @media (max-width: 600px) {
         padding: 1.5rem;
@@ -122,6 +134,7 @@
     grid-template-columns: 380px 1fr;
     gap: 3rem;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 
     @media (max-width: 1200px) {
@@ -337,12 +350,16 @@
             padding-right: 0.25rem;
 
             &::-webkit-scrollbar {
-                width: 3px;
+                width: 6px;
             }
 
             &::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.05);
+                background: rgba(255, 255, 255, 0.15);
                 border-radius: 10px;
+            }
+
+            &:hover::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
             }
         }
     }
@@ -372,6 +389,30 @@
         transform: translateY(-4px) scale(1.01);
         border-color: rgba(255, 255, 255, 0.15);
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
+
+        .card-actions-hover {
+            opacity: 1;
+        }
+    }
+
+    .card-actions-hover {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+
+        button.archive {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+
+            &:hover {
+                background: #ef4444;
+                color: #fff;
+            }
+        }
     }
 
     .card-content {
