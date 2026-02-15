@@ -222,73 +222,212 @@
             </section>
         </div>
 
-        <!-- Tactical Comms -->
+        <!-- Tactical Comms (Communication) -->
         <div *ngIf="activeTab() === 'communication'" class="tab-pane">
+            <!-- Section 1: Email Notifications -->
             <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-broadcast"></i>
-                    <h2>{{ 'SMTP_SERVER' | translate }}</h2>
+                    <i class="bi bi-envelope-check-fill"></i>
+                    <h2>Email notifications</h2>
                 </div>
 
-
                 <div class="settings-form">
-                    <div class="form-row">
-                        <div class="form-group flex-2">
-                            <label>SMTP Host</label>
-                            <input type="text" [(ngModel)]="smtp.host" placeholder="smtp.example.com">
-                        </div>
-                        <div class="form-group flex-1">
-                            <label>SMTP Port</label>
-                            <input type="number" [(ngModel)]="smtp.port" placeholder="587">
+                    <div class="form-group flex-2">
+                        <label>Emission email address</label>
+                        <input type="email" [(ngModel)]="notifications.emissionEmailAddress"
+                            placeholder="administrator@hagbes.com">
+                    </div>
+
+                    <div class="form-row mt-2">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" [(ngModel)]="notifications.bccRecipients">
+                                Blind carbon copy recipients (bcc)
+                            </label>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label>SMTP User</label>
-                            <input type="text" [(ngModel)]="smtp.user" placeholder="user@example.com">
-                        </div>
-                        <div class="form-group flex-1">
-                            <label>SMTP Password</label>
-                            <input type="password" [(ngModel)]="smtp.password" placeholder="••••••••">
+
+                    <div class="form-row mt-1">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" [(ngModel)]="notifications.plainTextMail">
+                                Plain text mail (no HTML)
+                            </label>
                         </div>
                     </div>
+
+                    <div class="form-group mt-3">
+                        <label>Address user in emails with</label>
+                        <select [(ngModel)]="notifications.addressUserWith">
+                            <option value="full_name">Full name</option>
+                            <option value="first_name">First name</option>
+                            <option value="username">Username</option>
+                        </select>
+                    </div>
+
+                    <div class="hr-premium"></div>
+
+                    <div class="sub-header">EMAILS HEADER & EMAILS FOOTER</div>
+
+                    <!-- Header Editor -->
                     <div class="form-group">
-                        <label>From Email</label>
-                        <input type="email" [(ngModel)]="smtp.from_email" placeholder="noreply@example.com">
+                        <label>Emails header</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-type-bold"></i>
+                                    <i class="bi bi-type-italic"></i>
+                                    <i class="bi bi-type-strikethrough"></i>
+                                    <i class="bi bi-code-slash"></i>
+                                    <i class="bi bi-link-45deg"></i>
+                                    <i class="bi bi-image"></i>
+                                    <i class="bi bi-list-ul"></i>
+                                    <i class="bi bi-list-ol"></i>
+                                    <i class="bi bi-quote"></i>
+                                    <i class="bi bi-table"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.emailsHeader[currentTemplateLang()]"
+                                placeholder="Enter email header for {{ currentTemplateLang() | uppercase }}..."></textarea>
+                        </div>
                     </div>
 
-                    <div class="form-actions gap-2"
-                        style="display: flex; flex-direction: column; align-items: flex-start;">
-                        <!-- Test results alerts near the action button -->
-                        <div *ngIf="testSuccess() && activeTab() === 'communication'"
-                            class="alert-premium alert-success"
-                            style="position: static; transform: none; width: 100%; margin-bottom: 1rem;">
-                            <i class="bi bi-check-circle"></i> {{ testSuccess() }}
+                    <!-- Footer Editor -->
+                    <div class="form-group mt-4">
+                        <label>Emails footer</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-type-bold"></i>
+                                    <i class="bi bi-type-italic"></i>
+                                    <i class="bi bi-type-strikethrough"></i>
+                                    <i class="bi bi-code-slash"></i>
+                                    <i class="bi bi-image"></i>
+                                    <i class="bi bi-list-ul"></i>
+                                    <i class="bi bi-quote"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.emailsFooter[currentTemplateLang()]"
+                                placeholder="Enter email footer for {{ currentTemplateLang() | uppercase }}..."></textarea>
                         </div>
-                        <div *ngIf="testError() && activeTab() === 'communication'" class="alert-premium alert-error"
-                            style="position: static; transform: none; width: 100%; margin-bottom: 1rem;">
-                            <i class="bi bi-shield-exclamation"></i> {{ testError() }}
-                        </div>
-
-                        <button type="button" class="btn-secondary" (click)="onTestSmtp()" [disabled]="testLoading"
-                            style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
-                            <span *ngIf="!testLoading">Test SMTP Connection</span>
-                            <span *ngIf="testLoading" class="loader small"></span>
-                        </button>
                     </div>
                 </div>
             </section>
 
+            <!-- Section 2: Configure Your Email Provider -->
+            <section class="settings-section mt-4">
+                <div class="section-header">
+                    <i class="bi bi-server"></i>
+                    <h2>CONFIGURE YOUR EMAIL PROVIDER</h2>
+                </div>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Email delivery method</label>
+                        <select [(ngModel)]="smtp.deliveryMethod">
+                            <option value="smtp">smtp</option>
+                            <option value="sendmail">sendmail</option>
+                            <option value="test">test (no delivery)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>SMTP server</label>
+                            <input type="text" [(ngModel)]="smtp.host" placeholder="mail.hagbes.com">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>SMTP port</label>
+                            <input type="number" [(ngModel)]="smtp.port" placeholder="587">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>SMTP HELO domain</label>
+                            <input type="text" [(ngModel)]="smtp.heloDomain" placeholder="hagbes.com">
+                        </div>
+                        <div class="form-group flex-2">
+                            <label>Sender Email (Technical)</label>
+                            <input type="email" [(ngModel)]="smtp.from_email" placeholder="noreply@hagbes.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>SMTP authentication</label>
+                        <select [(ngModel)]="smtp.authentication">
+                            <option value="none">none</option>
+                            <option value="plain">plain</option>
+                            <option value="login">login</option>
+                            <option value="cram_md5">cram_md5</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row" *ngIf="smtp.authentication !== 'none'">
+                        <div class="form-group flex-1">
+                            <label>SMTP username</label>
+                            <input type="text" [(ngModel)]="smtp.user" placeholder="administrator@hagbes.com">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>SMTP password</label>
+                            <input type="password" [(ngModel)]="smtp.password" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="smtp.useStartTLS">
+                            Automatically use STARTTLS if available
+                        </label>
+                    </div>
+
+                    <div class="form-group checkbox-group mt-1">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="smtp.useSSL">
+                            Use SSL connection
+                        </label>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="button" class="btn-secondary" (click)="onTestSmtp()" [disabled]="testLoading">
+                            <span *ngIf="!testLoading">Test Connection</span>
+                            <span *ngIf="testLoading" class="loader small"></span>
+                        </button>
+                        <div *ngIf="testSuccess() && activeTab() === 'communication'" class="text-success mt-2">
+                            <i class="bi bi-check-circle"></i> {{ testSuccess() }}
+                        </div>
+                        <div *ngIf="testError() && activeTab() === 'communication'" class="text-error mt-2">
+                            <i class="bi bi-shield-exclamation"></i> {{ testError() }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Telegram Settings -->
             <section class="settings-section mt-4">
                 <div class="section-header">
                     <i class="bi bi-telegram"></i>
-                    <h2>{{ 'TELEGRAM_INTEGRATION' | translate }} (RemainderD)</h2>
+                    <h2>STANDARD TELEGRAM SETTINGS</h2>
                 </div>
                 <div class="settings-form">
                     <div class="form-group checkbox-group mb-4">
                         <label class="checkbox-container">
                             <input type="checkbox" [(ngModel)]="notifications.telegramEnabled">
-                            Enable Organization-wide Telegram Notifications
+                            Enable Telegram Notifications
                         </label>
                     </div>
                     <div class="form-row">
@@ -298,24 +437,24 @@
                                 placeholder="123456789:ABCDefgh-IJKLmnop...">
                         </div>
                         <div class="form-group flex-1">
-                            <label>Default Chat ID</label>
+                            <label>Chat ID</label>
                             <input type="text" [(ngModel)]="notifications.telegramChatId" placeholder="-100123456789">
                         </div>
                     </div>
                     <div class="form-actions mt-3">
-                        <button type="button" class="btn-secondary" (click)="onTestTelegram()" [disabled]="testLoading"
-                            style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
-                            <span *ngIf="!testLoading">Test Telegram Connection</span>
+                        <button type="button" class="btn-secondary" (click)="onTestTelegram()" [disabled]="testLoading">
+                            <span *ngIf="!testLoading">Test Standard Telegram</span>
                             <span *ngIf="testLoading" class="loader small"></span>
                         </button>
                     </div>
                 </div>
             </section>
 
+            <!-- Section 4: Global Controls -->
             <section class="settings-section mt-4">
                 <div class="section-header">
-                    <i class="bi bi-envelope-paper-fill"></i>
-                    <h2>{{ 'EMAIL_MGMT' | translate }}</h2>
+                    <i class="bi bi-toggle-on"></i>
+                    <h2>GLOBAL COMMS CONTROL</h2>
                 </div>
                 <div class="settings-form">
                     <div class="form-group checkbox-group">
@@ -323,9 +462,6 @@
                             <input type="checkbox" [(ngModel)]="notifications.emailNotificationsEnabled">
                             Enable Global Email Notifications
                         </label>
-                        <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; margin-left: 2rem;">
-                            When disabled, all automated email communications will be suspended organization-wide.
-                        </p>
                     </div>
                 </div>
             </section>

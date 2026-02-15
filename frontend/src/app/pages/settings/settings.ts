@@ -45,7 +45,12 @@ export class Settings implements OnInit {
         port: 587,
         user: '',
         password: '',
-        from_email: ''
+        from_email: '',
+        deliveryMethod: 'smtp',
+        heloDomain: '',
+        authentication: 'login',
+        useStartTLS: true,
+        useSSL: false
     };
 
     passwordPolicy = {
@@ -68,8 +73,17 @@ export class Settings implements OnInit {
         telegramBotToken: '',
         telegramChatId: '',
         telegramEnabled: false,
-        emailNotificationsEnabled: true
+        emailNotificationsEnabled: true,
+        emissionEmailAddress: '',
+        bccRecipients: false,
+        plainTextMail: false,
+        addressUserWith: 'full_name',
+        emailsHeader: {} as Record<string, string>,
+        emailsFooter: {} as Record<string, string>
     };
+
+    currentTemplateLang = signal<string>('en');
+    templateLangs = ['en', 'am', 'om'];
 
     branding = {
         systemPageTitle: 'Task Management System',
@@ -298,6 +312,11 @@ export class Settings implements OnInit {
                 this.smtp.user = orgAny.smtp_user || '';
                 this.smtp.password = orgAny.smtp_password || '';
                 this.smtp.from_email = orgAny.smtp_from_email || '';
+                this.smtp.deliveryMethod = orgAny.email_delivery_method || 'smtp';
+                this.smtp.heloDomain = orgAny.smtp_helo_domain || '';
+                this.smtp.authentication = orgAny.smtp_authentication || 'login';
+                this.smtp.useStartTLS = orgAny.smtp_use_starttls ?? true;
+                this.smtp.useSSL = orgAny.smtp_use_ssl ?? false;
 
                 // Advanced Dashboard
                 this.dashboard.showClock = orgAny.show_dashboard_clock ?? true;
@@ -315,6 +334,22 @@ export class Settings implements OnInit {
                 this.notifications.telegramChatId = orgAny.telegram_chat_id || '';
                 this.notifications.telegramEnabled = orgAny.telegram_enabled ?? false;
                 this.notifications.emailNotificationsEnabled = orgAny.email_notifications_enabled ?? true;
+                this.notifications.emissionEmailAddress = orgAny.emission_email_address || '';
+                this.notifications.bccRecipients = orgAny.bcc_recipients ?? false;
+                this.notifications.plainTextMail = orgAny.plain_text_mail ?? false;
+                this.notifications.addressUserWith = orgAny.address_user_in_emails_with || 'full_name';
+
+                try {
+                    this.notifications.emailsHeader = orgAny.emails_header ? JSON.parse(orgAny.emails_header) : {};
+                } catch (e) {
+                    this.notifications.emailsHeader = {};
+                }
+
+                try {
+                    this.notifications.emailsFooter = orgAny.emails_footer ? JSON.parse(orgAny.emails_footer) : {};
+                } catch (e) {
+                    this.notifications.emailsFooter = {};
+                }
             },
             error: (err) => console.error('Failed to load org settings', err)
         });
@@ -354,6 +389,18 @@ export class Settings implements OnInit {
             telegram_chat_id: this.notifications.telegramChatId,
             telegram_enabled: this.notifications.telegramEnabled,
             email_notifications_enabled: this.notifications.emailNotificationsEnabled,
+            emission_email_address: this.notifications.emissionEmailAddress,
+            bcc_recipients: this.notifications.bccRecipients,
+            plain_text_mail: this.notifications.plainTextMail,
+            address_user_in_emails_with: this.notifications.addressUserWith,
+            emails_header: JSON.stringify(this.notifications.emailsHeader),
+            emails_footer: JSON.stringify(this.notifications.emailsFooter),
+
+            email_delivery_method: this.smtp.deliveryMethod,
+            smtp_helo_domain: this.smtp.heloDomain,
+            smtp_authentication: this.smtp.authentication,
+            smtp_use_starttls: this.smtp.useStartTLS,
+            smtp_use_ssl: this.smtp.useSSL,
             system_page_title: this.branding.systemPageTitle,
             theme_mode: this.branding.themeMode,
             show_dashboard_clock: this.dashboard.showClock,
@@ -468,7 +515,9 @@ export class Settings implements OnInit {
             smtp_port: this.smtp.port,
             smtp_user: this.smtp.user,
             smtp_password: this.smtp.password,
-            smtp_from_email: this.smtp.from_email
+            smtp_from_email: this.smtp.from_email || this.notifications.emissionEmailAddress,
+            use_starttls: this.smtp.useStartTLS,
+            use_ssl: this.smtp.useSSL
         };
 
         this.hierarchyService.testSmtp(testData).subscribe({
