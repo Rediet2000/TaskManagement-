@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -88,6 +88,7 @@ def create_note(
     *,
     db: Session = Depends(get_db),
     note_in: schemas.notes.NoteCreate,
+    background_tasks: BackgroundTasks,
     current_user: models.core.User = Depends(deps.get_current_active_user)
 ) -> Any:
     """
@@ -103,11 +104,11 @@ def create_note(
     db.refresh(note)
     
     # Notify via Telegram
-    asyncio.create_task(notification_service.send_telegram_notification(
-        db, 
+    background_tasks.add_task(
+        notification_service.send_telegram_background,
         current_user.org_id, 
         f"📝 New Note: {note.title}\nBy: {current_user.full_name}"
-    ))
+    )
 
     return note
 

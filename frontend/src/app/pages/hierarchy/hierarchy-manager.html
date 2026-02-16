@@ -1,23 +1,23 @@
 <div class="hierarchy-container">
     <header class="page-header">
         <div class="header-content">
-            <h1>Structural Command</h1>
-            <p>Define operational hierarchy and intelligence access protocols</p>
+            <h1>{{ 'STRUCTURAL_COMMAND' | translate }}</h1>
+            <p>{{ 'DEFINE_OPERATIONAL_HIERARCHY' | translate }}</p>
         </div>
         <div class="actions">
             @if (isSuperAdmin()) {
             <button class="premium-btn-secondary" (click)="showOrgModal.set(true)">
-                <i class="bi bi-globe"></i> Initialize Organization
+                <i class="bi bi-globe"></i> {{ 'INITIALIZE_ORGANIZATION' | translate }}
             </button>
             }
             <button class="premium-btn" (click)="showBranchModal.set(true)">
-                <i class="bi bi-geo-alt"></i> New Command Branch
+                <i class="bi bi-geo-alt"></i> {{ 'NEW_COMMAND_BRANCH' | translate }}
             </button>
             <button class="premium-btn" (click)="showRoleModal.set(true)">
-                <i class="bi bi-shield-lock"></i> Add Protocol Role
+                <i class="bi bi-shield-lock"></i> {{ 'ADD_PROTOCOL_ROLE' | translate }}
             </button>
             <button class="premium-btn" (click)="showDeptModal.set(true)">
-                <i class="bi bi-building-add"></i> Add Department
+                <i class="bi bi-building-add"></i> {{ 'ADD_DEPARTMENT' | translate }}
             </button>
         </div>
     </header>
@@ -35,14 +35,15 @@
         <section class="full-width">
             <div class="section-header">
                 <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #3b82f6;"></i>
-                <h2>INTELLIGENCE ACCESS ROLES</h2>
+                <h2>{{ 'INTELLIGENCE_ACCESS_ROLES' | translate }}</h2>
             </div>
             <div class="role-badges">
                 @for (role of roles(); track role.id) {
                 <div class="role-badge-group">
                     <span class="role-badge">
                         <i class="bi bi-person-badge"></i> {{ role.name }}
-                        <small *ngIf="role.parent_role_id">(Reports to {{ getRoleName(role.parent_role_id) }})</small>
+                        <small *ngIf="role.parent_role_id">({{ 'REPORTS_TO' | translate }} {{
+                            getRoleName(role.parent_role_id) }})</small>
                     </span>
                     <div class="role-actions">
                         <button class="icon-btn-xs" (click)="openEditRoleModal(role)" title="Modify">
@@ -67,7 +68,7 @@
                     <span class="branch-address" *ngIf="branch.address">{{ branch.address }}</span>
                 </div>
                 <button class="premium-btn btn-sm" (click)="openDeptModal(branch.id)">
-                    <i class="bi bi-plus-circle"></i> ADD DEPARTMENT
+                    <i class="bi bi-plus-circle"></i> {{ 'ADD_DEPARTMENT' | translate | uppercase }}
                 </button>
             </div>
 
@@ -86,11 +87,11 @@
                         @for (team of getTeamsByDept(dept.id); track team.id) {
                         <div class="team-item">
                             <span class="team-name">{{ team.name }}</span>
-                            <span class="member-count">ACTIVE</span>
+                            <span class="member-count">{{ 'ACTIVE' | translate }}</span>
                         </div>
                         }
                         @if (getTeamsByDept(dept.id).length === 0) {
-                        <div class="empty-msg">No active teams detected</div>
+                        <div class="empty-msg">{{ 'NO_ACTIVE_TEAMS' | translate }}</div>
                         }
                     </div>
                 </div>
@@ -98,7 +99,7 @@
                 @if (getDeptsByBranch(branch.id).length === 0) {
                 <div class="dept-card"
                     style="display: flex; align-items: center; justify-content: center; opacity: 0.5;">
-                    <p>No departments established.</p>
+                    <p>{{ 'NO_DEPARTMENTS' | translate }}</p>
                 </div>
                 }
             </div>
@@ -113,7 +114,7 @@
         <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
             <h3
                 style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
-                NEW ACCESS PROTOCOL</h3>
+                {{ 'NEW_ACCESS_PROTOCOL' | translate }}</h3>
 
             <div *ngIf="error()" class="alert-premium alert-error">
                 <i class="bi bi-shield-exclamation"></i> {{ error() }}
@@ -121,12 +122,12 @@
 
             <form (ngSubmit)="onAddRole()">
                 <div class="form-group">
-                    <label>Protocol Designation</label>
+                    <label>{{ 'PROTOCOL_DESIGNATION' | translate }}</label>
                     <input type="text" name="name" [(ngModel)]="newRole.name" required
                         placeholder="Protocol designation (e.g. Lead Architect)">
                 </div>
                 <div class="form-group">
-                    <label>Command Authority (Parent)</label>
+                    <label>{{ 'COMMAND_AUTHORITY' | translate }}</label>
                     <select name="parentRole" [(ngModel)]="newRole.parent_role_id">
                         <option [ngValue]="null">Top Level Authority</option>
                         @for (role of roles(); track role.id) {
@@ -135,9 +136,9 @@
                     </select>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="premium-btn-secondary"
-                        (click)="showRoleModal.set(false)">Cancel</button>
-                    <button type="submit" class="premium-btn">ESTABLISH ROLE</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showRoleModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ESTABLISH_ROLE' | translate }}</button>
                 </div>
             </form>
         </div>
@@ -149,7 +150,7 @@
         <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
             <h3
                 style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
-                NEW DEPARTMENT</h3>
+                {{ 'NEW_DEPARTMENT' | translate }}</h3>
 
             <div *ngIf="error()" class="alert-premium alert-error">
                 <i class="bi bi-shield-exclamation"></i> {{ error() }}
@@ -157,14 +158,14 @@
 
             <form (ngSubmit)="onAddDept()">
                 <div class="form-group">
-                    <label>Department Designation</label>
+                    <label>{{ 'DEPARTMENT_DESIGNATION' | translate }}</label>
                     <input type="text" name="name" [(ngModel)]="newDept.name" required
                         placeholder="Department designation (e.g. Cyber Security)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="premium-btn-secondary"
-                        (click)="showDeptModal.set(false)">Cancel</button>
-                    <button type="submit" class="premium-btn">CREATE</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showDeptModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ADD' | translate | uppercase }}</button>
                 </div>
             </form>
         </div>
@@ -175,7 +176,7 @@
         <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
             <h3
                 style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
-                NEW OPERATIONAL TEAM</h3>
+                {{ 'ADD_OPERATIONAL_TEAM' | translate }}</h3>
 
             <div *ngIf="error()" class="alert-premium alert-error">
                 <i class="bi bi-shield-exclamation"></i> {{ error() }}
@@ -183,14 +184,14 @@
 
             <form (ngSubmit)="onAddTeam()">
                 <div class="form-group">
-                    <label>Team Designation</label>
+                    <label>{{ 'TEAM_DESIGNATION' | translate }}</label>
                     <input type="text" name="name" [(ngModel)]="newTeam.name" required
                         placeholder="Team designation (e.g. Alpha Unit)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="premium-btn-secondary"
-                        (click)="showTeamModal.set(false)">Cancel</button>
-                    <button type="submit" class="premium-btn">CREATE TEAM</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showTeamModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'CREATE_TEAM' | translate }}</button>
                 </div>
             </form>
         </div>
@@ -201,7 +202,7 @@
         <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
             <h3
                 style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
-                INITIALIZE ORGANIZATION</h3>
+                {{ 'INITIALIZE_ORGANIZATION' | translate }}</h3>
 
             <div *ngIf="error()" class="alert-premium alert-error">
                 <i class="bi bi-shield-exclamation"></i> {{ error() }}
@@ -209,14 +210,14 @@
 
             <form (ngSubmit)="onAddOrg()">
                 <div class="form-group">
-                    <label>Organization Name</label>
+                    <label>{{ 'ORGANIZATION_NAME' | translate }}</label>
                     <input type="text" name="name" [(ngModel)]="newOrg.name" required
                         placeholder="Organization name (e.g. Global Tech Solutions)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="premium-btn-secondary"
-                        (click)="showOrgModal.set(false)">Cancel</button>
-                    <button type="submit" class="premium-btn">INITIALIZE</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showOrgModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'INITIALIZE' | translate }}</button>
                 </div>
             </form>
         </div>
@@ -227,7 +228,7 @@
         <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
             <h3
                 style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
-                NEW BRANCH</h3>
+                {{ 'NEW_COMMAND_BRANCH' | translate }}</h3>
 
             <div *ngIf="error()" class="alert-premium alert-error">
                 <i class="bi bi-shield-exclamation"></i> {{ error() }}
@@ -235,19 +236,19 @@
 
             <form (ngSubmit)="onAddBranch()">
                 <div class="form-group">
-                    <label>Branch Designation</label>
+                    <label>{{ 'BRANCH_DESIGNATION' | translate }}</label>
                     <input type="text" name="bName" [(ngModel)]="newBranch.name" required
                         placeholder="Branch moniker (e.g. North HQ)">
                 </div>
                 <div class="form-group">
-                    <label>Geospatial Address (Optional)</label>
+                    <label>{{ 'GEOSPATIAL_ADDRESS' | translate }}</label>
                     <input type="text" name="bAddress" [(ngModel)]="newBranch.address"
                         placeholder="Physical vector (e.g. 789 Vanguard Way)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="premium-btn-secondary"
-                        (click)="showBranchModal.set(false)">Cancel</button>
-                    <button type="submit" class="premium-btn">ESTABLISH BRANCH</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showBranchModal.set(false)">{{ 'CANCEL'
+                        | translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ESTABLISH_BRANCH' | translate }}</button>
                 </div>
             </form>
         </div>
@@ -281,7 +282,7 @@
             <div class="permissions-section mt-4">
                 <h4
                     style="color: #64748b; font-size: 0.875rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                    INTELLIGENCE ACCESS PRIVILEGES
+                    {{ 'INTELLIGENCE_ACCESS_PRIVILEGES' | translate }}
                 </h4>
                 <div class="permissions-grid"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; max-height: 400px; overflow-y: auto; padding-right: 1rem;">
@@ -306,8 +307,9 @@
             </div>
 
             <div class="modal-actions mt-4">
-                <button class="premium-btn-secondary" (click)="showEditRoleModal.set(false)">Cancel</button>
-                <button class="premium-btn" (click)="onUpdateRole()">APPLY PROTOCOL CHANGES</button>
+                <button class="premium-btn-secondary" (click)="showEditRoleModal.set(false)">{{ 'CANCEL' | translate
+                    }}</button>
+                <button class="premium-btn" (click)="onUpdateRole()">{{ 'APPLY_PROTOCOL_CHANGES' | translate }}</button>
             </div>
         </div>
     </div>

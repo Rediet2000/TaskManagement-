@@ -1,29 +1,29 @@
 <div class="security-container">
     <header class="page-header">
-        <h1>Vanguard Security Protocols</h1>
-        <p>Real-time audit logs and security event monitoring.</p>
+        <h1>{{ 'VANGUARD_SECURITY_PROTOCOLS' | translate }}</h1>
+        <p>{{ 'REAL_TIME_AUDIT_LOGS' | translate }}</p>
     </header>
 
     <div class="glass-card status-overview">
         <div class="status-item">
-            <label>Firewall Status</label>
-            <span class="active">ACTIVE PROTOCOL</span>
+            <label>{{ 'FIREWALL_STATUS' | translate }}</label>
+            <span class="active">{{ 'ACTIVE_PROTOCOL' | translate }}</span>
         </div>
         <div class="status-item">
-            <label>Neural Link Encryption</label>
+            <label>{{ 'NEURAL_LINK_ENCRYPTION' | translate }}</label>
             <span class="active">AES-256 SYNCED</span>
         </div>
         <div class="status-item">
-            <label>Authorized Domains Only</label>
-            <span class="active">ENFORCED</span>
+            <label>{{ 'AUTHORIZED_DOMAINS_ONLY' | translate }}</label>
+            <span class="active">{{ 'ENFORCED' | translate }}</span>
         </div>
     </div>
 
     <div class="glass-card logs-container">
         <div class="logs-header">
-            <h3>System Audit Stream</h3>
+            <h3>{{ 'SYSTEM_AUDIT_STREAM' | translate }}</h3>
             <button class="btn-sm" (click)="loadLogs()">
-                <i class="bi bi-arrow-clockwise"></i> Synchronize
+                <i class="bi bi-arrow-clockwise"></i> {{ 'SYNCHRONIZE' | translate }}
             </button>
         </div>
 
@@ -31,10 +31,10 @@
             <table class="logs-table">
                 <thead>
                     <tr>
-                        <th>Timestamp</th>
-                        <th>Subject (Agent ID)</th>
-                        <th>Action Protocol</th>
-                        <th>Signal Details</th>
+                        <th>{{ 'TIMESTAMP' | translate }}</th>
+                        <th>{{ 'SUBJECT_AGENT_ID' | translate }}</th>
+                        <th>{{ 'ACTION_PROTOCOL' | translate }}</th>
+                        <th>{{ 'SIGNAL_DETAILS' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,7 +48,7 @@
                     }
                     @if (logs().length === 0 && !loading()) {
                     <tr>
-                        <td colspan="4" class="empty-state">No security anomalies detected in the current cycle.</td>
+                        <td colspan="4" class="empty-state">{{ 'NO_SECURITY_ANOMALIES' | translate }}</td>
                     </tr>
                     }
                 </tbody>
@@ -57,7 +57,7 @@
 
         <div class="loading-overlay" *ngIf="loading()">
             <div class="spinner"></div>
-            <span>Synchronizing Security Stream...</span>
+            <span>{{ 'SYNCHRONIZING_SECURITY_STREAM' | translate }}</span>
         </div>
     </div>
 </div>

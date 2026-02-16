@@ -2,8 +2,8 @@
     <!-- Sidebar: Folders -->
     <aside class="notes-sidebar glass-card">
         <div class="sidebar-header">
-            <h3>Knowledge Substrate</h3>
-            <button class="icon-btn" (click)="createFolder()" title="New Folder">
+            <h3>{{ 'MY_NOTES' | translate }}</h3>
+            <button class="icon-btn" (click)="createFolder()" [title]="'NEW_FOLDER' | translate">
                 <i class="bi bi-folder-plus"></i>
             </button>
         </div>
@@ -11,7 +11,7 @@
         <div class="folder-list">
             <button class="folder-item" [class.active]="selectedFolderId() === null" (click)="selectFolder(null)">
                 <i class="bi bi-stack"></i>
-                <span>All Notes</span>
+                <span>{{ 'ALL_NOTES' | translate }}</span>
             </button>
 
             @for (folder of folders(); track folder.id) {
@@ -29,7 +29,7 @@
         <div class="panel-header">
             <div class="search-bar">
                 <i class="bi bi-search"></i>
-                <input type="text" placeholder="Search insights..." (input)="onSearch($event)">
+                <input type="text" [placeholder]="'SEARCH_NOTES' | translate" (input)="onSearch($event)">
             </div>
             <button class="premium-btn small" (click)="createNewNote()">
                 <i class="bi bi-plus-lg"></i>
@@ -45,8 +45,8 @@
             @for (note of notes(); track note.id) {
             <div class="note-preview-card" [class.active]="selectedNote()?.id === note.id" (click)="selectNote(note)">
                 <div class="card-content">
-                    <h4>{{ note.title || 'Untitled' }}</h4>
-                    <p>{{ note.content || 'No content...' }}</p>
+                    <h4>{{ note.title || ('UNTITLED_NOTE' | translate) }}</h4>
+                    <p>{{ note.content || ('NO_DESCRIPTIVE_DATA' | translate) }}</p>
                 </div>
                 <div class="card-meta">
                     <span>{{ note.updated_at | date:'MMM d' }}</span>
@@ -57,7 +57,7 @@
             } @empty {
             <div class="empty-state">
                 <i class="bi bi-box-seam"></i>
-                <p>No notes found in this matrix.</p>
+                <p>{{ 'NO_TASKS' | translate }}</p>
             </div>
             }
             }
@@ -69,7 +69,7 @@
         @if (selectedNote()) {
         <div class="editor-header">
             <input type="text" class="title-input" [(ngModel)]="selectedNote()!.title" (blur)="saveNote()"
-                placeholder="Insight Title">
+                [placeholder]="'UNTITLED_NOTE' | translate">
             <div class="editor-actions">
                 <div class="reminder-input-wrapper"
                     [title]="selectedNote()!.reminder_at ? 'Reminder set' : 'Set reminder'">
@@ -80,7 +80,7 @@
                 <button class="icon-btn danger" (click)="deleteNote(selectedNote()!.id)">
                     <i class="bi bi-trash3"></i>
                 </button>
-                <button class="premium-btn small" (click)="saveNote()">Save</button>
+                <button class="premium-btn small" (click)="saveNote()">{{ 'SAVE' | translate }}</button>
             </div>
         </div>
 
@@ -94,7 +94,7 @@
 
         <div class="editor-body">
             <textarea [(ngModel)]="selectedNote()!.content" (input)="saveNote()"
-                placeholder="Start documenting your strategic intelligence..."></textarea>
+                [placeholder]="'START_DOCUMENTING' | translate"></textarea>
         </div>
 
         <div class="editor-footer">
@@ -106,9 +106,9 @@
             <div class="placeholder-icon">
                 <i class="bi bi-journal-text"></i>
             </div>
-            <h2>Select a module to view or edit</h2>
-            <p>Select a note from the list or create a new one to begin documentation.</p>
-            <button class="premium-btn" (click)="createNewNote()">Initialize New Note</button>
+            <h2>{{ 'SELECT_MODULE' | translate }}</h2>
+            <p>{{ 'START_DOCUMENTING' | translate }}</p>
+            <button class="premium-btn" (click)="createNewNote()">{{ 'UNTITLED_NOTE' | translate }}</button>
         </div>
         }
     </section>

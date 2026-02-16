@@ -44,6 +44,28 @@ class NotificationService:
             except Exception as e:
                 print(f"Error sending Telegram message: {e}")
 
+    def send_telegram_background(self, org_id: int, message: str, chat_id: Optional[str] = None):
+        """
+        Background version of send_telegram_notification that handles its own DB session.
+        Suitable for use with FastAPI BackgroundTasks in sync endpoints.
+        """
+        from app.db.base import SessionLocal
+        import asyncio
+        
+        db = SessionLocal()
+        try:
+            # We need to run the async send_telegram_notification in the current thread's loop or create one
+            # FastAPI's background tasks for sync def functions run in a threadpool.
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            loop.run_until_complete(self.send_telegram_notification(db, org_id, message, chat_id))
+        finally:
+            db.close()
+
     def send_email_notification(self, db: Session, org_id: int, email_to: str, subject: str, body: str):
         org = db.query(Organization).filter(Organization.id == org_id).first()
         if not org or not org.email_notifications_enabled or not org.smtp_host:

@@ -31,7 +31,7 @@
             </div>
 
             <div *ngIf="route.snapshot.queryParams['signedUp']" class="alert-premium alert-success">
-                <i class="bi bi-check-circle"></i> Account created successfully. Please login.
+                <i class="bi bi-check-circle"></i> {{ 'SIGNUP_SUCCESS' | translate }}
             </div>
 
             <button type="submit" class="premium-btn login-btn" [disabled]="loading">

@@ -37,8 +37,21 @@ class Organization(Base):
     telegram_chat_id = Column(String, nullable=True)
     telegram_enabled = Column(Boolean, default=False)
     
-    # Email Notification Settings
+    # Advanced Email Notification Settings
     email_notifications_enabled = Column(Boolean, default=True)
+    emission_email_address = Column(String, nullable=True)
+    bcc_recipients = Column(Boolean, default=False)
+    plain_text_mail = Column(Boolean, default=False)
+    address_user_in_emails_with = Column(String, default="full_name")
+    emails_header = Column(String, nullable=True) # Stored as JSON string
+    emails_footer = Column(String, nullable=True) # Stored as JSON string
+    
+    # Enhanced SMTP Settings
+    email_delivery_method = Column(String, default="smtp")
+    smtp_helo_domain = Column(String, nullable=True)
+    smtp_authentication = Column(String, default="login")
+    smtp_use_starttls = Column(Boolean, default=True)
+    smtp_use_ssl = Column(Boolean, default=False)
     
     # Branding Settings
     system_page_title = Column(String, default="Task Management System")

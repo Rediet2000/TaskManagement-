@@ -9,11 +9,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TaskCreateModal } from '../../components/task-create-modal/task-create-modal';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-task-board',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule, HasPermissionDirective, TaskCreateModal],
+    imports: [CommonModule, FormsModule, DragDropModule, HasPermissionDirective, TaskCreateModal, TranslatePipe],
     templateUrl: './task-board.html',
     styleUrls: ['./task-board.scss']
 })

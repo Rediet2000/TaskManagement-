@@ -6,13 +6,13 @@
     </div>
 
     <div class="calendar-grid">
-        <div class="weekday">Sun</div>
-        <div class="weekday">Mon</div>
-        <div class="weekday">Tue</div>
-        <div class="weekday">Wed</div>
-        <div class="weekday">Thu</div>
-        <div class="weekday">Fri</div>
-        <div class="weekday">Sat</div>
+        <div class="weekday">{{ 'SUN' | translate }}</div>
+        <div class="weekday">{{ 'MON' | translate }}</div>
+        <div class="weekday">{{ 'TUE' | translate }}</div>
+        <div class="weekday">{{ 'WED' | translate }}</div>
+        <div class="weekday">{{ 'THU' | translate }}</div>
+        <div class="weekday">{{ 'FRI' | translate }}</div>
+        <div class="weekday">{{ 'SAT' | translate }}</div>
 
         @for (day of days(); track day.date.getTime()) {
         <div class="day" [class.not-current]="!day.isCurrentMonth" [class.today]="day.isToday"
@@ -46,7 +46,7 @@
             </div>
             }
             @if (day.tasks.length === 0 && day.notes.length === 0) {
-            <p class="empty">No events scheduled.</p>
+            <p class="empty">{{ 'NO_EVENTS' | translate }}</p>
             }
         </div>
     </div>

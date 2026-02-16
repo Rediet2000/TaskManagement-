@@ -2,13 +2,15 @@ import { Component, EventEmitter, Output, inject, signal, Input, OnInit } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../services/task.service';
+import { TranslationService } from '../../services/translation.service';
 import { AuthService } from '../../services/auth.service';
 import { SprintService, Sprint } from '../../services/sprint.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-task-create-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './task-create-modal.html',
     styleUrls: ['./task-create-modal.scss']
 })
@@ -16,6 +18,7 @@ export class TaskCreateModal implements OnInit {
     private taskService = inject(TaskService);
     private authService = inject(AuthService);
     private sprintService = inject(SprintService);
+    private translationService = inject(TranslationService);
 
     @Input() sprintId: number | null = null;
     @Output() close = new EventEmitter<void>();
@@ -81,7 +84,7 @@ export class TaskCreateModal implements OnInit {
 
         this.taskService.createTask(this.newTask).subscribe({
             next: (task) => {
-                this.success.set('Strategic task authorized and deployed.');
+                this.success.set(this.translationService.translate('STRATEGIC_TASK_AUTHORIZED'));
                 this.loading.set(false);
                 setTimeout(() => {
                     this.taskCreated.emit(task);
@@ -89,7 +92,7 @@ export class TaskCreateModal implements OnInit {
                 }, 1500);
             },
             error: (err) => {
-                this.error.set(err.error?.detail || 'Task authorization failed. Check link stability.');
+                this.error.set(err.error?.detail || this.translationService.translate('TASK_AUTH_FAILED'));
                 this.loading.set(false);
             }
         });

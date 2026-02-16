@@ -2,11 +2,12 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IntegrationsService, GitHubIntegration, GitHubRepo, GitHubActivity } from '../../../services/integrations.service';
+import { TranslatePipe } from '../../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-integrations',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './integrations.html',
     styleUrls: ['./integrations.scss']
 })

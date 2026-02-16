@@ -13,17 +13,28 @@
 
     .widget {
         grid-column: span 12;
-        position: relative; // For controls
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        position: relative;
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        z-index: 1;
 
         &.edit-mode {
-            outline: 2px dashed var(--primary);
-            outline-offset: 4px;
-            border-radius: 20px;
+            outline: 2px dashed rgba(59, 130, 246, 0.5);
+            outline-offset: 8px;
+            border-radius: 24px;
             cursor: move;
+            z-index: 10;
+
+            &::before {
+                content: '';
+                position: absolute;
+                inset: -10px;
+                background: rgba(59, 130, 246, 0.05);
+                border-radius: 32px;
+                z-index: -1;
+            }
 
             &:hover {
-                box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
+                box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
             }
         }
     }
@@ -59,6 +70,15 @@
         &:hover {
             transform: scale(1.1);
             background: #1d4ed8;
+        }
+
+        &[title="Shrink"],
+        &[title="Expand"] {
+            background: #4b5563; // Neutral gray
+
+            &:hover {
+                background: #374151;
+            }
         }
 
         &[title="Hide"] {

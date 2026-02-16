@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { NotesService, Note, Folder } from '../../services/notes.service';
 import { AuthService } from '../../services/auth.service';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-notes',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './notes.html',
     styleUrls: ['./notes.scss']
 })

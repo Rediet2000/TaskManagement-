@@ -6,11 +6,12 @@ import { SprintService, Sprint } from '../../services/sprint.service';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TaskCreateModal } from '../../components/task-create-modal/task-create-modal';
 import { BoardService, Board, BoardColumn } from '../../services/board.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-agile-board',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule, TaskCreateModal],
+    imports: [CommonModule, FormsModule, DragDropModule, TaskCreateModal, TranslatePipe],
     templateUrl: './agile-board.html',
     styleUrls: ['./agile-board.scss']
 })

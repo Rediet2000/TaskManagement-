@@ -1,17 +1,18 @@
 <div class="reports-container">
     <div class="reports-header">
-        <h1>Intelligence Analytics</h1>
+        <h1>{{ 'INTELLIGENCE_ANALYTICS' | translate }}</h1>
         <div class="tabs">
-            <button [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">Macro Overview</button>
-            <button [class.active]="activeTab() === 'performance'" (click)="setTab('performance')">Operational
-                Index</button>
+            <button [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">{{ 'MACRO_OVERVIEW' |
+                translate }}</button>
+            <button [class.active]="activeTab() === 'performance'" (click)="setTab('performance')">{{
+                'OPERATIONAL_INDEX' | translate }}</button>
         </div>
     </div>
 
     @if (loading()) {
     <div class="loading-state">
         <div class="loader"></div>
-        <p>Synchronizing operational metrics...</p>
+        <p>{{ 'SYNCHRONIZING_METRICS' | translate }}</p>
     </div>
     } @else {
     <div class="reports-content">
@@ -19,32 +20,32 @@
         @if (activeTab() === 'overview') {
         <div class="overview-grid">
             <div class="stat-card">
-                <h3>Total Initiatives</h3>
+                <h3>{{ 'TOTAL_INITIATIVES' | translate }}</h3>
                 <div class="value">{{ reportData()?.total_tasks || 0 }}</div>
             </div>
             <div class="stat-card">
-                <h3>Resolved Cases</h3>
+                <h3>{{ 'RESOLVED_CASES' | translate }}</h3>
                 <div class="value success">{{ reportData()?.completed || 0 }}</div>
             </div>
             <div class="stat-card">
-                <h3>Active Operations</h3>
+                <h3>{{ 'ACTIVE_OPERATIONS' | translate }}</h3>
                 <div class="value warning">{{ reportData()?.pending || 0 }}</div>
             </div>
             <div class="stat-card">
-                <h3>Unallocated Assets</h3>
+                <h3>{{ 'UNALLOCATED_ASSETS' | translate }}</h3>
                 <div class="value error">{{ reportData()?.unassigned || 0 }}</div>
             </div>
         </div>
 
         <div class="charts-section">
-            <h2>Deployment Efficiency</h2>
+            <h2>{{ 'DEPLOYMENT_EFFICIENCY' | translate }}</h2>
             <div class="progress-container">
                 <div class="progress-bar">
                     <div class="progress-fill" [style.width.%]="getCompletionPercentage()"></div>
                 </div>
                 <div class="progress-stats">
-                    <span>{{ getCompletionPercentage() }}% Objective Completion</span>
-                    <span>{{ reportData()?.started || 0 }} Units Engaged</span>
+                    <span>{{ getCompletionPercentage() }}% {{ 'OBJECTIVE_COMPLETION' | translate }}</span>
+                    <span>{{ reportData()?.started || 0 }} {{ 'UNITS_ENGAGED' | translate }}</span>
                 </div>
             </div>
         </div>
@@ -53,16 +54,16 @@
         <!-- Performance Tab -->
         @if (activeTab() === 'performance') {
         <div class="performance-table-container">
-            <h2>Operational Performance Index</h2>
+            <h2>{{ 'OPERATIONAL_INDEX' | translate }}</h2>
             <table class="performance-table">
                 <thead>
                     <tr>
-                        <th>Agent Asset</th>
-                        <th>Assigned Initiatives</th>
-                        <th>Engagement</th>
-                        <th>Resolutions</th>
-                        <th>Execution Rate</th>
-                        <th>Average Feedback</th>
+                        <th>{{ 'AGENT_ASSET' | translate }}</th>
+                        <th>{{ 'ASSIGNED_INITIATIVES' | translate }}</th>
+                        <th>{{ 'ENGAGEMENT' | translate }}</th>
+                        <th>{{ 'RESOLUTIONS' | translate }}</th>
+                        <th>{{ 'EXECUTION_RATE' | translate }}</th>
+                        <th>{{ 'AVERAGE_FEEDBACK' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -1,5 +1,5 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.agile import Board, BoardColumn
@@ -24,9 +24,9 @@ def read_boards(
 
 @router.post("/", response_model=BoardSchema)
 def create_board(
-    *,
-    db: Session = Depends(get_db),
     board_in: BoardCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
     current_user = Depends(deps.get_current_active_user),
 ) -> Any:
     """Create new board."""
@@ -51,11 +51,11 @@ def create_board(
     db.refresh(board)
     
     # Notify via Telegram
-    asyncio.create_task(notification_service.send_telegram_notification(
-        db, 
+    background_tasks.add_task(
+        notification_service.send_telegram_background,
         current_user.org_id, 
         f"📋 New Agile Board: {board.name}\nBy: {current_user.full_name}"
-    ))
+    )
 
     return board
 

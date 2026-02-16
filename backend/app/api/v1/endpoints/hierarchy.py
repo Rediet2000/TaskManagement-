@@ -280,18 +280,18 @@ def test_smtp_connection(
     print(f"--- SMTP Test Start: {smtp_in.smtp_host}:{smtp_in.smtp_port} ---")
     try:
         # Create connection
-        if smtp_in.smtp_port == 465:
-            print("Using SMTP_SSL for port 465")
+        if smtp_in.use_ssl:
+            print(f"Using SMTP_SSL for {smtp_in.smtp_host}:{smtp_in.smtp_port}")
             server = smtplib.SMTP_SSL(smtp_in.smtp_host, smtp_in.smtp_port, timeout=15)
         else:
-            print(f"Using standard SMTP for port {smtp_in.smtp_port}")
+            print(f"Using standard SMTP for {smtp_in.smtp_host}:{smtp_in.smtp_port}")
             server = smtplib.SMTP(smtp_in.smtp_host, smtp_in.smtp_port, timeout=15)
         
         with server:
-            server.set_debuglevel(1) # Enable smtplib debug output
+            server.set_debuglevel(1)
             server.ehlo()
             
-            if smtp_in.smtp_port != 465:
+            if not smtp_in.use_ssl and smtp_in.use_starttls:
                 print("Starting TLS")
                 server.starttls()
                 server.ehlo()
@@ -365,20 +365,21 @@ def get_dashboard_stats(
         .filter(Task.org_id == org_id)\
         .scalar() or 0
     
-    # Active tasks (in_progress status)
+    # Active tasks (Started status)
+    from app.models.task_tracking import TaskStatus
     active_tasks = db.query(func.count(Task.id))\
         .filter(
             Task.org_id == org_id,
-            Task.status == 'in_progress'
+            Task.status == TaskStatus.STARTED.value
         ).scalar() or 0
     
-    # Overdue tasks (due_date < today and status != completed)
-    today = datetime.now().date()
+    # Overdue tasks (due_date < today and status != Completed)
+    today = datetime.now()
     overdue_tasks = db.query(func.count(Task.id))\
         .filter(
             Task.org_id == org_id,
             Task.due_date < today,
-            Task.status != 'completed'
+            Task.status != TaskStatus.COMPLETED.value
         ).scalar() or 0
     
     # Total problems

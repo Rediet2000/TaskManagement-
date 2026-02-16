@@ -19,18 +19,24 @@
     </header>
 
     <!-- Create Task Modal -->
-    <app-task-create-modal *ngIf="showTaskModal()" (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
+    @if (showTaskModal()) {
+    <app-task-create-modal (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
     </app-task-create-modal>
+    }
 
     <!-- Analog Clock Widget -->
     @if (showClock() && currentOrg()?.show_dashboard_clock && currentOrg()?.dashboard_clock_type === 'analog') {
     <div class="analog-clock-container widget" [style.order]="getWidgetOrder('clock')" [class.edit-mode]="isEditMode()"
-        style="grid-column: span 4; width: 100%; height: 240px;">
-        <div class="widget-controls" *ngIf="isEditMode()">
+        [style.grid-column]="'span ' + getWidgetSize('clock')" style="width: 100%; height: 240px;">
+        @if (isEditMode()) {
+        <div class="widget-controls">
             <button (click)="moveWidget('clock', 'up')" title="Move Up"><i class="bi bi-arrow-left"></i></button>
             <button (click)="moveWidget('clock', 'down')" title="Move Down"><i class="bi bi-arrow-right"></i></button>
+            <button (click)="resizeWidget('clock', -1)" title="Shrink"><i class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('clock', 1)" title="Expand"><i class="bi bi-fullscreen"></i></button>
             <button (click)="toggleWidget('clock')" title="Hide"><i class="bi bi-eye-slash"></i></button>
         </div>
+        }
         <div class="clock-face">
             <div class="hand hour" [style.transform]="'rotate(' + hourRotation() + 'deg)'"></div>
             <div class="hand minute" [style.transform]="'rotate(' + minuteRotation() + 'deg)'"></div>
@@ -46,13 +52,22 @@
 
     <!-- Digital Clock Widget -->
     @if (showClock() && currentOrg()?.show_dashboard_clock && currentOrg()?.dashboard_clock_type === 'digital') {
-    <div class="digital-clock-container widget" [style.order]="getWidgetOrder('clock')"
-        [class.edit-mode]="isEditMode()">
-        <div class="widget-controls" *ngIf="isEditMode()">
-            <button (click)="moveWidget('clock', 'up')" title="Move Up"><i class="bi bi-chevron-left"></i></button>
-            <button (click)="moveWidget('clock', 'down')" title="Move Down"><i class="bi bi-chevron-right"></i></button>
-            <button (click)="toggleWidget('clock')" title="Hide"><i class="bi bi-eye-slash"></i></button>
+    <div class="digital-clock-container widget" [style.order]="getWidgetOrder('clock')" [class.edit-mode]="isEditMode()"
+        [style.grid-column]="'span ' + getWidgetSize('clock')">
+        @if (isEditMode()) {
+        <div class="widget-controls">
+            <button (click)="moveWidget('clock', 'up')" [title]="'MOVE_UP' | translate"><i
+                    class="bi bi-chevron-left"></i></button>
+            <button (click)="moveWidget('clock', 'down')" [title]="'MOVE_DOWN' | translate"><i
+                    class="bi bi-chevron-right"></i></button>
+            <button (click)="resizeWidget('clock', -1)" [title]="'SHRINK' | translate"><i
+                    class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('clock', 1)" [title]="'EXPAND' | translate"><i
+                    class="bi bi-fullscreen"></i></button>
+            <button (click)="toggleWidget('clock')" [title]="'HIDE' | translate"><i
+                    class="bi bi-eye-slash"></i></button>
         </div>
+        }
         <div class="time">{{ currentTime() | date:'HH:mm:ss' }}</div>
         <div class="date">{{ currentTime() | date:'EEEE, MMM d, y' }}</div>
     </div>
@@ -61,12 +76,21 @@
     <!-- Stats Grid Widget -->
     @if (showStats() && currentOrg()?.show_dashboard_stats) {
     <div class="stats-grid widget" [style.order]="getWidgetOrder('stats')" [class.edit-mode]="isEditMode()"
-        style="grid-column: span 8;">
-        <div class="widget-controls" *ngIf="isEditMode()">
-            <button (click)="moveWidget('stats', 'up')" title="Move Up"><i class="bi bi-chevron-left"></i></button>
-            <button (click)="moveWidget('stats', 'down')" title="Move Down"><i class="bi bi-chevron-right"></i></button>
-            <button (click)="toggleWidget('stats')" title="Hide"><i class="bi bi-eye-slash"></i></button>
+        [style.grid-column]="'span ' + getWidgetSize('stats')">
+        @if (isEditMode()) {
+        <div class="widget-controls">
+            <button (click)="moveWidget('stats', 'up')" [title]="'MOVE_UP' | translate"><i
+                    class="bi bi-chevron-left"></i></button>
+            <button (click)="moveWidget('stats', 'down')" [title]="'MOVE_DOWN' | translate"><i
+                    class="bi bi-chevron-right"></i></button>
+            <button (click)="resizeWidget('stats', -1)" [title]="'SHRINK' | translate"><i
+                    class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('stats', 1)" [title]="'EXPAND' | translate"><i
+                    class="bi bi-fullscreen"></i></button>
+            <button (click)="toggleWidget('stats')" [title]="'HIDE' | translate"><i
+                    class="bi bi-eye-slash"></i></button>
         </div>
+        }
         @for (stat of filteredStats(); track stat.label) {
         <div class="glass-card stat-card">
             <div class="stat-icon">
@@ -87,12 +111,21 @@
     <!-- Recent Tasks Widget -->
     @if (showTasks() && currentOrg()?.show_dashboard_tasks) {
     <div class="glass-card content-section recent-tasks widget" [style.order]="getWidgetOrder('tasks')"
-        [class.edit-mode]="isEditMode()" style="grid-column: span 6;">
-        <div class="widget-controls" *ngIf="isEditMode()">
-            <button (click)="moveWidget('tasks', 'up')" title="Move Up"><i class="bi bi-chevron-left"></i></button>
-            <button (click)="moveWidget('tasks', 'down')" title="Move Down"><i class="bi bi-chevron-right"></i></button>
-            <button (click)="toggleWidget('tasks')" title="Hide"><i class="bi bi-eye-slash"></i></button>
+        [class.edit-mode]="isEditMode()" [style.grid-column]="'span ' + getWidgetSize('tasks')">
+        @if (isEditMode()) {
+        <div class="widget-controls">
+            <button (click)="moveWidget('tasks', 'up')" [title]="'MOVE_UP' | translate"><i
+                    class="bi bi-chevron-left"></i></button>
+            <button (click)="moveWidget('tasks', 'down')" [title]="'MOVE_DOWN' | translate"><i
+                    class="bi bi-chevron-right"></i></button>
+            <button (click)="resizeWidget('tasks', -1)" [title]="'SHRINK' | translate"><i
+                    class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('tasks', 1)" [title]="'EXPAND' | translate"><i
+                    class="bi bi-fullscreen"></i></button>
+            <button (click)="toggleWidget('tasks')" [title]="'HIDE' | translate"><i
+                    class="bi bi-eye-slash"></i></button>
         </div>
+        }
         <div class="section-header">
             <h2>{{ 'RECENT_CRITICAL_TASKS' | translate }}</h2>
             <a href="#">{{ 'VIEW_ALL' | translate }}</a>
@@ -114,12 +147,20 @@
     <!-- Organizational Map Widget -->
     @if (currentOrg()?.show_dashboard_map) {
     <div class="glass-card content-section org-map widget" [style.order]="getWidgetOrder('map')"
-        [class.edit-mode]="isEditMode()" style="grid-column: span 6;">
-        <div class="widget-controls" *ngIf="isEditMode()">
-            <button (click)="moveWidget('map', 'up')" title="Move Up"><i class="bi bi-chevron-left"></i></button>
-            <button (click)="moveWidget('map', 'down')" title="Move Down"><i class="bi bi-chevron-right"></i></button>
-            <button (click)="isEditMode.set(false)" title="Done"><i class="bi bi-check2-circle"></i></button>
+        [class.edit-mode]="isEditMode()" [style.grid-column]="'span ' + getWidgetSize('map')">
+        @if (isEditMode()) {
+        <div class="widget-controls">
+            <button (click)="moveWidget('map', 'up')" [title]="'MOVE_UP' | translate"><i
+                    class="bi bi-chevron-left"></i></button>
+            <button (click)="moveWidget('map', 'down')" [title]="'MOVE_DOWN' | translate"><i
+                    class="bi bi-chevron-right"></i></button>
+            <button (click)="resizeWidget('map', -1)" [title]="'SHRINK' | translate"><i
+                    class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('map', 1)" [title]="'EXPAND' | translate"><i
+                    class="bi bi-fullscreen"></i></button>
+            <button (click)="toggleWidget('map')" [title]="'HIDE' | translate"><i class="bi bi-eye-slash"></i></button>
         </div>
+        }
         <div class="section-header">
             <h2>{{ 'ORG_MAP' | translate }}</h2>
         </div>
@@ -139,7 +180,7 @@
                     @if (branches().length === 0) {
                     <div class="map-empty">
                         <i class="bi bi-map"></i>
-                        <p>No branches registered yet</p>
+                        <p>{{ 'NO_BRANCHES_REGISTERED' | translate }}</p>
                     </div>
                     }
                 </div>
@@ -150,35 +191,52 @@
 
     <!-- Calendar Widget -->
     @if (showCalendar()) {
-    <div class="widget calendar-widget" [class.edit-mode]="isEditMode()" [style.order]="getWidgetOrder('calendar')">
-        <div class="widget-controls" *ngIf="isEditMode()">
-            <button (click)="moveWidget('calendar', 'up')" title="Move Up"><i class="bi bi-chevron-left"></i></button>
-            <button (click)="moveWidget('calendar', 'down')" title="Move Down"><i
+    <div class="widget calendar-widget" [class.edit-mode]="isEditMode()" [style.order]="getWidgetOrder('calendar')"
+        [style.grid-column]="'span ' + getWidgetSize('calendar')">
+        @if (isEditMode()) {
+        <div class="widget-controls">
+            <button (click)="moveWidget('calendar', 'up')" [title]="'MOVE_UP' | translate"><i
+                    class="bi bi-chevron-left"></i></button>
+            <button (click)="moveWidget('calendar', 'down')" [title]="'MOVE_DOWN' | translate"><i
                     class="bi bi-chevron-right"></i></button>
-            <button (click)="toggleWidget('calendar')" title="Hide"><i class="bi bi-eye-slash"></i></button>
+            <button (click)="resizeWidget('calendar', -1)" [title]="'SHRINK' | translate"><i
+                    class="bi bi-fullscreen-exit"></i></button>
+            <button (click)="resizeWidget('calendar', 1)" [title]="'EXPAND' | translate"><i
+                    class="bi bi-fullscreen"></i></button>
+            <button (click)="toggleWidget('calendar')" [title]="'HIDE' | translate"><i
+                    class="bi bi-eye-slash"></i></button>
         </div>
+        }
         <app-calendar></app-calendar>
     </div>
     }
 
     <!-- Hidden Widgets Recovery (Only in Edit Mode) -->
-    <div class="hidden-widgets-panel glass-card animate-slide-up"
-        *ngIf="isEditMode() && (!showClock() || !showStats() || !showTasks() || !showCalendar())">
-        <h4><i class="bi bi-plus-circle"></i> Restore Widgets</h4>
+    @if (isEditMode() && (!showClock() || !showStats() || !showTasks() || !showCalendar())) {
+    <div class="hidden-widgets-panel glass-card animate-slide-up">
+        <h4><i class="bi bi-plus-circle"></i> {{ 'RESTORE_WIDGETS' | translate }}</h4>
         <div class="restore-list">
-            <button *ngIf="!showClock()" (click)="toggleWidget('clock')" class="restore-btn">
-                <i class="bi bi-clock"></i> Clock
+            @if (!showClock()) {
+            <button (click)="toggleWidget('clock')" class="restore-btn">
+                <i class="bi bi-clock"></i> {{ 'CLOCK' | translate }}
             </button>
-            <button *ngIf="!showStats()" (click)="toggleWidget('stats')" class="restore-btn">
-                <i class="bi bi-bar-chart"></i> Stats
+            }
+            @if (!showStats()) {
+            <button (click)="toggleWidget('stats')" class="restore-btn">
+                <i class="bi bi-bar-chart"></i> {{ 'STATS' | translate }}
             </button>
-            <button *ngIf="!showTasks()" (click)="toggleWidget('tasks')" class="restore-btn">
-                <i class="bi bi-list-task"></i> Tasks
+            }
+            @if (!showTasks()) {
+            <button (click)="toggleWidget('tasks')" class="restore-btn">
+                <i class="bi bi-list-task"></i> {{ 'TASKS' | translate }}
             </button>
-            <button *ngIf="!showCalendar()" (click)="toggleWidget('calendar')" class="restore-btn">
-                <i class="bi bi-calendar3"></i> Calendar
+            }
+            @if (!showCalendar()) {
+            <button (click)="toggleWidget('calendar')" class="restore-btn">
+                <i class="bi bi-calendar3"></i> {{ 'CALENDAR' | translate }}
             </button>
+            }
         </div>
     </div>
-</div>
+    }
 </div>

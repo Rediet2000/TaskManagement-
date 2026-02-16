@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TaskService, Task } from '../../services/task.service';
 import { NotesService, Note } from '../../services/notes.service';
 import { forkJoin } from 'rxjs';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 interface CalendarDay {
     date: Date;
@@ -15,7 +16,7 @@ interface CalendarDay {
 @Component({
     selector: 'app-calendar',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, TranslatePipe],
     templateUrl: './calendar.html',
     styleUrls: ['./calendar.scss']
 })

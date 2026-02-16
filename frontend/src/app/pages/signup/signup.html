@@ -4,7 +4,7 @@
             <h1>{{ 'SIGN_UP' | translate }}</h1>
             <p *ngIf="!isInvited()">{{ 'JOIN_ORG' | translate }}</p>
             <p *ngIf="isInvited()" style="color: #4ade80; font-weight: 700;">
-                You've been invited to join {{ invitedOrgName() }}
+                {{ 'INVITED_TO_JOIN' | translate }} {{ invitedOrgName() }}
             </p>
         </div>
 
@@ -13,7 +13,7 @@
                 <label for="fullName">{{ 'FULL_NAME' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required
-                        placeholder="Your full name">
+                        [placeholder]="'YOUR_FULL_NAME' | translate">
                 </div>
             </div>
 
@@ -21,7 +21,7 @@
                 <label for="email">{{ 'EMAIL_ADDRESS' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="email" id="email" name="email" [(ngModel)]="email" required
-                        placeholder="user@company.com" [disabled]="isInvited()">
+                        [placeholder]="'USER_EMAIL_PLACEHOLDER' | translate" [disabled]="isInvited()">
                 </div>
             </div>
 

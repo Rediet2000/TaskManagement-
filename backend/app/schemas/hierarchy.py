@@ -28,7 +28,22 @@ class OrganizationBase(BaseModel):
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     telegram_enabled: bool = False
+    
+    # Advanced Email Notification Settings
     email_notifications_enabled: bool = True
+    emission_email_address: Optional[str] = None
+    bcc_recipients: bool = False
+    plain_text_mail: bool = False
+    address_user_in_emails_with: str = "full_name"
+    emails_header: Optional[str] = None
+    emails_footer: Optional[str] = None
+    
+    # Enhanced SMTP Settings
+    email_delivery_method: str = "smtp"
+    smtp_helo_domain: Optional[str] = None
+    smtp_authentication: str = "login"
+    smtp_use_starttls: bool = True
+    smtp_use_ssl: bool = False
     
     # Branding Settings
     system_page_title: str = "Task Management System"
@@ -89,7 +104,22 @@ class OrganizationUpdate(BaseModel):
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     telegram_enabled: Optional[bool] = None
+    
+    # Advanced Email Notification Settings
     email_notifications_enabled: Optional[bool] = None
+    emission_email_address: Optional[str] = None
+    bcc_recipients: Optional[bool] = None
+    plain_text_mail: Optional[bool] = None
+    address_user_in_emails_with: Optional[str] = None
+    emails_header: Optional[str] = None
+    emails_footer: Optional[str] = None
+    
+    # Enhanced SMTP Settings
+    email_delivery_method: Optional[str] = None
+    smtp_helo_domain: Optional[str] = None
+    smtp_authentication: Optional[str] = None
+    smtp_use_starttls: Optional[bool] = None
+    smtp_use_ssl: Optional[bool] = None
     
     system_page_title: Optional[str] = None
     theme_mode: Optional[str] = None
@@ -190,3 +220,5 @@ class SMTPTest(BaseModel):
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
     smtp_from_email: str
+    use_starttls: bool = True
+    use_ssl: bool = False

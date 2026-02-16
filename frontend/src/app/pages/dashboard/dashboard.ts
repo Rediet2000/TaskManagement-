@@ -41,6 +41,39 @@ export class Dashboard implements OnInit, OnDestroy {
             : []
     );
 
+    // Local Widget Sizes (Personal Customization)
+    localWidgetSizes = signal<Record<string, number>>(
+        localStorage.getItem('dash_widget_sizes')
+            ? JSON.parse(localStorage.getItem('dash_widget_sizes')!)
+            : {
+                'clock': 4,
+                'stats': 8,
+                'tasks': 6,
+                'map': 6,
+                'calendar': 12
+            }
+    );
+
+    getWidgetSize(widget: string): number {
+        return this.localWidgetSizes()[widget] || 6;
+    }
+
+    resizeWidget(widget: string, delta: number) {
+        const currentSizes = { ...this.localWidgetSizes() };
+        const currentSize = currentSizes[widget] || 6;
+
+        // Allowed spans: 4, 6, 8, 12
+        const spans = [4, 6, 8, 12];
+        const currentIndex = spans.indexOf(currentSize);
+        let newIndex = currentIndex + delta;
+
+        if (newIndex >= 0 && newIndex < spans.length) {
+            currentSizes[widget] = spans[newIndex];
+            this.localWidgetSizes.set(currentSizes);
+            localStorage.setItem('dash_widget_sizes', JSON.stringify(currentSizes));
+        }
+    }
+
     toggleEditMode() {
         this.isEditMode.update(v => !v);
         if (!this.isEditMode()) {
@@ -89,37 +122,33 @@ export class Dashboard implements OnInit, OnDestroy {
             label: 'TOTAL_TASKS',
             value: this.rawStats().total_tasks.toString(),
             icon: 'bi-list-task',
-            trend: '+12%',
+            trend: '',
             trendUp: true
         },
         {
             label: 'ACTIVE_TASKS',
             value: this.rawStats().active_tasks.toString(),
             icon: 'bi-play-circle',
-            trend: '+5%',
+            trend: '',
             trendUp: true
         },
         {
             label: 'OVERDUE',
             value: this.rawStats().overdue_tasks.toString(),
             icon: 'bi-exclamation-triangle',
-            trend: '-2%',
+            trend: '',
             trendUp: false
         },
         {
             label: 'TOTAL_PROBLEMS',
             value: this.rawStats().total_problems.toString(),
             icon: 'bi-bug',
-            trend: '+18%',
+            trend: '',
             trendUp: true
         }
     ]);
 
-    recentTasks = signal([
-        { id: 1, title: 'Upgrade Production Database', priority: 'High', status: 'In Progress' },
-        { id: 2, title: 'Regional Office API Integration', priority: 'Medium', status: 'Pending' },
-        { id: 3, title: 'Security Audit - Branch A', priority: 'High', status: 'Completed' }
-    ]);
+    recentTasks = signal<any[]>([]);
 
     rawStats = signal({
         total_tasks: 0,

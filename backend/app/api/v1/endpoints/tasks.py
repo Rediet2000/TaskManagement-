@@ -1,5 +1,5 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, BackgroundTasks
 import os
 import uuid
 import shutil
@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from app import schemas, models
 from app.api import deps
-from app.core.utils import create_audit_log
+from app.db.base import get_db
+from app.db.utils import create_audit_log
 from app.core.notifications import notification_service
 import asyncio
 
@@ -43,6 +44,7 @@ async def create_task(
     *,
     db: Session = Depends(get_db),
     task_in: schemas.task.TaskCreate,
+    background_tasks: BackgroundTasks,
     current_user: models.core.User = Depends(deps.get_current_active_user),
     org_id: int = Depends(deps.get_current_org_id)
 ) -> Any:
@@ -65,11 +67,11 @@ async def create_task(
         assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
         if assignee:
             message = f"🚀 New Task Assigned: {db_obj.title}\nPriority: {db_obj.priority}\nBy: {current_user.full_name}"
-            asyncio.create_task(notification_service.send_telegram_notification(
-                db, 
+            background_tasks.add_task(
+                notification_service.send_telegram_background,
                 current_user.org_id, 
                 message
-            ))
+            )
             notification_service.send_email_notification(db, current_user.org_id, assignee.email, "New Task Assigned", message)
             
     return db_obj

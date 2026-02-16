@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { HierarchyService, Department, Team, Organization, OrganizationCreate, Branch } from '../../services/hierarchy.service';
 import { AuthService } from '../../services/auth.service';
 import { RbacService, Role, Permission } from '../../services/rbac.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-hierarchy-manager',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './hierarchy-manager.html',
     styleUrls: ['./hierarchy-manager.scss']
 })

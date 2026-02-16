@@ -26,7 +26,7 @@ export class MainLayout implements OnInit {
     private titleService = inject(Title);
     private document = inject(DOCUMENT);
 
-    currentLanguage = signal<string>('en');
+    currentLanguage = this.translationService.currentLang;
 
     isSidebarCollapsed = false;
     isMobileSidebarActive = signal<boolean>(false);
@@ -41,7 +41,7 @@ export class MainLayout implements OnInit {
 
         // Load language preference
         const savedLang = localStorage.getItem('language') || this.currentUser()?.language || 'en';
-        this.currentLanguage.set(savedLang);
+        this.translationService.setLanguage(savedLang);
     }
 
     constructor() {
@@ -111,7 +111,6 @@ export class MainLayout implements OnInit {
     }
 
     setLanguage(lang: string) {
-        this.currentLanguage.set(lang);
         this.translationService.setLanguage(lang);
 
         // If user is logged in, sync with profile

@@ -278,27 +278,47 @@
     }
 
     .kanban-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 2rem;
+        padding: 1rem 0 3rem;
         flex: 1;
-        overflow: hidden;
+        align-items: flex-start;
 
-        @media (max-width: 1400px) {
-            grid-template-columns: repeat(4, 280px);
-            overflow-x: auto;
-            padding-bottom: 1rem;
+        &::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+        }
+
+        &:hover::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.3);
         }
     }
 
     .kanban-column {
         display: flex;
         flex-direction: column;
-        background: rgba(15, 23, 42, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.03);
-        border-radius: 20px;
-        padding: 1.25rem;
-        height: 100%;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 32px;
+        width: 400px;
+        min-width: 400px;
+        max-height: 100%;
+        padding: 1.75rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        &:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
 
         .kanban-header {
             display: flex;

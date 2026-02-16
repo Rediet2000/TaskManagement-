@@ -1,11 +1,11 @@
 <div class="problem-container animate-fade-in">
     <header class="page-header">
         <div class="header-info">
-            <h1>Branch Problem Tracker</h1>
-            <p>Monitor and resolve branch-level operational issues</p>
+            <h1>{{ 'BRANCH_PROBLEM_TRACKER' | translate }}</h1>
+            <p>{{ 'MONITOR_RESOLVE_ISSUES' | translate }}</p>
         </div>
         <button class="btn-primary" (click)="showModal.set(true)">
-            <i class="bi bi-exclamation-triangle"></i> Report Issue
+            <i class="bi bi-exclamation-triangle"></i> {{ 'REPORT_ISSUE' | translate }}
         </button>
     </header>
 
@@ -13,13 +13,13 @@
         <table class="problem-table">
             <thead>
                 <tr>
-                    <th>Location</th>
-                    <th>System Component</th>
-                    <th>Device ID</th>
-                    <th>Severity</th>
-                    <th>Status</th>
-                    <th>Assigned</th>
-                    <th>Actions</th>
+                    <th>{{ 'LOCATION' | translate }}</th>
+                    <th>{{ 'SYSTEM_COMPONENT' | translate }}</th>
+                    <th>{{ 'DEVICE_ID' | translate }}</th>
+                    <th>{{ 'SEVERITY' | translate }}</th>
+                    <th>{{ 'STATUS' | translate }}</th>
+                    <th>{{ 'ASSIGNED' | translate }}</th>
+                    <th>{{ 'ACTIONS' | translate }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,7 +41,7 @@
                     <td>{{ p.assigned_date | date:'shortDate' }}</td>
                     <td>
                         @if (p.status !== 'Fixed') {
-                        <button class="icon-btn-sm" (click)="onFix(p.id)" title="Resolve Issue">
+                        <button class="icon-btn-sm" (click)="onFix(p.id)" [title]="'RESOLVE_ISSUE' | translate">
                             <i class="bi bi-check-circle-fill"></i>
                         </button>
                         }
@@ -50,7 +50,7 @@
                 }
                 @if (problems().length === 0) {
                 <tr>
-                    <td colspan="7" class="empty-state">No issues reported yet</td>
+                    <td colspan="7" class="empty-state">{{ 'NO_ISSUES_REPORTED' | translate }}</td>
                 </tr>
                 }
             </tbody>
@@ -61,19 +61,19 @@
     <div class="modal-overlay" *ngIf="showModal()">
         <div class="glass-card modal-content">
             <div class="modal-header">
-                <h2>Diagnostic Report Entry</h2>
+                <h2>{{ 'DIAGNOSTIC_REPORT_ENTRY' | translate }}</h2>
                 <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
             </div>
 
             <form (ngSubmit)="onReportProblem()" #problemForm="ngForm">
                 <div class="form-row">
                     <div class="form-group half">
-                        <label>Sector Location</label>
+                        <label>{{ 'SECTOR_LOCATION' | translate }}</label>
                         <input type="text" name="location" [(ngModel)]="newProblem.branch_location" required
                             placeholder="HQ, Factory, etc.">
                     </div>
                     <div class="form-group half">
-                        <label>System Component</label>
+                        <label>{{ 'SYSTEM_COMPONENT' | translate }}</label>
                         <input type="text" name="component" [(ngModel)]="newProblem.component"
                             placeholder="Network, Power, etc.">
                     </div>
@@ -81,12 +81,12 @@
 
                 <div class="form-row">
                     <div class="form-group half">
-                        <label>Device ID</label>
+                        <label>{{ 'DEVICE_ID' | translate }}</label>
                         <input type="text" name="deviceId" [(ngModel)]="newProblem.device_id"
                             placeholder="Unit ID / Serial">
                     </div>
                     <div class="form-group half">
-                        <label>Priority Severity</label>
+                        <label>{{ 'PRIORITY_SEVERITY' | translate }}</label>
                         <select name="severity" [(ngModel)]="newProblem.severity">
                             <option value="Low">Low</option>
                             <option value="Medium">Medium</option>
@@ -97,14 +97,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Brief Protocol Description</label>
+                    <label>{{ 'BRIEF_PROTOCOL_DESCRIPTION' | translate }}</label>
                     <textarea name="type" [(ngModel)]="newProblem.problem_type" required
-                        placeholder="Describe the anomaly..."></textarea>
+                        [placeholder]="'DESCRIBE_ANOMALY' | translate"></textarea>
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Aborted</button>
-                    <button type="submit" class="btn-primary" [disabled]="!problemForm.form.valid">Commence Fix</button>
+                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">{{ 'ABORTED' | translate
+                        }}</button>
+                    <button type="submit" class="btn-primary" [disabled]="!problemForm.form.valid">{{ 'COMMENCE_FIX' |
+                        translate }}</button>
                 </div>
             </form>
         </div>

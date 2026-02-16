@@ -32,6 +32,19 @@ export interface Organization {
     telegram_chat_id?: string;
     telegram_enabled?: boolean;
     email_notifications_enabled?: boolean;
+    emission_email_address?: string;
+    bcc_recipients?: boolean;
+    plain_text_mail?: boolean;
+    address_user_in_emails_with?: string;
+    emails_header?: string;
+    emails_footer?: string;
+
+    // Enhanced SMTP Settings
+    email_delivery_method?: string;
+    smtp_helo_domain?: string;
+    smtp_authentication?: string;
+    smtp_use_starttls?: boolean;
+    smtp_use_ssl?: boolean;
 
     // Branding Settings
     system_page_title?: string;

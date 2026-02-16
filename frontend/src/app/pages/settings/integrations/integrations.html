@@ -1,7 +1,7 @@
 <div class="integrations-container">
     <div class="header-section">
-        <h1>External Matrix Integrations</h1>
-        <p>Connect your strategic toolchain to synchronize intelligence across the system.</p>
+        <h1>{{ 'EXTERNAL_MATRIX' | translate }}</h1>
+        <p>{{ 'CONNECT_TOOLCHAIN' | translate }}</p>
     </div>
 
     <div class="integrations-grid">
@@ -13,7 +13,7 @@
                     <div>
                         <h3>GitHub</h3>
                         <span class="status-badge" [class.active]="integration()">
-                            {{ integration() ? 'Connected' : 'Disconnected' }}
+                            {{ (integration() ? 'CONNECTED' : 'DISCONNECTED') | translate }}
                         </span>
                     </div>
                 </div>
@@ -23,27 +23,27 @@
                 @if (!integration()) {
                 <div class="setup-form">
                     <div class="input-group">
-                        <label>Installation ID</label>
+                        <label>{{ 'INSTALLATION_ID' | translate }}</label>
                         <input type="text" [(ngModel)]="installationId" placeholder="e.g. 12345678">
                     </div>
                     <div class="input-group">
-                        <label>Webhook Secret</label>
+                        <label>{{ 'WEBHOOK_SECRET' | translate }}</label>
                         <input type="password" [(ngModel)]="webhookSecret" placeholder="••••••••">
                     </div>
                     <button class="premium-btn" (click)='setupIntegration()' [disabled]="loading()">
-                        {{ loading() ? 'Initializing...' : 'Connect GitHub App' }}
+                        {{ (loading() ? 'INITIALIZING' : 'CONNECT_GITHUB') | translate }}
                     </button>
                     <p class="hint">Use your GitHub App credentials to establish a secure link.</p>
                 </div>
                 } @else {
                 <div class="active-status">
                     <div class="info-row">
-                        <span>Installation ID:</span>
+                        <span>{{ 'INSTALLATION_ID' | translate }}:</span>
                         <strong>{{ integration()?.installation_id }}</strong>
                     </div>
 
                     <div class="repro-section">
-                        <h4>Managed Repositories</h4>
+                        <h4>{{ 'MANAGED_REPOS' | translate }}</h4>
                         <div class="repo-list">
                             @for (repo of integration()?.repositories; track repo.id) {
                             <div class="repo-item">
@@ -71,8 +71,8 @@
                 <div class="provider-info">
                     <i class="bi bi-pulse"></i>
                     <div>
-                        <h3>GitHub Neural Feed</h3>
-                        <span class="status-badge">Live Updates</span>
+                        <h3>{{ 'GITHUB_FEED' | translate }}</h3>
+                        <span class="status-badge">{{ 'LIVE_UPDATES' | translate }}</span>
                     </div>
                 </div>
                 <button class="icon-btn" (click)="loadActivity()"><i class="bi bi-arrow-clockwise"></i></button>
@@ -96,7 +96,7 @@
                 } @empty {
                 <div class="empty-state">
                     <i class="bi bi-reception-1"></i>
-                    <p>No external activity detected on the wire.</p>
+                    <p>{{ 'NO_EXTERNAL_ACTIVITY' | translate }}</p>
                 </div>
                 }
             </div>

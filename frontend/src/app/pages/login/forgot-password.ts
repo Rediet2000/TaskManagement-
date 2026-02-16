@@ -3,23 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-forgot-password',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
+    imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
     template: `
         <div class="auth-container">
             <div class="auth-card glass-card animate-fade-in">
                 <div class="auth-header">
                     <img src="assets/logo.png" alt="Logo" class="auth-logo" onerror="this.src='https://placehold.co/120x40/1e293b/ffffff?text=Task+Mgmt'">
-                    <h1>Reset Password</h1>
-                    <p class="text-muted">Enter your email to receive a reset link</p>
+                    <h1>{{ 'RESET_PASSWORD' | translate }}</h1>
+                    <p class="text-muted">{{ 'ENTER_EMAIL_RESET' | translate }}</p>
                 </div>
 
                 <form (ngSubmit)="onSubmit()" #resetForm="ngForm">
                     <div class="form-group animate-slide-up" style="animation-delay: 0.1s">
-                        <label for="email">Email Address</label>
+                        <label for="email">{{ 'EMAIL_ADDRESS' | translate }}</label>
                         <div class="input-wrapper">
                             <i class="bi bi-envelope"></i>
                             <input 
@@ -29,7 +30,7 @@ import { AuthService } from '../../services/auth.service';
                                 [(ngModel)]="email" 
                                 required 
                                 email
-                                placeholder="name@company.com"
+                                [placeholder]="'EMAIL_ADDRESS' | translate"
                             >
                         </div>
                     </div>
@@ -50,12 +51,12 @@ import { AuthService } from '../../services/auth.service';
                         style="animation-delay: 0.2s"
                         [disabled]="loading() || !resetForm.valid || success"
                     >
-                        <span *ngIf="!loading()">Send Link</span>
+                        <span *ngIf="!loading()">{{ 'SEND_LINK' | translate }}</span>
                         <span *ngIf="loading()" class="loader small"></span>
                     </button>
 
                     <div class="auth-footer animate-slide-up" style="animation-delay: 0.3s">
-                        <p>Remembered your password? <a routerLink="/login">Back to Login</a></p>
+                        <p>{{ 'REMEMBER_PASSWORD' | translate }} <a routerLink="/login">{{ 'BACK_TO_LOGIN' | translate }}</a></p>
                     </div>
                 </form>
             </div>
