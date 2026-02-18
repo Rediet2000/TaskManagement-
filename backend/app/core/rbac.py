@@ -54,7 +54,7 @@ class RBACService:
         if role.name == "Super Admin":
             return True
             
-        if role.name == "Organization Admin":
+        if role.name == "Admin":
             return True
             
         if role.name == "Manager":
@@ -87,7 +87,7 @@ class RBACService:
                 "report:view", "report:own", "report:team", "report:export", "report:audit", "report:org",
                 "settings:manage", "settings:workflow", "settings:tags", "settings:integrations", "settings:billing", "settings:branding", "settings:rbac"
             ],
-            "Organization Admin": [
+            "Admin": [
                 "task:view", "task:create", "task:edit_own", "task:edit_all", "task:assign", "task:status", "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
                 "project:view", "project:create", "project:edit", "project:delete", "project:members", "project:visibility",
                 "user:invite", "user:remove", "user:role_assign", "role:manage",
