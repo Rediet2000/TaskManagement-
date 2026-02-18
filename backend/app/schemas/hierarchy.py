@@ -37,6 +37,7 @@ class OrganizationBase(BaseModel):
     address_user_in_emails_with: str = "full_name"
     emails_header: Optional[str] = None
     emails_footer: Optional[str] = None
+    notification_template: Optional[str] = None
     
     # Enhanced SMTP Settings
     email_delivery_method: str = "smtp"
@@ -45,9 +46,11 @@ class OrganizationBase(BaseModel):
     smtp_use_starttls: bool = True
     smtp_use_ssl: bool = False
     
-    # Branding Settings
     system_page_title: str = "Task Management System"
     theme_mode: str = "system"
+    border_radius: str = "0.75rem"
+    font_family: str = "'Inter', sans-serif"
+    font_size_base: str = "16px"
     
     # Company Profile (Phase 15)
     industry: Optional[str] = None
@@ -113,6 +116,7 @@ class OrganizationUpdate(BaseModel):
     address_user_in_emails_with: Optional[str] = None
     emails_header: Optional[str] = None
     emails_footer: Optional[str] = None
+    notification_template: Optional[str] = None
     
     # Enhanced SMTP Settings
     email_delivery_method: Optional[str] = None
@@ -123,6 +127,9 @@ class OrganizationUpdate(BaseModel):
     
     system_page_title: Optional[str] = None
     theme_mode: Optional[str] = None
+    border_radius: Optional[str] = None
+    font_family: Optional[str] = None
+    font_size_base: Optional[str] = None
     
     show_dashboard_clock: Optional[bool] = None
     show_dashboard_map: Optional[bool] = None

@@ -10,11 +10,13 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "TaskManagement API"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "secret"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost/taskmanagement"
+    DATABASE_URL: str
+    
+    ALLOWED_ORIGINS: str = "*"
     
     SMTP_TLS: bool = True
     SMTP_PORT: Optional[int] = 587
@@ -27,8 +29,8 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     
     # Initial Setup
-    FIRST_SUPERADMIN_EMAIL: str = "admin@system.com"
-    FIRST_SUPERADMIN_PASSWORD: str = "12345"
+    FIRST_SUPERADMIN_EMAIL: str
+    FIRST_SUPERADMIN_PASSWORD: str
     FIRST_ALLOWED_DOMAIN: Optional[str] = None
     
     class Config:

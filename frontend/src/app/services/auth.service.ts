@@ -35,11 +35,13 @@ export class AuthService {
     }
 
     login(email: string, password: string): Observable<any> {
-        const formData = new FormData();
-        formData.append('username', email);
-        formData.append('password', password);
+        const body = new URLSearchParams();
+        body.set('username', email);
+        body.set('password', password);
 
-        return this.http.post<any>(`${environment.apiUrl}/auth/login/access-token`, formData).pipe(
+        return this.http.post<any>(`${environment.apiUrl}/auth/login/access-token`, body.toString(), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        }).pipe(
             tap(response => {
                 localStorage.setItem('token', response.access_token);
             })

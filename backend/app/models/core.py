@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Table, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Table, DateTime, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -45,6 +45,7 @@ class Organization(Base):
     address_user_in_emails_with = Column(String, default="full_name")
     emails_header = Column(String, nullable=True) # Stored as JSON string
     emails_footer = Column(String, nullable=True) # Stored as JSON string
+    notification_template = Column(String, nullable=True) # Stored as JSON string
     
     # Enhanced SMTP Settings
     email_delivery_method = Column(String, default="smtp")
@@ -56,6 +57,9 @@ class Organization(Base):
     # Branding Settings
     system_page_title = Column(String, default="Task Management System")
     theme_mode = Column(String, default="system") # system, light, dark
+    border_radius = Column(String, default="0.75rem")
+    font_family = Column(String, default="'Inter', sans-serif")
+    font_size_base = Column(String, default="16px")
     
     # Company Profile (Phase 15)
     industry = Column(String, nullable=True)
@@ -132,6 +136,8 @@ class Role(Base):
     
     organization = relationship("Organization", back_populates="roles")
     permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
+    permissions_json = Column(String, nullable=True) # JSON string for granular overrides
+    is_standard = Column(Boolean, default=False)
 
 class Permission(Base):
     __tablename__ = "permissions"
@@ -148,6 +154,20 @@ role_permissions = Table(
     Base.metadata,
     Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
+)
+
+user_branches = Table(
+    "user_branches",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("branch_id", Integer, ForeignKey("branches.id"), primary_key=True),
+)
+
+user_departments = Table(
+    "user_departments",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("dept_id", Integer, ForeignKey("departments.id"), primary_key=True),
 )
 
 class User(Base):
@@ -196,6 +216,9 @@ class User(Base):
     department = relationship("Department")
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     role = relationship("Role")
+    
+    branches = relationship("Branch", secondary=user_branches)
+    departments = relationship("Department", secondary=user_departments)
 
     created_tasks = relationship("Task", foreign_keys="Task.creator_id", back_populates="creator")
     assigned_tasks = relationship("Task", foreign_keys="Task.assignee_id", back_populates="assignee")
@@ -231,6 +254,8 @@ class Invitation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True))
     is_used = Column(Boolean, default=False)
+    branch_ids = Column(ARRAY(Integer), default=[])
+    dept_ids = Column(ARRAY(Integer), default=[])
 
     organization = relationship("Organization")
     role = relationship("Role")

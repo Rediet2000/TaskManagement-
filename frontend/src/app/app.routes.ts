@@ -83,6 +83,10 @@ export const routes: Routes = [
                 path: 'archive',
                 loadComponent: () => import('./pages/tasks/archive-management').then(m => m.ArchiveManagement)
             },
+            {
+                path: 'calendar',
+                loadComponent: () => import('./pages/calendar/calendar').then(m => m.CalendarPage)
+            },
             // Add more feature routes here
         ]
     },

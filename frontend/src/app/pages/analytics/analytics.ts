@@ -17,7 +17,7 @@ export class Analytics implements OnInit {
     constructor(private http: HttpClient) { }
 
     ngOnInit() {
-        this.http.get(`${environment.apiUrl}/reports`).subscribe(data => {
+        this.http.get(`${environment.apiUrl}/reports/realtime`).subscribe(data => {
             this.insights.set(data);
         });
     }

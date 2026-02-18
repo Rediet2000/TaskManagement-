@@ -18,6 +18,8 @@ class UserCreate(UserBase):
     dept_id: Optional[int] = None
     team_id: Optional[int] = None
     role_id: Optional[int] = None
+    branch_ids: List[int] = []
+    dept_ids: List[int] = []
     invitation_token: Optional[str] = None
 
 class UserInvite(UserBase):
@@ -25,6 +27,8 @@ class UserInvite(UserBase):
     full_name: str
     org_id: int
     role_id: Optional[int] = None
+    branch_ids: List[int] = []
+    dept_ids: List[int] = []
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
@@ -33,6 +37,8 @@ class UserUpdate(UserBase):
     role_id: Optional[int] = None
     dept_id: Optional[int] = None
     team_id: Optional[int] = None
+    branch_ids: Optional[List[int]] = None
+    dept_ids: Optional[List[int]] = None
 
 class User(UserBase):
     id: int
@@ -51,6 +57,8 @@ class UserOut(User):
     permissions: List[str] = []
     dept_name: Optional[str] = None
     team_name: Optional[str] = None
+    branch_ids: List[int] = []
+    dept_ids: List[int] = []
     
     # Profile fields
     profile_photo_url: Optional[str] = None

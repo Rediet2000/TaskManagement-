@@ -10,6 +10,9 @@ export class TranslationService {
         'en': {
             'DASHBOARD': 'Dashboard',
             'TASKS': 'Tasks',
+            'CALENDAR': 'Calendar',
+            'CALENDAR_VIEW': 'Calendar View',
+            'CALENDAR_SUBTITLE': 'Manage your schedule, tasks, and notes in one place',
             'AGILE_BOARD': 'Agile Board',
             'PROBLEM_AREAS': 'Problem Areas',
             'RBAC_ORG': 'RBAC & Org',
@@ -198,7 +201,6 @@ export class TranslationService {
             // Dashboard
             'CLOCK': 'Clock',
             'STATS': 'Stats',
-            'CALENDAR': 'Calendar',
             // Security
             'VANGUARD_SECURITY_PROTOCOLS': 'Vanguard Security Protocols',
             'REAL_TIME_AUDIT_LOGS': 'Real-time audit logs and security event monitoring.',
@@ -311,6 +313,9 @@ export class TranslationService {
         'am': {
             'DASHBOARD': 'ዳሽቦርድ',
             'TASKS': 'ተግባራት',
+            'CALENDAR': 'ካላንደር',
+            'CALENDAR_VIEW': 'የቀን መቁጠሪያ እይታ',
+            'CALENDAR_SUBTITLE': 'መርሃግብርዎን፣ ተግባሮችዎን እና ማስታወሻዎችዎን በአንድ ቦታ ያስተዳድሩ',
             'AGILE_BOARD': 'አጃይል ቦርድ',
             'PROBLEM_AREAS': 'የችግር ቦታዎች',
             'RBAC_ORG': 'RBAC እና ድርጅት',
@@ -499,7 +504,6 @@ export class TranslationService {
             // Dashboard
             'CLOCK': 'ሰዓት',
             'STATS': 'ስታቲስቲክስ',
-            'CALENDAR': 'ካላንደር',
             // Security
             'VANGUARD_SECURITY_PROTOCOLS': 'የደህንነት ፕሮቶኮሎች',
             'REAL_TIME_AUDIT_LOGS': 'የእውነተኛ ጊዜ የኦዲት ምዝግብ እና የደህንነት ክትትል::',
@@ -612,6 +616,9 @@ export class TranslationService {
         'om': {
             'DASHBOARD': 'Daashboordii',
             'TASKS': 'Hojiiwwan',
+            'CALENDAR': 'Kaalandara',
+            'CALENDAR_VIEW': 'Ilaalcha Kaalandaraa',
+            'CALENDAR_SUBTITLE': 'Sagantaa keessan, hojiiwwan keessan fi yaadannoowwan keessan bakka tokkotti hordofaa',
             'AGILE_BOARD': 'Agile Board',
             'PROBLEM_AREAS': 'Bakka Rakkoo',
             'RBAC_ORG': 'RBAC & Org',
@@ -800,7 +807,6 @@ export class TranslationService {
             // Dashboard
             'CLOCK': 'Sa\'aatii',
             'STATS': 'Istaatistiksii',
-            'CALENDAR': 'Kaalaandarii',
             // Security
             'VANGUARD_SECURITY_PROTOCOLS': 'Pirootokoolota Nageenyaa',
             'REAL_TIME_AUDIT_LOGS': 'Hordoffii nageenyaa fi galmee audit yeroo sirrii::',

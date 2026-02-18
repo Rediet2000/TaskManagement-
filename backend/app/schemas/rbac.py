@@ -18,6 +18,8 @@ class Permission(PermissionBase):
 class RoleBase(BaseModel):
     name: str
     parent_role_id: Optional[int] = None
+    permissions_json: Optional[str] = None
+    is_standard: bool = False
 
 class RoleCreate(RoleBase):
     org_id: int
@@ -27,6 +29,8 @@ class RoleUpdate(BaseModel):
     name: Optional[str] = None
     parent_role_id: Optional[int] = None
     permission_ids: Optional[List[int]] = None
+    permissions_json: Optional[str] = None
+    is_standard: Optional[bool] = None
 
 class Role(RoleBase):
     id: int

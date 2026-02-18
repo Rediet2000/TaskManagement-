@@ -190,6 +190,22 @@
             &.note-item i {
                 color: #f59e0b;
             }
+
+            &.clickable {
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    border-color: var(--primary);
+                    transform: translateX(4px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                &:active {
+                    transform: translateX(2px) scale(0.98);
+                }
+            }
         }
     }
 }

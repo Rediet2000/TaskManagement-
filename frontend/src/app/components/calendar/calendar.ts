@@ -4,6 +4,7 @@ import { TaskService, Task } from '../../services/task.service';
 import { NotesService, Note } from '../../services/notes.service';
 import { forkJoin } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { Router } from '@angular/router';
 
 interface CalendarDay {
     date: Date;
@@ -23,6 +24,7 @@ interface CalendarDay {
 export class CalendarComponent implements OnInit {
     private taskService = inject(TaskService);
     private notesService = inject(NotesService);
+    private router = inject(Router);
 
     currentDate = signal(new Date());
     days = signal<CalendarDay[]>([]);
@@ -119,5 +121,13 @@ export class CalendarComponent implements OnInit {
 
     selectDay(day: CalendarDay) {
         this.selectedDay.set(day);
+    }
+
+    onItemClick(item: any, type: 'task' | 'note') {
+        if (type === 'task') {
+            this.router.navigate(['/agile']);
+        } else if (type === 'note') {
+            this.router.navigate(['/notes']);
+        }
     }
 }

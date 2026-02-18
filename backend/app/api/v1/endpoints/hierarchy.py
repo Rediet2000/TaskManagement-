@@ -75,6 +75,11 @@ def update_organization(
     db.add(org)
     db.commit()
     db.refresh(org)
+    
+    # Log org update
+    from app.db.utils import create_audit_log
+    create_audit_log(db, current_user.id, "Update Organization", f"Updated organization profile for {org.name}", org_id)
+    
     return org
 
 @router.post("/organizations/{org_id}/logo", response_model=schemas.hierarchy.Organization)
@@ -118,6 +123,10 @@ async def upload_logo(
     db.add(org)
     db.commit()
     db.refresh(org)
+    
+    # Log logo update
+    from app.db.utils import create_audit_log
+    create_audit_log(db, current_user.id, "Update Logo", "Uploaded new organization logo", org_id)
     
     return org
 
@@ -247,6 +256,11 @@ def create_allowed_domain(
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Log allowed domain addition
+    from app.db.utils import create_audit_log
+    create_audit_log(db, domain_in.user_id if hasattr(domain_in, "user_id") else 0, "Add Allowed Domain", f"Added domain restriction: {db_obj.domain}", db_obj.org_id)
+    
     return db_obj
 
 @router.get("/mail-lists", response_model=List[schemas.hierarchy.MailList])

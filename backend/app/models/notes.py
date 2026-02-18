@@ -28,6 +28,7 @@ class Note(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     reminder_at = Column(DateTime(timezone=True), nullable=True)
+    reminder_sent = Column(Boolean, default=False)
 
     folder = relationship("Folder", back_populates="notes")
     creator = relationship("User")

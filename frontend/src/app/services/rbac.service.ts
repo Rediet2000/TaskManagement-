@@ -8,6 +8,8 @@ export interface Role {
     name: string;
     org_id: number;
     parent_role_id?: number | null;
+    is_standard?: boolean;
+    permissions_json?: string;
 }
 
 export interface Permission {

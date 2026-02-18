@@ -70,6 +70,7 @@ export class MainLayout implements OnInit {
         const items = [
             { label: 'DASHBOARD', route: '/', icon: 'bi-grid-1x2-fill' },
             { label: 'TASKS', route: '/tasks', icon: 'bi-list-check' },
+            { label: 'CALENDAR', route: '/calendar', icon: 'bi-calendar3' },
             { label: 'AGILE_BOARD', route: '/agile', icon: 'bi-kanban-fill' },
             { label: 'PROBLEM_AREAS', route: '/problems', icon: 'bi-exclamation-octagon-fill' },
             { label: 'RBAC_ORG', route: '/rbac', icon: 'bi-shield-lock-fill' },

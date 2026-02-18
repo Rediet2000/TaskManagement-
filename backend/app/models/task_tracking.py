@@ -81,6 +81,7 @@ class Task(Base):
     rating_comment = Column(Text, nullable=True)
     
     is_archived = Column(Boolean, default=False)
+    due_reminder_sent = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")

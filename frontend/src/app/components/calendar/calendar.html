@@ -32,14 +32,14 @@
 
         <div class="item-list">
             @for (task of day.tasks; track task.id) {
-            <div class="item task-item">
+            <div class="item task-item clickable" (click)="onItemClick(task, 'task')">
                 <i class="bi bi-check2-square"></i>
                 <span>{{ task.title }}</span>
                 <span class="badge" [class]="task.priority.toLowerCase()">{{ task.priority }}</span>
             </div>
             }
             @for (note of day.notes; track note.id) {
-            <div class="item note-item">
+            <div class="item note-item clickable" (click)="onItemClick(note, 'note')">
                 <i class="bi bi-sticky-fill"></i>
                 <span>{{ note.title }}</span>
                 <span class="badge note">Reminder</span>

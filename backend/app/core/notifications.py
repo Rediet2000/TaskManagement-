@@ -1,4 +1,6 @@
-from typing import Any, Optional
+from typing import Any, Optional, Dict
+import json
+from datetime import datetime
 from telegram import Bot
 from app.core.config import settings
 import smtplib
@@ -93,5 +95,51 @@ class NotificationService:
                 server.sendmail(from_email, email_to, message.as_string())
         except Exception as e:
             print(f"Error sending email: {e}")
+
+    def format_message(self, db: Session, org_id: int, lang: str, event_type: str, context: Dict[str, Any]) -> str:
+        """
+        Formats a notification message using placeholders.
+        """
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        template = None
+        
+        if org and org.notification_template:
+            try:
+                templates = json.loads(org.notification_template)
+                template = templates.get(lang) or templates.get('en')
+            except:
+                template = None
+
+        if not template:
+            # Standard default notifications
+            defaults = {
+                "NEW_TASK": "🚀 New Task Assigned: {task_title}\nPriority: {priority}\nBy: {sender_name}\nDate: {date} at {time}",
+                "TASK_UPDATE": "📝 Task Updated: {task_title}\nStatus: {status}\nBy: {sender_name}",
+                "PROBLEM_ASSIGNED": "⚠️ Problem Assigned: {task_title}\nSeverity: {priority}\nDate: {date} {time}",
+                "NOTE_REMINDER": "🕒 REMINDER: {task_title}\nFolder: {folder_name}\nContent: {content}\nSet for: {date} {time}"
+            }
+            template = defaults.get(event_type, "Notification: {task_title} ({date} {time})")
+
+        # Prepare global context
+        now = datetime.now()
+        global_ctx = {
+            "date": now.strftime("%Y-%m-%d"),
+            "time": now.strftime("%H:%M"),
+            "hour": now.strftime("%H"),
+            "minute": now.strftime("%M"),
+            "day": now.strftime("%A"),
+            "org_name": org.name if org else "Task System"
+        }
+        
+        # Merge contexts
+        full_ctx = {**global_ctx, **context}
+        
+        # Perform replacement
+        message = template
+        for key, value in full_ctx.items():
+            placeholder = "{" + key + "}"
+            message = message.replace(placeholder, str(value if value is not None else ""))
+            
+        return message
 
 notification_service = NotificationService()

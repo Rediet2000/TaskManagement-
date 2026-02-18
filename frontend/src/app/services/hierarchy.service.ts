@@ -49,6 +49,9 @@ export interface Organization {
     // Branding Settings
     system_page_title?: string;
     theme_mode?: string;
+    border_radius?: string;
+    font_family?: string;
+    font_size_base?: string;
 
     // Dashboard Settings
     show_dashboard_clock?: boolean;

@@ -2,15 +2,14 @@ name: task-management
 
 services:
   db:
-    # Upgrading to PostgreSQL 17 (Latest stable). 
-    # Note: Major version upgrades may require volume purging or migration.
     image: postgres:17
+    restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=taskmanagement
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-taskmanagement}
     ports:
       - "5432:5432"
 
@@ -20,17 +19,13 @@ services:
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/taskmanagement
-      - SECRET_KEY=your-secret-key-here
-      - FIRST_SUPERADMIN_EMAIL=${FIRST_SUPERADMIN_EMAIL:-admin@system.com}
-      - FIRST_SUPERADMIN_PASSWORD=${FIRST_SUPERADMIN_PASSWORD:-12345}
-      - FIRST_ALLOWED_DOMAIN=${FIRST_ALLOWED_DOMAIN}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - FIRST_SUPERADMIN_EMAIL=${FIRST_SUPERADMIN_EMAIL}
+      - FIRST_SUPERADMIN_PASSWORD=${FIRST_SUPERADMIN_PASSWORD}
     ports:
       - "8000:8000"
     depends_on:
@@ -46,5 +41,3 @@ services:
 
 volumes:
   postgres_data:
-  frontend_node_modules:
-  frontend_angular_cache:

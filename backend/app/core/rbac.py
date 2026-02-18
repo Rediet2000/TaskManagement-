@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.core import User, Role, Permission
+import json
 
 class RBACService:
     @staticmethod
@@ -10,6 +11,19 @@ class RBACService:
         
         permissions = {p.code for p in role.permissions}
         
+        # Handle granular overrides from JSON
+        if role.permissions_json:
+            try:
+                overrides = json.loads(role.permissions_json)
+                # overrides structure: {"code": true/false}
+                for code, val in overrides.items():
+                    if val:
+                        permissions.add(code)
+                    elif code in permissions:
+                        permissions.remove(code)
+            except:
+                pass
+
         # Inherit permissions from parent role
         if role.parent_role_id:
             parent_permissions = RBACService.get_role_permissions(db, role.parent_role_id)
@@ -66,28 +80,41 @@ class RBACService:
         
         # Role Mappings
         ROLE_MAPPINGS = {
-            "Admin": [
+            "Super Admin": [
+                "task:view", "task:create", "task:edit_own", "task:edit_all", "task:assign", "task:status", "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
+                "project:view", "project:create", "project:edit", "project:delete", "project:members", "project:visibility",
+                "user:invite", "user:remove", "user:role_assign", "role:manage",
+                "report:view", "report:own", "report:team", "report:export", "report:audit", "report:org",
+                "settings:manage", "settings:workflow", "settings:tags", "settings:integrations", "settings:billing", "settings:branding", "settings:rbac"
+            ],
+            "Organization Admin": [
                 "task:view", "task:create", "task:edit_own", "task:edit_all", "task:assign", "task:status", "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
                 "project:view", "project:create", "project:edit", "project:delete", "project:members", "project:visibility",
                 "user:invite", "user:remove", "user:role_assign", "role:manage",
                 "report:view", "report:own", "report:team", "report:export", "report:audit",
-                "settings:manage", "settings:workflow", "settings:tags", "settings:integrations", "settings:billing"
+                "settings:manage", "settings:workflow", "settings:tags", "settings:integrations", "settings:branding"
             ],
-            "Manager": [
+            "HR Manager": [
+                "task:view", "task:create", "task:edit_own", "task:status", "task:comment", "task:upload",
+                "user:invite", "user:remove", "user:role_assign",
+                "report:view", "report:own"
+            ],
+            "Project Manager": [
                 "task:view", "task:create", "task:edit_all", "task:assign", "task:status", 
                 "task:priority", "task:comment", "task:upload", "task:delete", "task:archive",
                 "project:view", "project:create", "project:edit", "project:members", "project:visibility",
-                "user:invite", "user:role_assign",
-                "report:view", "report:own", "report:team", "report:export",
-                "settings:workflow", "settings:tags"
+                "report:view", "report:own", "report:team", "report:export"
+            ],
+            "Finance Viewer": [
+                "task:view", "project:view", "report:view", "report:org"
             ],
             "Contributor": [
                 "task:view", "task:create", "task:edit_own", "task:status", "task:comment", "task:upload",
                 "project:view",
                 "report:view", "report:own"
             ],
-            "Viewer": [
-                "task:view", "project:view", "report:view"
+            "Guest": [
+                "task:view", "project:view"
             ]
         }
 
@@ -99,7 +126,7 @@ class RBACService:
             # Check if role exists for this org
             role = db.query(Role).filter(Role.org_id == org_id, Role.name == role_name).first()
             if not role:
-                role = Role(name=role_name, org_id=org_id)
+                role = Role(name=role_name, org_id=org_id, is_standard=True)
                 db.add(role)
                 db.flush() # Populate ID
             

@@ -127,3 +127,14 @@ def get_admin_dashboard_stats(
             "firewall": "ENFORCED"
         }
     }
+
+@router.get("/realtime", response_model=schemas.reports.RealTimeInsights)
+def get_realtime_reports(
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+    org_id: int = Depends(deps.get_current_org_id)
+) -> Any:
+    """
+    Get real-time insights for the Analytics page.
+    """
+    return AnalyticsEngine.get_realtime_insights(db, org_id)

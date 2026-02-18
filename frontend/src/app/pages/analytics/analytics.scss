@@ -146,3 +146,38 @@
         }
     }
 }
+
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+
+    .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid rgba(59, 130, 246, 0.1);
+        border-bottom-color: var(--primary);
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

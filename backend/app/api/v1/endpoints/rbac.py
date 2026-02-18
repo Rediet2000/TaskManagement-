@@ -34,7 +34,9 @@ def create_role(
     role = models.core.Role(
         name=role_in.name,
         org_id=role_in.org_id,
-        parent_role_id=role_in.parent_role_id
+        parent_role_id=role_in.parent_role_id,
+        permissions_json=role_in.permissions_json,
+        is_standard=role_in.is_standard
     )
     
     if role_in.permission_ids:

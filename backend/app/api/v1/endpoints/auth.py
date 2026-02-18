@@ -24,6 +24,10 @@ def login_access_token(
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     
+    # Log successful login
+    from app.db.utils import create_audit_log
+    create_audit_log(db, user.id, "Login", "User logged in successfully", user.org_id)
+    
     # Get organization's session timeout
     org = db.query(models.core.Organization).filter(models.core.Organization.id == user.org_id).first()
     timeout_minutes = org.session_timeout_minutes if org else settings.ACCESS_TOKEN_EXPIRE_MINUTES
@@ -87,17 +91,28 @@ def create_user_signup(
         is_active=True,
         is_verified=True, # Auto-verify if they signed up via invitation
     )
-    db.add(db_obj)
     
-    # Mark invitation as used
+    # Handle invitation pre-associations
     if user_in.invitation_token:
         invitation = db.query(models.core.Invitation).filter(models.core.Invitation.token == user_in.invitation_token).first()
         if invitation:
             invitation.is_used = True
+            if invitation.branch_ids:
+                branches = db.query(models.core.Branch).filter(models.core.Branch.id.in_(invitation.branch_ids)).all()
+                db_obj.branches = branches
+            if invitation.dept_ids:
+                depts = db.query(models.core.Department).filter(models.core.Department.id.in_(invitation.dept_ids)).all()
+                db_obj.departments = depts
             db.add(invitation)
             
+    db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Log signup
+    from app.db.utils import create_audit_log
+    create_audit_log(db, db_obj.id, "Signup", f"User registered via invitation: {user_in.email}", db_obj.org_id)
+    
     return db_obj
 
 @router.get("/test-token", response_model=schemas.auth.User)
@@ -127,6 +142,9 @@ def read_user_me(
     if current_user.team_id:
         team = db.query(models.core.Team).get(current_user.team_id)
         u_out.team_name = team.name if team else None
+    
+    u_out.branch_ids = [b.id for b in current_user.branches]
+    u_out.dept_ids = [d.id for d in current_user.departments]
     return u_out
 
 @router.post("/password-reset-request")
@@ -217,6 +235,9 @@ def get_users(
         if user.team_id:
             team = db.query(models.core.Team).get(user.team_id)
             u_out.team_name = team.name if team else None
+        
+        u_out.branch_ids = [b.id for b in user.branches]
+        u_out.dept_ids = [d.id for d in user.departments]
         results.append(u_out)
         
     return results
@@ -240,6 +261,12 @@ def toggle_user_active(
         
     user.is_active = not user.is_active
     db.commit()
+    
+    # Log status toggle
+    from app.db.utils import create_audit_log
+    action = "Activate User" if user.is_active else "Deactivate User"
+    create_audit_log(db, current_user.id, action, f"Toggled status for user {user.email}", current_user.org_id)
+    
     return {"status": "success", "is_active": user.is_active}
 
 @router.put("/users/{user_id}", response_model=schemas.auth.User)
@@ -263,7 +290,14 @@ def update_user(
         user.hashed_password = security.get_password_hash(update_data.pop("password"))
         
     for field, value in update_data.items():
-        setattr(user, field, value)
+        if field == "branch_ids":
+            branches = db.query(models.core.Branch).filter(models.core.Branch.id.in_(value)).all()
+            user.branches = branches
+        elif field == "dept_ids":
+            depts = db.query(models.core.Department).filter(models.core.Department.id.in_(value)).all()
+            user.departments = depts
+        else:
+            setattr(user, field, value)
         
     db.add(user)
     db.commit()
@@ -302,10 +336,16 @@ def invite_user(
         email=invite_in.email,
         org_id=current_user.org_id,
         role_id=invite_in.role_id,
+        branch_ids=invite_in.branch_ids,
+        dept_ids=invite_in.dept_ids,
         expires_at=datetime.now() + timedelta(days=7)
     )
     db.add(invitation)
     db.commit()
+    
+    # Log invitation
+    from app.db.utils import create_audit_log
+    create_audit_log(db, current_user.id, "Invite User", f"Created invitation for {invite_in.email}", current_user.org_id)
     
     # Send Email (if configured)
     org = current_user.organization

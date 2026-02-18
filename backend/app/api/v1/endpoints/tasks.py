@@ -66,7 +66,27 @@ async def create_task(
     if db_obj.assignee_id:
         assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
         if assignee:
-            message = f"🚀 New Task Assigned: {db_obj.title}\nPriority: {db_obj.priority}\nBy: {current_user.full_name}"
+            # Use dynamic formatting
+            context = {
+                "task_title": db_obj.title,
+                "priority": db_obj.priority,
+                "sender_name": current_user.full_name,
+                "user_name": assignee.full_name
+            }
+            message = notification_service.format_message(db, org_id, assignee.language or "en", "NEW_TASK", context)
+            
+            # 1. Create Web Notification (database)
+            db_notif = models.task_tracking.Notification(
+                user_id=assignee.id,
+                channel="web",
+                message=message,
+                status="Pending",
+                trigger_event="task_assign"
+            )
+            db.add(db_notif)
+            db.commit() # Commit to ensure it's saved
+
+            # 2. External Notifications
             background_tasks.add_task(
                 notification_service.send_telegram_background,
                 current_user.org_id, 
@@ -204,6 +224,36 @@ def update_task(
     db.add(task)
     db.commit()
     db.refresh(task)
+
+    # Notify assignee on update (if status changed or new assignee)
+    if "status" in update_data or "assignee_id" in update_data:
+        assignee = task.assignee
+        if assignee:
+            context = {
+                "task_title": task.title,
+                "status": task.status,
+                "priority": task.priority,
+                "sender_name": current_user.full_name,
+                "user_name": assignee.full_name
+            }
+            event_type = "TASK_UPDATE"
+            message = notification_service.format_message(db, current_user.org_id, assignee.language or "en", event_type, context)
+            
+            # 1. Create Web Notification
+            db_notif = models.task_tracking.Notification(
+                user_id=assignee.id,
+                channel="web",
+                message=message,
+                status="Pending",
+                trigger_event="task_update"
+            )
+            db.add(db_notif)
+            db.commit()
+
+            # 2. External Notifications
+            notification_service.send_email_notification(db, current_user.org_id, assignee.email, f"Task Update: {task.title}", message)
+            # notification_service.send_telegram_background(current_user.org_id, message) # This handles its own DB session
+
     create_audit_log(db, current_user.id, "TASK_UPDATE", f"Task '{task.title}' updated.", org_id=current_user.org_id)
     return task
 

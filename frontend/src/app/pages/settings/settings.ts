@@ -1,6 +1,9 @@
 import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { HierarchyService, Organization } from '../../services/hierarchy.service';
 import { AuthService } from '../../services/auth.service';
 import { RbacService, Role as RbacRole } from '../../services/rbac.service';
@@ -12,7 +15,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
     selector: 'app-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, TranslatePipe],
+    imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
     templateUrl: './settings.html',
     styleUrls: ['./settings.scss']
 })
@@ -21,6 +24,8 @@ export class Settings implements OnInit {
     private authService = inject(AuthService);
     private rbacService = inject(RbacService);
     private themeService = inject(ThemeService);
+    private router = inject(Router);
+    private http = inject(HttpClient);
 
     activeTab = signal<string>('user-access');
     org = this.themeService.currentOrg;
@@ -79,7 +84,8 @@ export class Settings implements OnInit {
         plainTextMail: false,
         addressUserWith: 'full_name',
         emailsHeader: {} as Record<string, string>,
-        emailsFooter: {} as Record<string, string>
+        emailsFooter: {} as Record<string, string>,
+        notificationTemplate: {} as Record<string, string>
     };
 
     currentTemplateLang = signal<string>('en');
@@ -87,7 +93,10 @@ export class Settings implements OnInit {
 
     branding = {
         systemPageTitle: 'Task Management System',
-        themeMode: 'system'
+        themeMode: 'system',
+        borderRadius: '0.75rem',
+        fontFamily: "'Inter', sans-serif",
+        fontSizeBase: '16px'
     };
 
     companyProfile = {
@@ -115,8 +124,19 @@ export class Settings implements OnInit {
         fullName: '',
         email: '',
         password: '',
-        roleId: null as number | null
+        roleId: null as number | null,
+        branch_ids: [] as number[],
+        dept_ids: [] as number[]
     };
+
+    branches = signal<any[]>([]);
+    departments = signal<any[]>([]);
+
+    // RBAC Management
+    allPermissions = signal<any[]>([]);
+    selectedRole = signal<any>(null);
+    rolePermissions = signal<Record<string, boolean>>({});
+    isEditingRole = signal<boolean>(false);
 
     // UI States
     loading = false;
@@ -162,6 +182,8 @@ export class Settings implements OnInit {
                     this.loadRoles();
                     this.loadAllowedDomains();
                     this.loadUsers();
+                    this.loadOrgDetails();
+                    this.loadPermissions();
                 }
             }
         });
@@ -179,7 +201,9 @@ export class Settings implements OnInit {
             fullName: user.full_name,
             email: user.email,
             password: '', // Keep empty unless updating
-            roleId: user.role_id
+            roleId: user.role_id,
+            branch_ids: user.branch_ids || [],
+            dept_ids: user.dept_ids || []
         };
         // Scroll to form
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -188,7 +212,7 @@ export class Settings implements OnInit {
     onCancelEdit() {
         this.isEditingUser.set(false);
         this.editUserId.set(null);
-        this.newUser = { fullName: '', email: '', password: '', roleId: null };
+        this.newUser = { fullName: '', email: '', password: '', roleId: null, branch_ids: [], dept_ids: [] };
     }
 
     loadUsers() {
@@ -203,6 +227,66 @@ export class Settings implements OnInit {
             next: (data) => this.roles.set(data),
             error: (err) => console.error('Failed to load roles', err)
         });
+    }
+
+    loadPermissions() {
+        this.rbacService.getPermissions().subscribe({
+            next: (data) => this.allPermissions.set(data),
+            error: (err) => console.error('Failed to load permissions', err)
+        });
+    }
+
+    loadOrgDetails() {
+        this.hierarchyService.getBranches().subscribe(data => this.branches.set(data));
+        this.hierarchyService.getDepartments().subscribe(data => this.departments.set(data));
+    }
+
+    // RBAC Handlers
+    onSelectRole(role: any) {
+        this.selectedRole.set(role);
+        this.isEditingRole.set(true);
+        // Parse permissions_json
+        try {
+            this.rolePermissions.set(role.permissions_json ? JSON.parse(role.permissions_json) : {});
+        } catch (e) {
+            this.rolePermissions.set({});
+        }
+    }
+
+    togglePermission(code: string) {
+        const current = { ...this.rolePermissions() };
+        current[code] = !current[code];
+        this.rolePermissions.set(current);
+    }
+
+    onSaveRole() {
+        const role = this.selectedRole();
+        if (!role) return;
+
+        this.loading = true;
+        const updateData = {
+            permissions_json: JSON.stringify(this.rolePermissions())
+        };
+
+        this.rbacService.updateRole(role.id, updateData).subscribe({
+            next: () => {
+                this.success.set('Role permissions updated successfully');
+                this.loading = false;
+                this.isEditingRole.set(false);
+                this.loadRoles();
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                this.error.set('Failed to update role');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
+    onCancelRoleEdit() {
+        this.isEditingRole.set(false);
+        this.selectedRole.set(null);
     }
 
     loadAllowedDomains() {
@@ -297,6 +381,9 @@ export class Settings implements OnInit {
                 this.secondaryColor = org.secondary_color || '#64748b';
                 this.branding.systemPageTitle = orgAny.system_page_title || 'Task Management System';
                 this.branding.themeMode = orgAny.theme_mode || 'system';
+                this.branding.borderRadius = orgAny.border_radius || '0.75rem';
+                this.branding.fontFamily = orgAny.font_family || "'Inter', sans-serif";
+                this.branding.fontSizeBase = orgAny.font_size_base || '16px';
 
                 // Company Profile
                 this.companyProfile.industry = orgAny.industry || '';
@@ -350,6 +437,12 @@ export class Settings implements OnInit {
                 } catch (e) {
                     this.notifications.emailsFooter = {};
                 }
+
+                try {
+                    this.notifications.notificationTemplate = orgAny.notification_template ? JSON.parse(orgAny.notification_template) : {};
+                } catch (e) {
+                    this.notifications.notificationTemplate = {};
+                }
             },
             error: (err) => console.error('Failed to load org settings', err)
         });
@@ -395,6 +488,7 @@ export class Settings implements OnInit {
             address_user_in_emails_with: this.notifications.addressUserWith,
             emails_header: JSON.stringify(this.notifications.emailsHeader),
             emails_footer: JSON.stringify(this.notifications.emailsFooter),
+            notification_template: JSON.stringify(this.notifications.notificationTemplate),
 
             email_delivery_method: this.smtp.deliveryMethod,
             smtp_helo_domain: this.smtp.heloDomain,
@@ -403,6 +497,9 @@ export class Settings implements OnInit {
             smtp_use_ssl: this.smtp.useSSL,
             system_page_title: this.branding.systemPageTitle,
             theme_mode: this.branding.themeMode,
+            border_radius: this.branding.borderRadius,
+            font_family: this.branding.fontFamily,
+            font_size_base: this.branding.fontSizeBase,
             show_dashboard_clock: this.dashboard.showClock,
             show_dashboard_map: this.dashboard.showMap,
             show_dashboard_stats: this.dashboard.showStats,
@@ -443,7 +540,9 @@ export class Settings implements OnInit {
             full_name: this.newUser.fullName,
             email: this.newUser.email,
             org_id: this.org()!.id,
-            role_id: this.newUser.roleId
+            role_id: this.newUser.roleId,
+            branch_ids: this.newUser.branch_ids,
+            dept_ids: this.newUser.dept_ids
         };
 
         if (this.isEditingUser()) {
@@ -472,7 +571,7 @@ export class Settings implements OnInit {
                 next: () => {
                     this.userSuccess.set('User invited successfully. They will receive an email with login details.');
                     this.userLoading = false;
-                    this.newUser = { fullName: '', email: '', password: '', roleId: null };
+                    this.newUser = { fullName: '', email: '', password: '', roleId: null, branch_ids: [], dept_ids: [] };
                     this.loadUsers();
                     this.autoDismiss('user');
                 },
@@ -560,5 +659,33 @@ export class Settings implements OnInit {
                 this.autoDismiss('test');
             }
         });
+    }
+
+    onDownloadAuditLogs() {
+        const url = `${environment.apiUrl}/security/export`;
+        this.loading = true;
+        this.http.get(url, { responseType: 'blob' }).subscribe({
+            next: (blob) => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `audit_logs_${this.org()?.id || 'export'}.csv`;
+                link.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                this.loading = false;
+                this.success.set('Audit logs downloaded successfully');
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                console.error('Download failed', err);
+                this.error.set('Failed to download audit logs');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
+    onViewAllLogs() {
+        this.router.navigate(['/security']);
     }
 }

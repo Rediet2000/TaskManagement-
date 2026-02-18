@@ -19,9 +19,10 @@ from sync_schema import ensure_schema
 ensure_schema()
 
 # Set all CORS enabled origins
+origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",")] if settings.ALLOWED_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for local network access
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

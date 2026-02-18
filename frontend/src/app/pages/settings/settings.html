@@ -23,6 +23,9 @@
             <button [class.active]="activeTab() === 'security'" (click)="setTab('security')">
                 <i class="bi bi-shield-fill-exclamation"></i> {{ 'SECURITY' | translate }}
             </button>
+            <button [class.active]="activeTab() === 'access-rights'" (click)="setTab('access-rights')">
+                <i class="bi bi-key-fill"></i> Access Rights
+            </button>
             <a href="/settings/integrations" class="nav-link" routerLink="/settings/integrations"
                 routerLinkActive="active"
                 style="display: flex; align-items: center; gap: 1.25rem; padding: 1rem 1.5rem; text-decoration: none; color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 700;">
@@ -42,6 +45,7 @@
 
         <!-- User & Access Management -->
         <div *ngIf="activeTab() === 'user-access'" class="tab-pane">
+            <!-- Standard User Record Form -->
             <section class="settings-section">
                 <div class="section-header">
                     <i class="bi" [class.bi-send-fill]="!isEditingUser()"
@@ -66,23 +70,45 @@
                         </div>
                         <div class="form-group flex-2">
                             <label>{{ 'EMAIL_ADDRESS' | translate }}</label>
-                            <input type="email" name="email" [(ngModel)]="newUser.email" placeholder="user@company.com">
+                            <input type="email" name="email" [(ngModel)]="newUser.email" placeholder="user@company.com"
+                                [disabled]="isEditingUser()">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group flex-2" *ngIf="isEditingUser()">
-                            <label>{{ 'PASSWORD' | translate }}</label>
+                            <label>{{ 'PASSWORD' | translate }} (Leave blank to keep current)</label>
                             <input type="password" name="password" [(ngModel)]="newUser.password">
                         </div>
                         <div class="form-group flex-1">
-                            <label>Role</label>
+                            <label>System Role</label>
                             <select name="roleId" [(ngModel)]="newUser.roleId">
                                 <option [ngValue]="null">Select Role</option>
                                 <option *ngFor="let role of roles()" [value]="role.id">{{ role.name }}</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-actions gap-2">
+
+                    <!-- Advanced Relations: Multiple Branches/Departments -->
+                    <div class="form-row mt-3">
+                        <div class="form-group flex-1">
+                            <label>Linked Branches</label>
+                            <select multiple name="branch_ids" [(ngModel)]="newUser.branch_ids"
+                                style="height: 100px; padding: 0.5rem;">
+                                <option *ngFor="let b of branches()" [value]="b.id">{{ b.name }}</option>
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Linked Departments</label>
+                            <select multiple name="dept_ids" [(ngModel)]="newUser.dept_ids"
+                                style="height: 100px; padding: 0.5rem;">
+                                <option *ngFor="let d of departments()" [value]="d.id">{{ d.name }}</option>
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions gap-2 mt-4">
                         <button *ngIf="isEditingUser()" type="button" class="btn-secondary" (click)="onCancelEdit()"
                             style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
                             {{ 'CANCEL' | translate }}
@@ -109,6 +135,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Org Links</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -118,6 +145,14 @@
                                 <td>{{ u.full_name }}</td>
                                 <td>{{ u.email }}</td>
                                 <td>{{ u.role_name || 'No Clearance' }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <span class="badge" style="background: rgba(30,58,138,0.4); color: #60a5fa;"
+                                            title="Linked Branches">📍 {{ u.branch_ids?.length || 0 }}</span>
+                                        <span class="badge" style="background: rgba(20,83,45,0.4); color: #4ade80;"
+                                            title="Linked Departments">🏢 {{ u.dept_ids?.length || 0 }}</span>
+                                    </div>
+                                </td>
                                 <td>
                                     <span class="badge" [class.badge-success]="u.is_active"
                                         [class.badge-error]="!u.is_active">
@@ -325,6 +360,28 @@
                                 placeholder="Enter email footer for {{ currentTemplateLang() | uppercase }}..."></textarea>
                         </div>
                     </div>
+
+                    <!-- Notification Template Editor -->
+                    <div class="form-group mt-4">
+                        <label>Notification Message Template</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-info-circle"
+                                        title="Variables: {task_title}, {user_name}, {status}, {priority}, {sender_name}, {content}, {folder_name}, {date}, {time}, {hour}, {minute}, {day}, {org_name}"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.notificationTemplate[currentTemplateLang()]"
+                                placeholder="Enter notification template (e.g. New task assigned: {task_title}) for {{ currentTemplateLang() | uppercase }}..."></textarea>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -492,13 +549,44 @@
                         <label>System Page Title</label>
                         <input type="text" [(ngModel)]="branding.systemPageTitle">
                     </div>
-                    <div class="form-group mt-3">
-                        <label>Theme Appearance</label>
-                        <select [(ngModel)]="branding.themeMode">
-                            <option value="light">Light Mode</option>
-                            <option value="dark">Dark Mode</option>
-                            <option value="system">Follow System</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label>Theme Appearance</label>
+                            <select [(ngModel)]="branding.themeMode">
+                                <option value="light">Light Mode</option>
+                                <option value="dark">Dark Mode</option>
+                                <option value="system">Follow System</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Border Radius</label>
+                            <select [(ngModel)]="branding.borderRadius">
+                                <option value="0px">Sharp (0px)</option>
+                                <option value="0.25rem">Modern (4px)</option>
+                                <option value="0.5rem">Soft (8px)</option>
+                                <option value="0.75rem">Premium (12px)</option>
+                                <option value="1rem">Bubbled (16px)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row mt-3">
+                        <div class="form-group flex-2">
+                            <label>Typography (Font Family)</label>
+                            <select [(ngModel)]="branding.fontFamily">
+                                <option value="'Inter', sans-serif">Inter (Standard Modern)</option>
+                                <option value="'Outfit', sans-serif">Outfit (Premium Rounded)</option>
+                                <option value="'Roboto', sans-serif">Roboto (Clean / Tech)</option>
+                                <option value="'Segoe UI', sans-serif">System Optimized</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Base Scaling</label>
+                            <select [(ngModel)]="branding.fontSizeBase">
+                                <option value="14px">Compact (14px)</option>
+                                <option value="16px">Standard (16px)</option>
+                                <option value="18px">Large (18px)</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-row mt-3">
                         <div class="form-group">
@@ -604,13 +692,91 @@
                 <p style="color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 500; margin-bottom: 2rem;">
                     View and download a history of system activities and user actions.</p>
                 <div class="mt-3" style="display: flex; gap: 1.5rem;">
-                    <button class="premium-btn">
+                    <button class="premium-btn" (click)="onDownloadAuditLogs()">
                         <i class="bi bi-file-earmark-arrow-down-fill"></i> Download Audit Logs (CSV)
                     </button>
-                    <button class="btn-secondary"
+                    <button class="btn-secondary" (click)="onViewAllLogs()"
                         style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
                         <i class="bi bi-shield-shaded"></i> View All Logs
                     </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Access Rights (RBAC) -->
+        <div *ngIf="activeTab() === 'access-rights'" class="tab-pane">
+            <section class="settings-section">
+                <div class="section-header">
+                    <i class="bi bi-key-fill"></i>
+                    <h2>System Roles & Granular Overrides</h2>
+                </div>
+
+                <div class="role-management-grid">
+                    <!-- Roles List -->
+                    <div class="role-list">
+                        <div *ngFor="let role of roles()" class="role-card"
+                            [class.active]="selectedRole()?.id === role.id" (click)="onSelectRole(role)">
+                            <div class="role-card-info">
+                                <span class="role-name">{{ role.name }}</span>
+                                <span class="role-type" *ngIf="role.is_standard">STANDARD</span>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Permissions Editor -->
+                    <div class="permission-editor" *ngIf="isEditingRole()">
+                        <div class="editor-header">
+                            <h3>Configuring: {{ selectedRole().name }}</h3>
+                            <div class="header-actions">
+                                <button class="btn-ghost" (click)="onCancelRoleEdit()">Cancel</button>
+                                <button class="premium-btn small" (click)="onSaveRole()">Save Overrides</button>
+                            </div>
+                        </div>
+
+                        <div class="permission-groups">
+                            <div class="perm-table-container">
+                                <table class="perm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission Code</th>
+                                            <th>Inherited / Overriden</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let perm of allPermissions()">
+                                            <td>
+                                                <div class="perm-info">
+                                                    <code>{{ perm.code }}</code>
+                                                    <small>{{ perm.description }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="inheritance-badge"
+                                                    [class.overridden]="rolePermissions()[perm.code] !== undefined">
+                                                    {{ rolePermissions()[perm.code] !== undefined ? 'OVERRIDDEN' :
+                                                    'INHERITED' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <label class="switch">
+                                                    <input type="checkbox" [checked]="rolePermissions()[perm.code]"
+                                                        (change)="togglePermission(perm.code)">
+                                                    <span class="slider round"></span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="no-role-selected" *ngIf="!isEditingRole()">
+                        <i class="bi bi-shield-lock"></i>
+                        <p>Select a role from the list to manage its granular permission overrides.</p>
+                    </div>
                 </div>
             </section>
         </div>
