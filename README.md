@@ -23,9 +23,6 @@ A high-performance, enterprise-grade task management system with organizational 
 
 ### Prerequisites
 - Docker & Docker Desktop
-
-### Development
-1. **Clone & Setup**:
    ```bash
    git clone -b Dev https://github.com/Rediet2000/TaskManagement-.git
    cd TaskManagement-
