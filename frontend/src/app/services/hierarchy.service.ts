@@ -30,16 +30,40 @@ export interface Organization {
     // Notification Settings
     telegram_bot_token?: string;
     telegram_chat_id?: string;
+    telegram_enabled?: boolean;
+    email_notifications_enabled?: boolean;
+    emission_email_address?: string;
+    bcc_recipients?: boolean;
+    plain_text_mail?: boolean;
+    address_user_in_emails_with?: string;
+    emails_header?: string;
+    emails_footer?: string;
+
+    // Enhanced SMTP Settings
+    email_delivery_method?: string;
+    smtp_helo_domain?: string;
+    smtp_authentication?: string;
+    smtp_use_starttls?: boolean;
+    smtp_use_ssl?: boolean;
 
     // Branding Settings
     system_page_title?: string;
     theme_mode?: string;
+    border_radius?: string;
+    font_family?: string;
+    font_size_base?: string;
 
     // Dashboard Settings
     show_dashboard_clock?: boolean;
     show_dashboard_map?: boolean;
     show_dashboard_stats?: boolean;
     show_dashboard_tasks?: boolean;
+
+    dashboard_layout?: string;
+    dashboard_refresh_rate?: number;
+    dashboard_clock_type?: string;
+    dashboard_metrics_config?: string;
+    dashboard_compact_mode?: boolean;
 }
 
 export interface OrganizationCreate {
@@ -150,5 +174,18 @@ export class HierarchyService {
 
     testSmtp(smtpData: any): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/test-smtp`, smtpData);
+    }
+
+    testTelegram(botToken: string, chatId: string): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/test-telegram?bot_token=${botToken}&chat_id=${chatId}`, {});
+    }
+
+    // Dashboard Data
+    getDashboardStats(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard/stats`);
+    }
+
+    getRecentTasks(limit: number = 10): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/recent-tasks?limit=${limit}`);
     }
 }

@@ -14,10 +14,15 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+# Initialize Database Schema
+from sync_schema import ensure_schema
+ensure_schema()
+
 # Set all CORS enabled origins
+origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",")] if settings.ALLOWED_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,6 +38,11 @@ app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 @app.get("/")
 def root():
     return {"message": "Task Management API is running"}
+
+from app.core.tasks import start_background_tasks
+@app.on_event("startup")
+async def startup_event():
+    start_background_tasks()
 
 from app.api.v1.api import api_router
 app.include_router(api_router, prefix=settings.API_V1_STR)

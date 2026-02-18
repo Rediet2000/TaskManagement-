@@ -11,6 +11,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/signup/signup').then(m => m.SignUp)
     },
     {
+        path: 'register-company',
+        loadComponent: () => import('./pages/signup/register-company').then(m => m.RegisterCompany)
+    },
+    {
         path: 'forgot-password',
         loadComponent: () => import('./pages/login/forgot-password').then(m => m.ForgotPassword)
     },
@@ -32,6 +36,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/tasks/task-board').then(m => m.TaskBoard)
             },
             {
+                path: 'agile',
+                loadComponent: () => import('./pages/tasks/agile-board').then(m => m.AgileBoard)
+            },
+            {
                 path: 'problems',
                 loadComponent: () => import('./pages/problems/problem-tracking').then(m => m.ProblemTracking)
             },
@@ -46,6 +54,38 @@ export const routes: Routes = [
             {
                 path: 'settings',
                 loadComponent: () => import('./pages/settings/settings').then(m => m.Settings)
+            },
+            {
+                path: 'settings/integrations',
+                loadComponent: () => import('./pages/settings/integrations/integrations').then(m => m.Integrations)
+            },
+            {
+                path: 'profile',
+                loadComponent: () => import('./pages/profile/profile').then(m => m.Profile)
+            },
+            {
+                path: 'reports',
+                loadComponent: () => import('./pages/reports/reports').then(m => m.Reports)
+            },
+            {
+                path: 'admin-dashboard',
+                loadComponent: () => import('./pages/dashboard/admin-dashboard').then(m => m.AdminDashboard)
+            },
+            {
+                path: 'notes',
+                loadComponent: () => import('./pages/notes/notes').then(m => m.NotesPage)
+            },
+            {
+                path: 'security',
+                loadComponent: () => import('./pages/security/security-logs').then(m => m.SecurityLogs)
+            },
+            {
+                path: 'archive',
+                loadComponent: () => import('./pages/tasks/archive-management').then(m => m.ArchiveManagement)
+            },
+            {
+                path: 'calendar',
+                loadComponent: () => import('./pages/calendar/calendar').then(m => m.CalendarPage)
             },
             // Add more feature routes here
         ]

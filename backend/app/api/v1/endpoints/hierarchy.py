@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from app import schemas, models
 from app.api import deps
 from app.db.base import get_db
+import httpx
 
 router = APIRouter()
 
@@ -30,6 +31,12 @@ def create_organization(
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Initialize roles and standard hierarchy for the new organization
+    from app.core.rbac import RBACService
+    RBACService.initialize_org_roles(db, db_obj.id)
+    RBACService.setup_standard_hierarchy(db, db_obj.id)
+    
     return db_obj
 
 @router.get("/organizations/{org_id}", response_model=schemas.hierarchy.Organization)
@@ -68,6 +75,11 @@ def update_organization(
     db.add(org)
     db.commit()
     db.refresh(org)
+    
+    # Log org update
+    from app.db.utils import create_audit_log
+    create_audit_log(db, current_user.id, "Update Organization", f"Updated organization profile for {org.name}", org_id)
+    
     return org
 
 @router.post("/organizations/{org_id}/logo", response_model=schemas.hierarchy.Organization)
@@ -111,6 +123,10 @@ async def upload_logo(
     db.add(org)
     db.commit()
     db.refresh(org)
+    
+    # Log logo update
+    from app.db.utils import create_audit_log
+    create_audit_log(db, current_user.id, "Update Logo", "Uploaded new organization logo", org_id)
     
     return org
 
@@ -240,6 +256,11 @@ def create_allowed_domain(
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    # Log allowed domain addition
+    from app.db.utils import create_audit_log
+    create_audit_log(db, domain_in.user_id if hasattr(domain_in, "user_id") else 0, "Add Allowed Domain", f"Added domain restriction: {db_obj.domain}", db_obj.org_id)
+    
     return db_obj
 
 @router.get("/mail-lists", response_model=List[schemas.hierarchy.MailList])
@@ -273,18 +294,18 @@ def test_smtp_connection(
     print(f"--- SMTP Test Start: {smtp_in.smtp_host}:{smtp_in.smtp_port} ---")
     try:
         # Create connection
-        if smtp_in.smtp_port == 465:
-            print("Using SMTP_SSL for port 465")
+        if smtp_in.use_ssl:
+            print(f"Using SMTP_SSL for {smtp_in.smtp_host}:{smtp_in.smtp_port}")
             server = smtplib.SMTP_SSL(smtp_in.smtp_host, smtp_in.smtp_port, timeout=15)
         else:
-            print(f"Using standard SMTP for port {smtp_in.smtp_port}")
+            print(f"Using standard SMTP for {smtp_in.smtp_host}:{smtp_in.smtp_port}")
             server = smtplib.SMTP(smtp_in.smtp_host, smtp_in.smtp_port, timeout=15)
         
         with server:
-            server.set_debuglevel(1) # Enable smtplib debug output
+            server.set_debuglevel(1)
             server.ehlo()
             
-            if smtp_in.smtp_port != 465:
+            if not smtp_in.use_ssl and smtp_in.use_starttls:
                 print("Starting TLS")
                 server.starttls()
                 server.ehlo()
@@ -307,3 +328,106 @@ def test_smtp_connection(
     except Exception as e:
         print(f"SMTP Error encountered: {str(e)}")
         raise HTTPException(status_code=400, detail=f"SMTP Error: {str(e)}")
+
+@router.post("/test-telegram")
+async def test_telegram_connection(
+    *,
+    bot_token: str,
+    chat_id: str,
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Test Telegram bot connection and chat availability.
+    """
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": "Task Management System: Operational status confirmed. Bot connection active."
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=10.0)
+            
+            if response.status_code != 200:
+                error_data = response.json()
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Telegram API Error: {error_data.get('description', 'Unknown error')}"
+                )
+                
+            return {"status": "success", "message": "Test message sent successfully."}
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=400, detail=f"Telegram connection failed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error testing Telegram: {str(e)}")
+
+@router.get("/dashboard/stats")
+def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get dashboard statistics for the current user's organization"""
+    from datetime import datetime
+    from sqlalchemy import func
+    from app.models.task_tracking import Task, ProblemArea
+    
+    org_id = current_user.org_id
+    
+    # Total tasks
+    total_tasks = db.query(func.count(Task.id))\
+        .filter(Task.org_id == org_id)\
+        .scalar() or 0
+    
+    # Active tasks (Started status)
+    from app.models.task_tracking import TaskStatus
+    active_tasks = db.query(func.count(Task.id))\
+        .filter(
+            Task.org_id == org_id,
+            Task.status == TaskStatus.STARTED.value
+        ).scalar() or 0
+    
+    # Overdue tasks (due_date < today and status != Completed)
+    today = datetime.now()
+    overdue_tasks = db.query(func.count(Task.id))\
+        .filter(
+            Task.org_id == org_id,
+            Task.due_date < today,
+            Task.status != TaskStatus.COMPLETED.value
+        ).scalar() or 0
+    
+    # Total problems
+    total_problems = db.query(func.count(ProblemArea.id))\
+        .filter(ProblemArea.org_id == org_id)\
+        .scalar() or 0
+    
+    return {
+        "total_tasks": total_tasks,
+        "active_tasks": active_tasks,
+        "overdue_tasks": overdue_tasks,
+        "total_problems": total_problems
+    }
+
+@router.get("/dashboard/recent-tasks")
+def get_recent_tasks(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get recent tasks for the current user's organization"""
+    from app.models.task_tracking import Task
+    
+    org_id = current_user.org_id
+    
+    tasks = db.query(Task)\
+        .filter(Task.org_id == org_id)\
+        .order_by(Task.created_at.desc())\
+        .limit(limit)\
+        .all()
+    
+    return [{
+        "id": task.id,
+        "title": task.title,
+        "priority": task.priority or "Medium",
+        "status": task.status or "pending"
+    } for task in tasks]

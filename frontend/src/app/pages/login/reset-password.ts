@@ -3,23 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-reset-password',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
+    imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
     template: `
         <div class="auth-container">
             <div class="auth-card glass-card animate-fade-in">
                 <div class="auth-header">
                     <img src="assets/logo.png" alt="Logo" class="auth-logo" onerror="this.src='https://placehold.co/120x40/1e293b/ffffff?text=Task+Mgmt'">
-                    <h1>Set New Password</h1>
-                    <p class="text-muted">Enter your new secure password below</p>
+                    <h1>{{ 'SET_NEW_PASSWORD' | translate }}</h1>
+                    <p class="text-muted">{{ 'NEW_PASSWORD' | translate }}</p>
                 </div>
 
                 <form (ngSubmit)="onSubmit()" #resetForm="ngForm">
                     <div class="form-group animate-slide-up" style="animation-delay: 0.1s">
-                        <label for="password">New Password</label>
+                        <label for="password">{{ 'NEW_PASSWORD' | translate }}</label>
                         <div class="input-wrapper">
                             <i class="bi bi-lock"></i>
                             <input 
@@ -35,7 +36,7 @@ import { AuthService } from '../../services/auth.service';
                     </div>
 
                     <div class="form-group animate-slide-up" style="animation-delay: 0.15s">
-                        <label for="confirm">Confirm Password</label>
+                        <label for="confirm">{{ 'CONFIRM_PASSWORD' | translate }}</label>
                         <div class="input-wrapper">
                             <i class="bi bi-shield-check"></i>
                             <input 
@@ -65,12 +66,12 @@ import { AuthService } from '../../services/auth.service';
                         style="animation-delay: 0.2s"
                         [disabled]="loading() || !resetForm.valid || newPassword !== confirmPassword || success"
                     >
-                        <span *ngIf="!loading()">Update Password</span>
+                        <span *ngIf="!loading()">{{ 'UPDATE_PASSWORD' | translate }}</span>
                         <span *ngIf="loading()" class="loader small"></span>
                     </button>
 
                     <div class="auth-footer animate-slide-up" style="animation-delay: 0.3s">
-                        <p><a routerLink="/login">Back to Login</a></p>
+                        <p><a routerLink="/login">{{ 'BACK_TO_LOGIN' | translate }}</a></p>
                     </div>
                 </form>
             </div>

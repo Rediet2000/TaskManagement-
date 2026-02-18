@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -23,3 +23,17 @@ class TaskReport(TaskReportBase):
     
     class Config:
         from_attributes = True
+
+class DepartmentEfficiency(BaseModel):
+    name: str
+    score: float
+
+class SectorPerformance(BaseModel):
+    rank: int
+    name: str
+    score: str # e.g. "99.1% Opti-Rate"
+
+class RealTimeInsights(BaseModel):
+    diagnostic_performance: List[float]
+    department_ranking: List[DepartmentEfficiency]
+    sector_performance: List[SectorPerformance]

@@ -1,15 +1,21 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { HierarchyService, Organization } from '../../services/hierarchy.service';
 import { AuthService } from '../../services/auth.service';
 import { RbacService, Role as RbacRole } from '../../services/rbac.service';
 import { ThemeService } from '../../services/theme.service';
 
+import { TranslationService } from '../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+
 @Component({
     selector: 'app-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
     templateUrl: './settings.html',
     styleUrls: ['./settings.scss']
 })
@@ -18,6 +24,8 @@ export class Settings implements OnInit {
     private authService = inject(AuthService);
     private rbacService = inject(RbacService);
     private themeService = inject(ThemeService);
+    private router = inject(Router);
+    private http = inject(HttpClient);
 
     activeTab = signal<string>('user-access');
     org = this.themeService.currentOrg;
@@ -42,7 +50,12 @@ export class Settings implements OnInit {
         port: 587,
         user: '',
         password: '',
-        from_email: ''
+        from_email: '',
+        deliveryMethod: 'smtp',
+        heloDomain: '',
+        authentication: 'login',
+        useStartTLS: true,
+        useSSL: false
     };
 
     passwordPolicy = {
@@ -63,50 +76,102 @@ export class Settings implements OnInit {
 
     notifications = {
         telegramBotToken: '',
-        telegramChatId: ''
+        telegramChatId: '',
+        telegramEnabled: false,
+        emailNotificationsEnabled: true,
+        emissionEmailAddress: '',
+        bccRecipients: false,
+        plainTextMail: false,
+        addressUserWith: 'full_name',
+        emailsHeader: {} as Record<string, string>,
+        emailsFooter: {} as Record<string, string>,
+        notificationTemplate: {} as Record<string, string>
     };
+
+    currentTemplateLang = signal<string>('en');
+    templateLangs = ['en', 'am', 'om'];
 
     branding = {
         systemPageTitle: 'Task Management System',
-        themeMode: 'system'
+        themeMode: 'system',
+        borderRadius: '0.75rem',
+        fontFamily: "'Inter', sans-serif",
+        fontSizeBase: '16px'
+    };
+
+    companyProfile = {
+        industry: '',
+        address: '',
+        timezone: 'UTC',
+        default_language: 'en',
+        contact_phone: '',
+        contact_email: ''
     };
 
     dashboard = {
         showClock: true,
         showMap: false,
         showStats: true,
-        showTasks: true
+        showTasks: true,
+        layout: 'clock,stats,tasks,map',
+        refreshRate: 30,
+        clockType: 'analog',
+        metricsConfig: 'tasks,active,overdue,problems',
+        compactMode: false
     };
 
     newUser = {
         fullName: '',
         email: '',
         password: '',
-        roleId: null as number | null
+        roleId: null as number | null,
+        branch_ids: [] as number[],
+        dept_ids: [] as number[]
     };
+
+    branches = signal<any[]>([]);
+    departments = signal<any[]>([]);
+
+    // RBAC Management
+    allPermissions = signal<any[]>([]);
+    selectedRole = signal<any>(null);
+    rolePermissions = signal<Record<string, boolean>>({});
+    isEditingRole = signal<boolean>(false);
 
     // UI States
     loading = false;
     userLoading = false;
     testLoading = false;
-    success = '';
-    error = '';
-    userSuccess = '';
-    userError = '';
-    testSuccess = '';
-    testError = '';
+    success = signal('');
+    error = signal('');
+    userSuccess = signal('');
+    userError = signal('');
+    testSuccess = signal('');
+    testError = signal('');
 
-    ngOnInit() {
-        // Refresh session to get enriched role info
-        this.authService.getMe().subscribe();
+    private autoDismiss(type: 'global' | 'user' | 'test' = 'global') {
+        setTimeout(() => {
+            if (type === 'global') {
+                this.success.set('');
+                this.error.set('');
+            } else if (type === 'user') {
+                this.userSuccess.set('');
+                this.userError.set('');
+            } else if (type === 'test') {
+                this.testSuccess.set('');
+                this.testError.set('');
+            }
+        }, 10000);
+    }
 
-        this.authService.currentUser.subscribe(user => {
+    constructor() {
+        effect(() => {
+            const user = this.authService.currentUser();
             if (user) {
                 this.currentUser.set(user);
 
-                // Basic RBAC check: Only Super Admin or Admin can manage users
-                const userRole = (user.role_name || '').toLowerCase();
-                if (userRole.includes('admin') || userRole.includes('super')) {
+                // Basic RBAC check: Only Super Admin or those with user:invite permission can manage users
+                if (this.authService.hasPermission('user:invite')) {
                     this.canManageUsers.set(true);
                 } else {
                     this.canManageUsers.set(false);
@@ -117,9 +182,16 @@ export class Settings implements OnInit {
                     this.loadRoles();
                     this.loadAllowedDomains();
                     this.loadUsers();
+                    this.loadOrgDetails();
+                    this.loadPermissions();
                 }
             }
         });
+    }
+
+    ngOnInit() {
+        // Refresh session to get enriched role info
+        this.authService.getMe().subscribe();
     }
 
     onEditUser(user: any) {
@@ -129,7 +201,9 @@ export class Settings implements OnInit {
             fullName: user.full_name,
             email: user.email,
             password: '', // Keep empty unless updating
-            roleId: user.role_id
+            roleId: user.role_id,
+            branch_ids: user.branch_ids || [],
+            dept_ids: user.dept_ids || []
         };
         // Scroll to form
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -138,7 +212,7 @@ export class Settings implements OnInit {
     onCancelEdit() {
         this.isEditingUser.set(false);
         this.editUserId.set(null);
-        this.newUser = { fullName: '', email: '', password: '', roleId: null };
+        this.newUser = { fullName: '', email: '', password: '', roleId: null, branch_ids: [], dept_ids: [] };
     }
 
     loadUsers() {
@@ -148,9 +222,132 @@ export class Settings implements OnInit {
         });
     }
 
+    loadRoles() {
+        this.rbacService.getRoles().subscribe({
+            next: (data) => this.roles.set(data),
+            error: (err) => console.error('Failed to load roles', err)
+        });
+    }
+
+    loadPermissions() {
+        this.rbacService.getPermissions().subscribe({
+            next: (data) => this.allPermissions.set(data),
+            error: (err) => console.error('Failed to load permissions', err)
+        });
+    }
+
+    loadOrgDetails() {
+        this.hierarchyService.getBranches().subscribe(data => this.branches.set(data));
+        this.hierarchyService.getDepartments().subscribe(data => this.departments.set(data));
+    }
+
+    // RBAC Handlers
+    onSelectRole(role: any) {
+        this.selectedRole.set(role);
+        this.isEditingRole.set(true);
+        // Parse permissions_json
+        try {
+            this.rolePermissions.set(role.permissions_json ? JSON.parse(role.permissions_json) : {});
+        } catch (e) {
+            this.rolePermissions.set({});
+        }
+    }
+
+    togglePermission(code: string) {
+        const current = { ...this.rolePermissions() };
+        current[code] = !current[code];
+        this.rolePermissions.set(current);
+    }
+
+    onSaveRole() {
+        const role = this.selectedRole();
+        if (!role) return;
+
+        this.loading = true;
+        const updateData = {
+            permissions_json: JSON.stringify(this.rolePermissions())
+        };
+
+        this.rbacService.updateRole(role.id, updateData).subscribe({
+            next: () => {
+                this.success.set('Role permissions updated successfully');
+                this.loading = false;
+                this.isEditingRole.set(false);
+                this.loadRoles();
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                this.error.set('Failed to update role');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
+    onCancelRoleEdit() {
+        this.isEditingRole.set(false);
+        this.selectedRole.set(null);
+    }
+
+    loadAllowedDomains() {
+        // hierarchyService.getAllowedDomains(orgId) implementation needed
+        // For now, assuming it exists or using a placeholder if service is missing it
+        if (this.org()) {
+            this.hierarchyService.getAllowedDomains().subscribe({
+                next: (data) => this.allowedDomains.set(data),
+                error: (err) => console.error('Failed to load allowed domains', err)
+            });
+        }
+    }
+
+    onAddDomain() {
+        const domain = this.newDomain.trim();
+        if (!domain || !this.org()) return;
+
+        const domainData = {
+            domain: domain,
+            org_id: this.org()!.id
+        };
+
+        this.loading = true;
+        this.hierarchyService.createAllowedDomain(domainData).subscribe({
+            next: () => {
+                this.success.set('Domain added successfully');
+                this.loading = false;
+                this.newDomain = '';
+                this.loadAllowedDomains();
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                this.error.set(err.error?.detail || 'Failed to add domain');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
+    onDeleteDomain(id: number) {
+        if (!confirm('Are you sure you want to remove this domain?')) return;
+
+        this.loading = true;
+        this.hierarchyService.deleteAllowedDomain(id).subscribe({
+            next: () => {
+                this.success.set('Domain removed successfully');
+                this.loading = false;
+                this.loadAllowedDomains();
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                this.error.set(err.error?.detail || 'Failed to remove domain');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
     onToggleUserStatus(userId: number) {
         if (this.currentUser()?.id === userId) {
-            this.userError = 'Cannot deactivate yourself';
+            this.userError.set('Cannot deactivate yourself');
             return;
         }
 
@@ -169,8 +366,8 @@ export class Settings implements OnInit {
 
     setTab(tab: string) {
         this.activeTab.set(tab);
-        this.success = '';
-        this.error = '';
+        this.success.set('');
+        this.error.set('');
     }
 
     loadOrg(id: number) {
@@ -184,6 +381,17 @@ export class Settings implements OnInit {
                 this.secondaryColor = org.secondary_color || '#64748b';
                 this.branding.systemPageTitle = orgAny.system_page_title || 'Task Management System';
                 this.branding.themeMode = orgAny.theme_mode || 'system';
+                this.branding.borderRadius = orgAny.border_radius || '0.75rem';
+                this.branding.fontFamily = orgAny.font_family || "'Inter', sans-serif";
+                this.branding.fontSizeBase = orgAny.font_size_base || '16px';
+
+                // Company Profile
+                this.companyProfile.industry = orgAny.industry || '';
+                this.companyProfile.address = orgAny.address || '';
+                this.companyProfile.timezone = orgAny.timezone || 'UTC';
+                this.companyProfile.default_language = orgAny.default_language || 'en';
+                this.companyProfile.contact_phone = orgAny.contact_phone || '';
+                this.companyProfile.contact_email = orgAny.contact_email || '';
 
                 // SMTP
                 this.smtp.host = orgAny.smtp_host || '';
@@ -191,74 +399,60 @@ export class Settings implements OnInit {
                 this.smtp.user = orgAny.smtp_user || '';
                 this.smtp.password = orgAny.smtp_password || '';
                 this.smtp.from_email = orgAny.smtp_from_email || '';
+                this.smtp.deliveryMethod = orgAny.email_delivery_method || 'smtp';
+                this.smtp.heloDomain = orgAny.smtp_helo_domain || '';
+                this.smtp.authentication = orgAny.smtp_authentication || 'login';
+                this.smtp.useStartTLS = orgAny.smtp_use_starttls ?? true;
+                this.smtp.useSSL = orgAny.smtp_use_ssl ?? false;
 
-                // Password & Session
-                this.passwordPolicy.minLength = orgAny.password_min_length || 8;
-                this.passwordPolicy.requireSpecial = orgAny.password_require_special !== undefined ? orgAny.password_require_special : true;
-                this.passwordPolicy.expiryDays = orgAny.password_expiry_days || 90;
-                this.sessionConfig.timeoutMinutes = orgAny.session_timeout_minutes || 60;
-
-                // LDAP
-                this.ldap.enabled = !!orgAny.ldap_enabled;
-                this.ldap.server = orgAny.ldap_server || '';
-                this.ldap.baseDn = orgAny.ldap_base_dn || '';
+                // Advanced Dashboard
+                this.dashboard.showClock = orgAny.show_dashboard_clock ?? true;
+                this.dashboard.showMap = orgAny.show_dashboard_map ?? false;
+                this.dashboard.showStats = orgAny.show_dashboard_stats ?? true;
+                this.dashboard.showTasks = orgAny.show_dashboard_tasks ?? true;
+                this.dashboard.layout = orgAny.dashboard_layout || 'clock,stats,tasks,map';
+                this.dashboard.refreshRate = orgAny.dashboard_refresh_rate || 30;
+                this.dashboard.clockType = orgAny.dashboard_clock_type || 'analog';
+                this.dashboard.metricsConfig = orgAny.dashboard_metrics_config || 'tasks,active,overdue,problems';
+                this.dashboard.compactMode = orgAny.dashboard_compact_mode ?? false;
 
                 // Notifications
                 this.notifications.telegramBotToken = orgAny.telegram_bot_token || '';
                 this.notifications.telegramChatId = orgAny.telegram_chat_id || '';
+                this.notifications.telegramEnabled = orgAny.telegram_enabled ?? false;
+                this.notifications.emailNotificationsEnabled = orgAny.email_notifications_enabled ?? true;
+                this.notifications.emissionEmailAddress = orgAny.emission_email_address || '';
+                this.notifications.bccRecipients = orgAny.bcc_recipients ?? false;
+                this.notifications.plainTextMail = orgAny.plain_text_mail ?? false;
+                this.notifications.addressUserWith = orgAny.address_user_in_emails_with || 'full_name';
 
-                // Dashboard
-                this.dashboard.showClock = orgAny.show_dashboard_clock !== undefined ? orgAny.show_dashboard_clock : true;
-                this.dashboard.showMap = !!orgAny.show_dashboard_map;
-                this.dashboard.showStats = orgAny.show_dashboard_stats !== undefined ? orgAny.show_dashboard_stats : true;
-                this.dashboard.showTasks = orgAny.show_dashboard_tasks !== undefined ? orgAny.show_dashboard_tasks : true;
+                try {
+                    this.notifications.emailsHeader = orgAny.emails_header ? JSON.parse(orgAny.emails_header) : {};
+                } catch (e) {
+                    this.notifications.emailsHeader = {};
+                }
 
-                this.themeService.updateTheme(org);
+                try {
+                    this.notifications.emailsFooter = orgAny.emails_footer ? JSON.parse(orgAny.emails_footer) : {};
+                } catch (e) {
+                    this.notifications.emailsFooter = {};
+                }
+
+                try {
+                    this.notifications.notificationTemplate = orgAny.notification_template ? JSON.parse(orgAny.notification_template) : {};
+                } catch (e) {
+                    this.notifications.notificationTemplate = {};
+                }
             },
-            error: (err: any) => this.error = 'Failed to load organization settings'
-        });
-    }
-
-    loadAllowedDomains() {
-        this.hierarchyService.getAllowedDomains().subscribe({
-            next: (domains: any[]) => this.allowedDomains.set(domains),
-            error: (err: any) => console.error('Failed to load domains', err)
-        });
-    }
-
-    onAddDomain() {
-        if (!this.newDomain || !this.org()) return;
-        this.hierarchyService.createAllowedDomain({
-            domain: this.newDomain,
-            org_id: this.org()!.id
-        }).subscribe({
-            next: () => {
-                this.loadAllowedDomains();
-                this.newDomain = '';
-            },
-            error: (err: any) => this.error = 'Failed to add domain'
-        });
-    }
-
-    onDeleteDomain(id: number) {
-        this.hierarchyService.deleteAllowedDomain(id).subscribe({
-            next: () => this.loadAllowedDomains(),
-            error: (err: any) => this.error = 'Failed to delete domain'
-        });
-    }
-
-    loadRoles() {
-        this.rbacService.getRoles().subscribe({
-            next: (roles: RbacRole[]) => this.roles.set(roles),
-            error: (err: any) => console.error('Failed to load roles', err)
+            error: (err) => console.error('Failed to load org settings', err)
         });
     }
 
     onUpdateSettings() {
         if (!this.org()) return;
         this.loading = true;
-        this.success = '';
-        this.error = '';
+        this.success.set('');
+        this.error.set('');
 
         const updateData = {
             email_domain: this.emailDomain,
@@ -269,6 +463,14 @@ export class Settings implements OnInit {
             smtp_user: this.smtp.user,
             smtp_password: this.smtp.password,
             smtp_from_email: this.smtp.from_email,
+
+            industry: this.companyProfile.industry,
+            address: this.companyProfile.address,
+            timezone: this.companyProfile.timezone,
+            default_language: this.companyProfile.default_language,
+            contact_phone: this.companyProfile.contact_phone,
+            contact_email: this.companyProfile.contact_email,
+
             password_min_length: this.passwordPolicy.minLength,
             password_require_special: this.passwordPolicy.requireSpecial,
             password_expiry_days: this.passwordPolicy.expiryDays,
@@ -278,23 +480,48 @@ export class Settings implements OnInit {
             ldap_base_dn: this.ldap.baseDn,
             telegram_bot_token: this.notifications.telegramBotToken,
             telegram_chat_id: this.notifications.telegramChatId,
+            telegram_enabled: this.notifications.telegramEnabled,
+            email_notifications_enabled: this.notifications.emailNotificationsEnabled,
+            emission_email_address: this.notifications.emissionEmailAddress,
+            bcc_recipients: this.notifications.bccRecipients,
+            plain_text_mail: this.notifications.plainTextMail,
+            address_user_in_emails_with: this.notifications.addressUserWith,
+            emails_header: JSON.stringify(this.notifications.emailsHeader),
+            emails_footer: JSON.stringify(this.notifications.emailsFooter),
+            notification_template: JSON.stringify(this.notifications.notificationTemplate),
+
+            email_delivery_method: this.smtp.deliveryMethod,
+            smtp_helo_domain: this.smtp.heloDomain,
+            smtp_authentication: this.smtp.authentication,
+            smtp_use_starttls: this.smtp.useStartTLS,
+            smtp_use_ssl: this.smtp.useSSL,
             system_page_title: this.branding.systemPageTitle,
             theme_mode: this.branding.themeMode,
+            border_radius: this.branding.borderRadius,
+            font_family: this.branding.fontFamily,
+            font_size_base: this.branding.fontSizeBase,
             show_dashboard_clock: this.dashboard.showClock,
             show_dashboard_map: this.dashboard.showMap,
             show_dashboard_stats: this.dashboard.showStats,
-            show_dashboard_tasks: this.dashboard.showTasks
+            show_dashboard_tasks: this.dashboard.showTasks,
+            dashboard_layout: this.dashboard.layout,
+            dashboard_refresh_rate: this.dashboard.refreshRate,
+            dashboard_clock_type: this.dashboard.clockType,
+            dashboard_metrics_config: this.dashboard.metricsConfig,
+            dashboard_compact_mode: this.dashboard.compactMode
         };
 
         this.hierarchyService.updateOrganization(this.org()!.id, updateData).subscribe({
             next: (updatedOrg: Organization) => {
                 this.themeService.updateTheme(updatedOrg);
-                this.success = 'Settings updated successfully';
+                this.success.set('Settings updated successfully');
                 this.loading = false;
+                this.autoDismiss('global');
             },
             error: (err: any) => {
-                this.error = 'Failed to update settings';
+                this.error.set('Failed to update settings');
                 this.loading = false;
+                this.autoDismiss('global');
             }
         });
     }
@@ -302,51 +529,56 @@ export class Settings implements OnInit {
     onCreateUser() {
         if (!this.newUser.email || !this.org()) return;
 
-        // Password only required for new users
-        if (!this.isEditingUser() && !this.newUser.password) {
-            this.userError = 'Password is required for new users';
-            return;
-        }
+        // Password only required when editing if user wants to change it
+        // For new users, we use invite flow (no password needed from admin)
 
         this.userLoading = true;
-        this.userSuccess = '';
-        this.userError = '';
+        this.userSuccess.set('');
+        this.userError.set('');
 
         const userData: any = {
             full_name: this.newUser.fullName,
             email: this.newUser.email,
             org_id: this.org()!.id,
-            role_id: this.newUser.roleId
+            role_id: this.newUser.roleId,
+            branch_ids: this.newUser.branch_ids,
+            dept_ids: this.newUser.dept_ids
         };
 
-        if (this.newUser.password) {
-            userData.password = this.newUser.password;
-        }
-
-        if (this.isEditingUser() && this.editUserId()) {
-            this.authService.updateUser(this.editUserId()!, userData).subscribe({
-                next: () => {
-                    this.userSuccess = 'User updated successfully';
-                    this.userLoading = false;
-                    this.onCancelEdit();
-                    this.loadUsers();
-                },
-                error: (err: any) => {
-                    this.userError = err.error?.detail || 'Failed to update user';
-                    this.userLoading = false;
-                }
-            });
+        if (this.isEditingUser()) {
+            if (this.newUser.password) {
+                userData.password = this.newUser.password;
+            }
+            if (this.editUserId()) {
+                this.authService.updateUser(this.editUserId()!, userData).subscribe({
+                    next: () => {
+                        this.userSuccess.set('User updated successfully');
+                        this.userLoading = false;
+                        this.onCancelEdit();
+                        this.loadUsers();
+                        this.autoDismiss('user');
+                    },
+                    error: (err: any) => {
+                        this.userError.set(err.error?.detail || 'Failed to update user');
+                        this.userLoading = false;
+                        this.autoDismiss('user');
+                    }
+                });
+            }
         } else {
-            this.authService.signup(userData).subscribe({
+            // Invite new user
+            this.authService.inviteUser(userData).subscribe({
                 next: () => {
-                    this.userSuccess = 'User created successfully';
+                    this.userSuccess.set('User invited successfully. They will receive an email with login details.');
                     this.userLoading = false;
-                    this.newUser = { fullName: '', email: '', password: '', roleId: null };
+                    this.newUser = { fullName: '', email: '', password: '', roleId: null, branch_ids: [], dept_ids: [] };
                     this.loadUsers();
+                    this.autoDismiss('user');
                 },
                 error: (err: any) => {
-                    this.userError = err.error?.detail || 'Failed to create user';
+                    this.userError.set(err.error?.detail || 'Failed to invite user');
                     this.userLoading = false;
+                    this.autoDismiss('user');
                 }
             });
         }
@@ -359,12 +591,14 @@ export class Settings implements OnInit {
             this.hierarchyService.uploadLogo(this.org()!.id, file).subscribe({
                 next: (updatedOrg) => {
                     this.themeService.updateTheme(updatedOrg);
-                    this.success = 'Logo uploaded successfully';
+                    this.success.set('Logo uploaded successfully');
                     this.loading = false;
+                    this.autoDismiss('global');
                 },
                 error: (err) => {
-                    this.error = 'Failed to upload logo';
+                    this.error.set('Failed to upload logo');
                     this.loading = false;
+                    this.autoDismiss('global');
                 }
             });
         }
@@ -372,26 +606,86 @@ export class Settings implements OnInit {
 
     onTestSmtp() {
         this.testLoading = true;
-        this.testSuccess = '';
-        this.testError = '';
+        this.testSuccess.set('');
+        this.testError.set('');
 
         const testData = {
             smtp_host: this.smtp.host,
             smtp_port: this.smtp.port,
             smtp_user: this.smtp.user,
             smtp_password: this.smtp.password,
-            smtp_from_email: this.smtp.from_email
+            smtp_from_email: this.smtp.from_email || this.notifications.emissionEmailAddress,
+            use_starttls: this.smtp.useStartTLS,
+            use_ssl: this.smtp.useSSL
         };
 
         this.hierarchyService.testSmtp(testData).subscribe({
             next: (res) => {
-                this.testSuccess = res.message;
+                this.testSuccess.set(res.message);
                 this.testLoading = false;
+                this.autoDismiss('test');
             },
             error: (err) => {
-                this.testError = err.error?.detail || 'SMTP test failed';
+                this.testError.set(err.error?.detail || 'SMTP test failed');
                 this.testLoading = false;
+                this.autoDismiss('test');
             }
         });
+    }
+
+    onTestTelegram() {
+        if (!this.notifications.telegramBotToken || !this.notifications.telegramChatId) {
+            this.testError.set('Bot Token and Chat ID are required for testing.');
+            this.autoDismiss('test');
+            return;
+        }
+
+        this.testLoading = true;
+        this.testSuccess.set('');
+        this.testError.set('');
+
+        this.hierarchyService.testTelegram(
+            this.notifications.telegramBotToken,
+            this.notifications.telegramChatId
+        ).subscribe({
+            next: (res) => {
+                this.testSuccess.set(res.message);
+                this.testLoading = false;
+                this.autoDismiss('test');
+            },
+            error: (err) => {
+                this.testError.set(err.error?.detail || 'Telegram test failed');
+                this.testLoading = false;
+                this.autoDismiss('test');
+            }
+        });
+    }
+
+    onDownloadAuditLogs() {
+        const url = `${environment.apiUrl}/security/export`;
+        this.loading = true;
+        this.http.get(url, { responseType: 'blob' }).subscribe({
+            next: (blob) => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `audit_logs_${this.org()?.id || 'export'}.csv`;
+                link.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                this.loading = false;
+                this.success.set('Audit logs downloaded successfully');
+                this.autoDismiss('global');
+            },
+            error: (err) => {
+                console.error('Download failed', err);
+                this.error.set('Failed to download audit logs');
+                this.loading = false;
+                this.autoDismiss('global');
+            }
+        });
+    }
+
+    onViewAllLogs() {
+        this.router.navigate(['/security']);
     }
 }

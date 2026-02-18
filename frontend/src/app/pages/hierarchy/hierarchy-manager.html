@@ -1,47 +1,56 @@
-<div class="hierarchy-container animate-fade-in">
+<div class="hierarchy-container">
     <header class="page-header">
         <div class="header-content">
-            <h1>Organizational Hierarchy & RBAC</h1>
-            <p>Manage departments, teams, and access roles</p>
+            <h1>{{ 'STRUCTURAL_COMMAND' | translate }}</h1>
+            <p>{{ 'DEFINE_OPERATIONAL_HIERARCHY' | translate }}</p>
         </div>
         <div class="actions">
             @if (isSuperAdmin()) {
-            <button class="btn-secondary me-3" (click)="showOrgModal.set(true)">
-                <i class="bi bi-globe"></i> New Organization
+            <button class="premium-btn-secondary" (click)="showOrgModal.set(true)">
+                <i class="bi bi-globe"></i> {{ 'INITIALIZE_ORGANIZATION' | translate }}
             </button>
             }
-            <button class="btn-primary me-3" (click)="showBranchModal.set(true)">
-                <i class="bi bi-geo-alt"></i> New Branch
+            <button class="premium-btn" (click)="showBranchModal.set(true)">
+                <i class="bi bi-geo-alt"></i> {{ 'NEW_COMMAND_BRANCH' | translate }}
             </button>
-            <button class="btn-primary me-3" (click)="showRoleModal.set(true)">
-                <i class="bi bi-shield-lock"></i> Add Role
+            <button class="premium-btn" (click)="showRoleModal.set(true)">
+                <i class="bi bi-shield-lock"></i> {{ 'ADD_PROTOCOL_ROLE' | translate }}
             </button>
-            <button class="btn-primary" (click)="showDeptModal.set(true)">
-                <i class="bi bi-building-add"></i> Add Department
+            <button class="premium-btn" (click)="showDeptModal.set(true)">
+                <i class="bi bi-building-add"></i> {{ 'ADD_DEPARTMENT' | translate }}
             </button>
         </div>
     </header>
 
+    <!-- Global Success/Error Alerts -->
+    <div *ngIf="success()" class="alert-premium alert-success">
+        <i class="bi bi-check-circle"></i> {{ success() }}
+    </div>
+    <div *ngIf="error()" class="alert-premium alert-error">
+        <i class="bi bi-shield-exclamation"></i> {{ error() }}
+    </div>
+
     <div class="hierarchy-grid">
         <!-- Roles Section -->
-        <section class="glass-card full-width">
+        <section class="full-width">
             <div class="section-header">
-                <h2>Access Roles</h2>
+                <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                <h2>{{ 'INTELLIGENCE_ACCESS_ROLES' | translate }}</h2>
             </div>
             <div class="role-badges">
                 @for (role of roles(); track role.id) {
                 <div class="role-badge-group">
                     <span class="role-badge">
                         <i class="bi bi-person-badge"></i> {{ role.name }}
-                        <small *ngIf="role.parent_role_id" class="text-muted ms-2">(Reports to {{
+                        <small *ngIf="role.parent_role_id">({{ 'REPORTS_TO' | translate }} {{
                             getRoleName(role.parent_role_id) }})</small>
                     </span>
                     <div class="role-actions">
-                        <button class="icon-btn-xs" (click)="openEditRoleModal(role)" title="Edit">
-                            <i class="bi bi-pencil"></i>
+                        <button class="icon-btn-xs" (click)="openEditRoleModal(role)" title="Modify">
+                            <i class="bi bi-pencil-square"></i>
                         </button>
-                        <button class="icon-btn-xs delete" (click)="onDeleteRole(role.id)" title="Delete">
-                            <i class="bi bi-trash"></i>
+                        <button class="icon-btn-xs delete" (click)="onDeleteRole(role.id)" title="Decommission">
+                            <i class="bi bi-trash3-fill"></i>
                         </button>
                     </div>
                 </div>
@@ -54,22 +63,22 @@
         <div class="branch-container full-width">
             <div class="branch-header">
                 <div class="branch-info">
-                    <i class="bi bi-geo-alt-fill"></i>
+                    <i class="bi bi-layers-fill"></i>
                     <h2>{{ branch.name }}</h2>
                     <span class="branch-address" *ngIf="branch.address">{{ branch.address }}</span>
                 </div>
-                <button class="btn-primary btn-sm" (click)="openDeptModal(branch.id)">
-                    <i class="bi bi-building-add"></i> Add Department
+                <button class="premium-btn btn-sm" (click)="openDeptModal(branch.id)">
+                    <i class="bi bi-plus-circle"></i> {{ 'ADD_DEPARTMENT' | translate | uppercase }}
                 </button>
             </div>
 
             <div class="hierarchy-grid nested">
                 @for (dept of getDeptsByBranch(branch.id); track dept.id) {
-                <div class="glass-card dept-card">
+                <div class="dept-card">
                     <div class="dept-header">
-                        <i class="bi bi-building"></i>
+                        <i class="bi bi-building-fill"></i>
                         <h3>{{ dept.name }}</h3>
-                        <button class="icon-btn-sm" title="Add Team" (click)="openTeamModal(dept.id)">
+                        <button class="icon-btn-sm" title="Add Operational Team" (click)="openTeamModal(dept.id)">
                             <i class="bi bi-plus-lg"></i>
                         </button>
                     </div>
@@ -78,48 +87,19 @@
                         @for (team of getTeamsByDept(dept.id); track team.id) {
                         <div class="team-item">
                             <span class="team-name">{{ team.name }}</span>
-                            <span class="member-count">Operational</span>
+                            <span class="member-count">{{ 'ACTIVE' | translate }}</span>
                         </div>
                         }
                         @if (getTeamsByDept(dept.id).length === 0) {
-                        <div class="empty-msg">No teams yet</div>
+                        <div class="empty-msg">{{ 'NO_ACTIVE_TEAMS' | translate }}</div>
                         }
                     </div>
                 </div>
                 }
                 @if (getDeptsByBranch(branch.id).length === 0) {
-                <div class="glass-card empty-card">
-                    <p>No departments in this branch yet.</p>
-                </div>
-                }
-            </div>
-        </div>
-        }
-
-        <!-- Unassigned Departments (if any) -->
-        @if (getDeptsByBranch(null).length > 0) {
-        <div class="branch-container full-width">
-            <div class="branch-header">
-                <h2>Unassigned Departments</h2>
-            </div>
-            <div class="hierarchy-grid nested">
-                @for (dept of getDeptsByBranch(null); track dept.id) {
-                <!-- Same dept card as above -->
-                <div class="glass-card dept-card">
-                    <div class="dept-header">
-                        <i class="bi bi-building"></i>
-                        <h3>{{ dept.name }}</h3>
-                        <button class="icon-btn-sm" title="Add Team" (click)="openTeamModal(dept.id)">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-                    </div>
-                    <div class="team-list">
-                        @for (team of getTeamsByDept(dept.id); track team.id) {
-                        <div class="team-item">
-                            <span class="team-name">{{ team.name }}</span>
-                        </div>
-                        }
-                    </div>
+                <div class="dept-card"
+                    style="display: flex; align-items: center; justify-content: center; opacity: 0.5;">
+                    <p>{{ 'NO_DEPARTMENTS' | translate }}</p>
                 </div>
                 }
             </div>
@@ -127,63 +107,91 @@
         }
     </div>
 
-    <!-- Modals (Dept, Team, Role, Org) -->
+    <!-- Modals -->
 
     <!-- Role Modal -->
     <div class="modal-overlay" *ngIf="showRoleModal()">
-        <div class="glass-card modal-content small">
-            <h3>Add New Role</h3>
+        <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
+                {{ 'NEW_ACCESS_PROTOCOL' | translate }}</h3>
+
+            <div *ngIf="error()" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error() }}
+            </div>
+
             <form (ngSubmit)="onAddRole()">
                 <div class="form-group">
-                    <label>Role Name</label>
-                    <input type="text" name="name" [(ngModel)]="newRole.name" required placeholder="e.g. Sales Manager">
+                    <label>{{ 'PROTOCOL_DESIGNATION' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newRole.name" required
+                        placeholder="Protocol designation (e.g. Lead Architect)">
                 </div>
                 <div class="form-group">
-                    <label>Parent Role</label>
+                    <label>{{ 'COMMAND_AUTHORITY' | translate }}</label>
                     <select name="parentRole" [(ngModel)]="newRole.parent_role_id">
-                        <option [ngValue]="null">None (Top Level)</option>
+                        <option [ngValue]="null">Top Level Authority</option>
                         @for (role of roles(); track role.id) {
                         <option [ngValue]="role.id">{{ role.name }}</option>
                         }
                     </select>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showRoleModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Role</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showRoleModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ESTABLISH_ROLE' | translate }}</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Dept Modal (existing) -->
+    <!-- Other modals similarly styled with premium-btn/form-group -->
+    <!-- Dept Modal -->
     <div class="modal-overlay" *ngIf="showDeptModal()">
-        <div class="glass-card modal-content small">
-            <h3>Add New Department</h3>
+        <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
+                {{ 'NEW_DEPARTMENT' | translate }}</h3>
+
+            <div *ngIf="error()" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error() }}
+            </div>
+
             <form (ngSubmit)="onAddDept()">
                 <div class="form-group">
-                    <label>Department Name</label>
-                    <input type="text" name="name" [(ngModel)]="newDept.name" required placeholder="e.g. Operations">
+                    <label>{{ 'DEPARTMENT_DESIGNATION' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newDept.name" required
+                        placeholder="Department designation (e.g. Cyber Security)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showDeptModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showDeptModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ADD' | translate | uppercase }}</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Team Modal (existing) -->
+    <!-- Team Modal -->
     <div class="modal-overlay" *ngIf="showTeamModal()">
-        <div class="glass-card modal-content small">
-            <h3>Add New Team</h3>
+        <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
+                {{ 'ADD_OPERATIONAL_TEAM' | translate }}</h3>
+
+            <div *ngIf="error()" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error() }}
+            </div>
+
             <form (ngSubmit)="onAddTeam()">
                 <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" name="name" [(ngModel)]="newTeam.name" required placeholder="e.g. Night Shift">
+                    <label>{{ 'TEAM_DESIGNATION' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newTeam.name" required
+                        placeholder="Team designation (e.g. Alpha Unit)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary me-3" (click)="showTeamModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showTeamModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'CREATE_TEAM' | translate }}</button>
                 </div>
             </form>
         </div>
@@ -191,67 +199,118 @@
 
     <!-- Org Modal -->
     <div class="modal-overlay" *ngIf="showOrgModal()">
-        <div class="glass-card modal-content small">
-            <h3>New Organization</h3>
+        <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
+                {{ 'INITIALIZE_ORGANIZATION' | translate }}</h3>
+
+            <div *ngIf="error()" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error() }}
+            </div>
+
             <form (ngSubmit)="onAddOrg()">
                 <div class="form-group">
-                    <label>Organization Name</label>
-                    <input type="text" name="name" [(ngModel)]="newOrg.name" required placeholder="e.g. Acme Corp">
+                    <label>{{ 'ORGANIZATION_NAME' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newOrg.name" required
+                        placeholder="Organization name (e.g. Global Tech Solutions)">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary me-3" (click)="showOrgModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Organization</button>
+                    <button type="button" class="premium-btn-secondary" (click)="showOrgModal.set(false)">{{ 'CANCEL' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'INITIALIZE' | translate }}</button>
                 </div>
             </form>
         </div>
     </div>
-    <!-- Edit Role Modal -->
-    <div class="modal-overlay" *ngIf="showEditRoleModal()">
-        <div class="glass-card modal-content small">
-            <h3>Edit Role</h3>
-            <form (ngSubmit)="onUpdateRole()">
+
+    <!-- Branch Modal -->
+    <div class="modal-overlay" *ngIf="showBranchModal()">
+        <div class="full-width modal-content small" style="background: rgba(15, 23, 42, 0.95);">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2.5rem; text-align: center;">
+                {{ 'NEW_COMMAND_BRANCH' | translate }}</h3>
+
+            <div *ngIf="error()" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error() }}
+            </div>
+
+            <form (ngSubmit)="onAddBranch()">
                 <div class="form-group">
-                    <label>Role Name</label>
-                    <input type="text" name="editName" [(ngModel)]="editRoleData.name" required
-                        placeholder="e.g. Sales Manager">
+                    <label>{{ 'BRANCH_DESIGNATION' | translate }}</label>
+                    <input type="text" name="bName" [(ngModel)]="newBranch.name" required
+                        placeholder="Branch moniker (e.g. North HQ)">
                 </div>
                 <div class="form-group">
-                    <label>Parent Role</label>
-                    <select name="editParentRole" [(ngModel)]="editRoleData.parent_role_id">
-                        <option [ngValue]="null">None (Top Level)</option>
+                    <label>{{ 'GEOSPATIAL_ADDRESS' | translate }}</label>
+                    <input type="text" name="bAddress" [(ngModel)]="newBranch.address"
+                        placeholder="Physical vector (e.g. 789 Vanguard Way)">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="premium-btn-secondary" (click)="showBranchModal.set(false)">{{ 'CANCEL'
+                        | translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'ESTABLISH_BRANCH' | translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Role Modal -->
+    <div class="modal-overlay" *ngIf="showEditRoleModal()">
+        <div class="full-width modal-content" style="background: rgba(15, 23, 42, 0.97); max-width: 800px;">
+            <h3
+                style="font-family: 'Outfit', sans-serif; font-weight: 900; color: #fff; margin-bottom: 2rem; text-align: center;">
+                MODIFY ACCESS PROTOCOL</h3>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Protocol Designation</label>
+                    <input type="text" [(ngModel)]="editRoleData.name" placeholder="Protocol name">
+                </div>
+                <div class="form-group">
+                    <label>Command Authority (Parent)</label>
+                    <select [(ngModel)]="editRoleData.parent_role_id">
+                        <option [ngValue]="null">Top Level Authority</option>
                         @for (role of roles(); track role.id) {
-                        <option *ngIf="role.id !== editRoleData.id" [ngValue]="role.id">{{ role.name }}</option>
+                        @if (role.id !== editRoleData.id) {
+                        <option [ngValue]="role.id">{{ role.name }}</option>
+                        }
                         }
                     </select>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary me-3"
-                        (click)="showEditRoleModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+
+            <div class="permissions-section mt-4">
+                <h4
+                    style="color: #64748b; font-size: 0.875rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
+                    {{ 'INTELLIGENCE_ACCESS_PRIVILEGES' | translate }}
+                </h4>
+                <div class="permissions-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; max-height: 400px; overflow-y: auto; padding-right: 1rem;">
+                    @for (perm of permissions(); track perm.id) {
+                    <div class="permission-item" (click)="togglePermission(perm.id)"
+                        [style.background]="isPermissionSelected(perm.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)'"
+                        [style.border-color]="isPermissionSelected(perm.id) ? '#3b82f6' : 'rgba(255,255,255,0.1)'"
+                        style="padding: 0.75rem; border: 1px solid; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="bi" [class.bi-shield-check]="isPermissionSelected(perm.id)"
+                                [class.bi-shield]="!isPermissionSelected(perm.id)"
+                                [style.color]="isPermissionSelected(perm.id) ? '#3b82f6' : '#64748b'"></i>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-size: 0.8125rem; font-weight: 600; color: #fff;">{{ perm.name
+                                    }}</span>
+                                <span style="font-size: 0.6875rem; color: #64748b;">{{ perm.code }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
                 </div>
-            </form>
-        </div>
-    </div>
-    <!-- Branch Modal -->
-    <div class="modal-overlay" *ngIf="showBranchModal()">
-        <div class="glass-card modal-content small">
-            <h3>Add New Branch</h3>
-            <form (ngSubmit)="onAddBranch()">
-                <div class="form-group">
-                    <label>Branch Name</label>
-                    <input type="text" name="bName" [(ngModel)]="newBranch.name" required
-                        placeholder="e.g. Downtown Office">
-                </div>
-                <div class="form-group">
-                    <label>Address (Optional)</label>
-                    <input type="text" name="bAddress" [(ngModel)]="newBranch.address" placeholder="e.g. 123 Main St">
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary me-3"
-                        (click)="showBranchModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Branch</button>
-                </div>
-            </form>
+            </div>
+
+            <div class="modal-actions mt-4">
+                <button class="premium-btn-secondary" (click)="showEditRoleModal.set(false)">{{ 'CANCEL' | translate
+                    }}</button>
+                <button class="premium-btn" (click)="onUpdateRole()">{{ 'APPLY_PROTOCOL_CHANGES' | translate }}</button>
+            </div>
         </div>
     </div>
 </div>

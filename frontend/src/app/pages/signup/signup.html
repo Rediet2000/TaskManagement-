@@ -1,32 +1,35 @@
 <div class="signup-container">
-    <div class="glass-card signup-card animate-fade-in">
+    <div class="signup-card">
         <div class="signup-header">
-            <h1>Create Account</h1>
-            <p>Join an organization to start managing tasks</p>
+            <h1>{{ 'SIGN_UP' | translate }}</h1>
+            <p *ngIf="!isInvited()">{{ 'JOIN_ORG' | translate }}</p>
+            <p *ngIf="isInvited()" style="color: #4ade80; font-weight: 700;">
+                {{ 'INVITED_TO_JOIN' | translate }} {{ invitedOrgName() }}
+            </p>
         </div>
 
         <form (ngSubmit)="onSubmit()" #signupForm="ngForm" class="signup-form">
             <div class="form-group">
-                <label for="fullName">Full Name</label>
+                <label for="fullName">{{ 'FULL_NAME' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required
-                        placeholder="John Doe">
+                        [placeholder]="'YOUR_FULL_NAME' | translate">
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">{{ 'EMAIL_ADDRESS' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="email" id="email" name="email" [(ngModel)]="email" required
-                        placeholder="name@company.com">
+                        [placeholder]="'USER_EMAIL_PLACEHOLDER' | translate" [disabled]="isInvited()">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="organization">Organization</label>
+            <div class="form-group" [style.display]="isInvited() ? 'none' : 'block'">
+                <label for="organization">{{ 'ORGANIZATION' | translate }}</label>
                 <div class="input-wrapper select-wrapper">
                     <select id="organization" name="organization" [(ngModel)]="orgId" required>
-                        <option [ngValue]="null" disabled selected>Select your organization</option>
+                        <option [ngValue]="null" disabled selected>{{ 'SELECT_ORG' | translate }}</option>
                         @for (org of organizations(); track org.id) {
                         <option [value]="org.id">{{ org.name }}</option>
                         }
@@ -35,25 +38,29 @@
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">{{ 'PASSWORD' | translate }}</label>
                 <div class="input-wrapper">
                     <input type="password" id="password" name="password" [(ngModel)]="password" required
                         placeholder="••••••••">
                 </div>
             </div>
 
-            <div *ngIf="error" class="error-message">
-                {{ error }}
+            <div *ngIf="error" class="alert-premium alert-error">
+                <i class="bi bi-shield-exclamation"></i> {{ error }}
             </div>
 
-            <button type="submit" class="btn-primary signup-btn" [disabled]="loading || !signupForm.form.valid">
-                <span *ngIf="!loading">Create Account</span>
+            <button type="submit" class="premium-btn signup-btn" [disabled]="loading || !signupForm.form.valid">
+                <span *ngIf="!loading">{{ 'CREATE_ACCOUNT' | translate }}</span>
                 <span *ngIf="loading" class="loader"></span>
             </button>
         </form>
 
         <div class="signup-footer">
-            <p>Already have an account? <a routerLink="/login">Sign In</a></p>
+            <p>{{ 'ALREADY_HAVE_ACCOUNT' | translate }} <a routerLink="/login">{{ 'SIGN_IN' | translate }}</a></p>
+            <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">
+                {{ 'NEED_WORKSPACE' | translate }} <a routerLink="/register-company">{{ 'REGISTER_ORG' | translate
+                    }}</a>
+            </p>
         </div>
     </div>
 </div>

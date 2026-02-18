@@ -1,0 +1,53 @@
+<div class="calendar-card glass-card">
+    <div class="calendar-header">
+        <button (click)="prevMonth()" class="nav-btn"><i class="bi bi-chevron-left"></i></button>
+        <h3>{{ monthName() }}</h3>
+        <button (click)="nextMonth()" class="nav-btn"><i class="bi bi-chevron-right"></i></button>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="weekday">{{ 'SUN' | translate }}</div>
+        <div class="weekday">{{ 'MON' | translate }}</div>
+        <div class="weekday">{{ 'TUE' | translate }}</div>
+        <div class="weekday">{{ 'WED' | translate }}</div>
+        <div class="weekday">{{ 'THU' | translate }}</div>
+        <div class="weekday">{{ 'FRI' | translate }}</div>
+        <div class="weekday">{{ 'SAT' | translate }}</div>
+
+        @for (day of days(); track day.date.getTime()) {
+        <div class="day" [class.not-current]="!day.isCurrentMonth" [class.today]="day.isToday"
+            [class.selected]="selectedDay()?.date?.getTime() === day.date.getTime()" (click)="selectDay(day)">
+            <span class="day-num">{{ day.date.getDate() }}</span>
+            <div class="indicators">
+                <span *ngIf="day.tasks.length > 0" class="dot task-dot" [title]="day.tasks.length + ' Tasks'"></span>
+                <span *ngIf="day.notes.length > 0" class="dot note-dot"
+                    [title]="day.notes.length + ' Reminders'"></span>
+            </div>
+        </div>
+        }
+    </div>
+
+    <div class="day-details" *ngIf="selectedDay() as day">
+        <h4>{{ day.date | date:'fullDate' }}</h4>
+
+        <div class="item-list">
+            @for (task of day.tasks; track task.id) {
+            <div class="item task-item clickable" (click)="onItemClick(task, 'task')">
+                <i class="bi bi-check2-square"></i>
+                <span>{{ task.title }}</span>
+                <span class="badge" [class]="task.priority.toLowerCase()">{{ task.priority }}</span>
+            </div>
+            }
+            @for (note of day.notes; track note.id) {
+            <div class="item note-item clickable" (click)="onItemClick(note, 'note')">
+                <i class="bi bi-sticky-fill"></i>
+                <span>{{ note.title }}</span>
+                <span class="badge note">Reminder</span>
+            </div>
+            }
+            @if (day.tasks.length === 0 && day.notes.length === 0) {
+            <p class="empty">{{ 'NO_EVENTS' | translate }}</p>
+            }
+        </div>
+    </div>
+</div>

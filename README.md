@@ -12,41 +12,38 @@ A high-performance, enterprise-grade task management system with organizational 
 - **🛡️ Advanced RBAC**: Permission-based access control with hierarchical roles.
 - **📊 Performance Hub**: Real-time dashboard with analog clock, organizational map, and productivity stats.
 - **🎨 Dynamic Branding**: Auto-theme injection and white-labeling support.
-- **📱 Responsive Design**: Glassmorphism UI optimized for desktop and mobile.
-- **🔑 Secure Auth**: Integrated SMTP for password recovery and LDAP support (Experimental).
+- **📋 Agile Integration**: Kanban and Scrum support with dynamic columns and WIP limits.
+- **🔍 Global Search Engine**: Tactics-wide task discovery via organizational search.
+- **📜 Strategy Audit**: Automated security logging and action tracking.
 
 ## 🛠️ Tech Stack
-
-- **Backend**: Python 3.11, FastAPI, SQLAlchemy, PostgreSQL.
-- **Frontend**: Angular 18, SCSS, Bootstrap Icons.
-- **Infrastructure**: Docker, Docker Compose, Nginx.
+...
 
 ## 📦 Quick Start
 
 ### Prerequisites
 - Docker & Docker Desktop
-
-### Deployment
-1. **Clone the repository**:
    ```bash
-   git clone https://github.com/rediet2000/TaskManagement-.git
-   cd task-management
-   ```
-
-2. **Setup environment**:
-   ```bash
+   git clone -b Dev https://github.com/Rediet2000/TaskManagement-.git
+   cd TaskManagement-
    cp .env.example .env
-   # Edit .env with your credentials
    ```
-
-3. **Launch with Docker**:
+2. **Launch**:
    ```bash
    docker-compose up -d --build
    ```
 
-4. **Access the app**:
-   - Frontend: `http://localhost:4200`
-   - API Docs: `http://localhost:8000/docs`
+### Production Deployment
+For stable environments:
+```bash
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+## 🔗 Port Mapping
+- **Frontend (Prod)**: `http://localhost:80`
+- **Frontend (Dev)**: `http://localhost:4200`
+- **API (Prod)**: `http://localhost:8000`
+- **API Docs**: `http://localhost:8000/docs`
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

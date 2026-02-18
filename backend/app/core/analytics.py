@@ -6,48 +6,80 @@ from datetime import datetime, timedelta
 
 class AnalyticsEngine:
     @staticmethod
-    def get_task_completion_trends(db: Session, org_id: int):
-        tasks = db.query(Task).filter(Task.org_id == org_id).all()
-        if not tasks:
-            return []
-        
-        df = pd.DataFrame([{
-            'id': t.id,
-            'status': t.status,
-            'created_at': t.created_at,
-            'completed_at': t.completed_at
-        } for t in tasks])
-        
-        df['created_at'] = pd.to_datetime(df['created_at'])
-        df['completed_at'] = pd.to_datetime(df['completed_at'])
-        
-        # Trend: Completion rate per day
-        # ... logic for trends ...
-        return df.to_dict(orient='records')
+    def get_realtime_insights(db: Session, org_id: int):
+        from app.models.core import Department, Branch, Team
+        from app.models.task_tracking import Task
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
 
-    @staticmethod
-    def get_user_performance_scores(db: Session, org_id: int):
-        # Calculate rating system: Completion metrics
-        # Performance rating based on completion metrics (e.g., ⭐⭐⭐⭐⭐ Excellent)
-        users = db.query(User).filter(User.org_id == org_id).all()
-        # ... calculation logic ...
-        return []
+        # 1. Diagnostic Performance (10-Day Trend)
+        today = datetime.now()
+        trend_data = []
+        for i in range(9, -1, -1):
+            date = today - timedelta(days=i)
+            start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            count = db.query(Task).filter(
+                Task.org_id == org_id,
+                Task.completed_at >= start_of_day,
+                Task.completed_at <= end_of_day
+            ).count()
+            # Normalize for a 0-100 scale in the UI chart
+            # If there are few tasks, we'll scale it so it looks dynamic
+            trend_data.append(float(min(count * 10, 100)))
 
-    @staticmethod
-    def get_problem_area_insights(db: Session, org_id: int):
-        problems = db.query(ProblemArea).filter(ProblemArea.org_id == org_id).all()
-        if not problems:
-            return {}
+        # 2. Department Efficiency Ranking
+        depts = db.query(Department).filter(Department.org_id == org_id).all()
+        dept_ranking = []
+        for d in depts:
+            total_tasks = db.query(Task).join(Team).filter(
+                Team.dept_id == d.id,
+                Task.org_id == org_id
+            ).count()
+            
+            completed_tasks = db.query(Task).join(Team).filter(
+                Team.dept_id == d.id,
+                Task.org_id == org_id,
+                Task.status == "Completed"
+            ).count()
+            
+            score = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0.0
+            dept_ranking.append({"name": d.name, "score": round(score, 1)})
         
-        df = pd.DataFrame([{
-            'branch': p.branch_location,
-            'type': p.problem_type,
-            'resolution_time': p.resolution_time
-        } for p in problems])
-        
-        # Most frequent problem types, resolution time per branch
-        insights = {
-            "top_types": df['type'].value_counts().to_dict(),
-            "avg_resolution_per_branch": df.groupby('branch')['resolution_time'].mean().to_dict()
+        # Sort by score descending
+        dept_ranking.sort(key=lambda x: x["score"], reverse=True)
+
+        # 3. Sector (Branch) Performance Protocols
+        branches = db.query(Branch).filter(Branch.org_id == org_id).all()
+        sector_performance = []
+        for i, b in enumerate(branches):
+            # Calculate Opti-Rate based on all tasks in the branch (tasks connected via teams/departments)
+            total_tasks = db.query(Task).join(Team).join(Department).filter(
+                Department.branch_id == b.id,
+                Task.org_id == org_id
+            ).count()
+            
+            completed_tasks = db.query(Task).join(Team).join(Department).filter(
+                Department.branch_id == b.id,
+                Task.org_id == org_id,
+                Task.status == "Completed"
+            ).count()
+            
+            rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0.0
+            sector_performance.append({
+                "rank": i + 1,
+                "name": b.name,
+                "score": f"{round(rate, 1)}% Opti-Rate"
+            })
+            
+        # Re-rank after sorting
+        sector_performance.sort(key=lambda x: float(x["score"].split('%')[0]), reverse=True)
+        for i, s in enumerate(sector_performance):
+            s["rank"] = i + 1
+
+        return {
+            "diagnostic_performance": trend_data,
+            "department_ranking": dept_ranking[:4], # Top 4
+            "sector_performance": sector_performance[:4] # Top 4
         }
-        return insights

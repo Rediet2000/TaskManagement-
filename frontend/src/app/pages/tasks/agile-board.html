@@ -1,0 +1,256 @@
+<div class="agile-container">
+    <header class="agile-header">
+        <div class="header-left">
+            <h1>{{ 'STRATEGIC_BOARD' | translate }}</h1>
+            <div class="board-selector" *ngIf="boards().length">
+                <select [ngModel]="activeBoard()?.id" (ngModelChange)="onBoardChange($event)">
+                    <option *ngFor="let b of boards()" [value]="b.id">{{ b.name }} ({{ b.type }})</option>
+                </select>
+            </div>
+            <div class="sprint-selector" *ngIf="sprints().length">
+                <select [ngModel]="activeSprint()?.id" (ngModelChange)="onSprintChange($event)">
+                    <option *ngFor="let s of sprints()" [value]="s.id">{{ s.name }} [{{ s.status }}]</option>
+                </select>
+                <div class="sprint-actions" *ngIf="activeSprint() as sprint">
+                    <button *ngIf="sprint.status === 'Planning'" class="btn-primary mini"
+                        (click)="transitionSprint('Active')">
+                        {{ 'ACTIVATE' | translate }}
+                    </button>
+                    <button *ngIf="sprint.status === 'Active'" class="btn-success mini"
+                        (click)="transitionSprint('Completed')">
+                        {{ 'COMPLETE' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="premium-btn" (click)="showSprintModal.set(true)">
+                <i class="bi bi-calendar-check-fill"></i> {{ 'INITIALIZE_CYCLE' | translate }}
+            </button>
+        </div>
+    </header>
+
+    <div class="agile-layout" cdkDropListGroup>
+        <!-- Project Archive (Backlog) -->
+        <div class="agile-column backlog">
+            <div class="column-header">
+                <div class="header-main">
+                    <h2>{{ 'PROJECT_BACKLOG' | translate }}</h2>
+                    <span class="count">{{ getBacklogTasks().length }}</span>
+                </div>
+                <button class="btn-icon" (click)="showTaskModal.set(true)" [title]="'QUICK_DEPLOY' | translate">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div class="task-bucket" cdkDropList id="backlog" [cdkDropListData]="getBacklogTasks()"
+                [cdkDropListConnectedTo]="agileColumnNames" (cdkDropListDropped)="onDrop($event)">
+                @for (task of getBacklogTasks(); track task.id) {
+                <div class="agile-card" cdkDrag [cdkDragData]="task">
+                    <div class="card-type" [class]="task.issue_type"></div>
+                    <div class="card-content">
+                        <div class="card-head">
+                            <i class="bi" [class.bi-bookmark-star-fill]="task.issue_type === 'story'"
+                                [class.bi-bug-fill]="task.issue_type === 'bug'"
+                                [class.bi-lightning-charge-fill]="task.issue_type === 'task'"></i>
+                            @if (task.story_points) {
+                            <span class="points">{{ task.story_points }} SP</span>
+                            }
+                        </div>
+                        <h4>{{ task.title }}</h4>
+                        <div class="card-footer">
+                            <span class="status-indicator">{{ 'STANDBY' | translate }}</span>
+                            <button class="btn-icon mini" (click)="onMoveToSprint(task)"
+                                [title]="'DEPLOY_TO_CYCLE' | translate">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button class="btn-icon mini archive"
+                                (click)="onArchiveTask(task); $event.stopPropagation()"
+                                [title]="'ARCHIVE_MISSION' | translate">
+                                <i class="bi bi-archive-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+                @if (getBacklogTasks().length === 0) {
+                <div class="empty-state">
+                    <i class="bi bi-shield-check"></i>
+                    {{ 'ARCHIVE_OPTIMIZED' | translate }}
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Active Strategic Cycle (Kanban) -->
+        @if (activeSprint(); as sprint) {
+        <div class="active-cycle">
+            <div class="cycle-header">
+                <div class="cycle-main">
+                    <div class="cycle-title">
+                        <h2>{{ sprint.name }}</h2>
+                        <span class="badge active">{{ sprint.status }}</span>
+                    </div>
+                    <p class="cycle-goal">{{ sprint.goal || ('OPERATIONAL_OBJECTIVES_CONFIDENTIAL' | translate) }}</p>
+                </div>
+                <div class="cycle-meta">
+                    <div class="meta-item">
+                        <label>{{ 'ENGAGEMENT' | translate }}</label>
+                        <span>{{ sprint.start_date | date:'shortDate' }} - {{ sprint.end_date | date:'shortDate'
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-grid">
+                @for (column of activeColumns; track column.id) {
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <div class="header-titles">
+                            <h3>{{ column.name }}</h3>
+                            @if (getColumnWipLimit(column)) {
+                            <span class="wip-tag">{{ 'WIP' | translate }}: {{ getColumnWipLimit(column) }}</span>
+                            }
+                        </div>
+                        <span class="count">{{ getSprintTasksByColumn(column).length }}</span>
+                    </div>
+                    <div class="kanban-bucket" cdkDropList [id]="column.name"
+                        [cdkDropListData]="getSprintTasksByColumn(column)"
+                        [cdkDropListConnectedTo]="['backlog', ...agileColumnNames]"
+                        (cdkDropListDropped)="onDrop($event)">
+                        @for (task of getSprintTasksByColumn(column); track task.id) {
+                        <div class="agile-card kanban" cdkDrag [cdkDragData]="task">
+                            <div class="card-type" [class]="task.issue_type"></div>
+                            <div class="card-content">
+                                <div class="card-head">
+                                    <i class="bi" [class.bi-bookmark-star-fill]="task.issue_type === 'story'"
+                                        [class.bi-bug-fill]="task.issue_type === 'bug'"
+                                        [class.bi-lightning-charge-fill]="task.issue_type === 'task'"></i>
+                                    @if (task.story_points) {
+                                    <span class="points">{{ task.story_points }} SP</span>
+                                    }
+                                </div>
+                                <h4>{{ task.title }}</h4>
+                                @if (task.description) {
+                                <p class="mini-desc">{{ task.description }}</p>
+                                }
+                                @if (task.checklist && task.checklist.length > 0) {
+                                <div class="checklist-progress">
+                                    <i class="bi bi-card-checklist"></i>
+                                    <span>{{ task.checklist.length }} {{ 'ITEMS' | translate }}</span>
+                                </div>
+                                }
+                                <div class="card-actions-hover">
+                                    <button class="btn-icon mini archive"
+                                        (click)="onArchiveTask(task); $event.stopPropagation()"
+                                        [title]="'ARCHIVE_MISSION' | translate">
+                                        <i class="bi bi-archive-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- No Active Sprint State -->
+        @if (!activeSprint()) {
+        <div class="empty-board">
+            <div class="empty-content">
+                <i class="bi bi-cpu"></i>
+                <h2>{{ 'INERT_BOARD_STATE' | translate }}</h2>
+                <p>{{ 'INITIALIZE_CYCLE_MESSAGE' | translate }}</p>
+                <div class="empty-actions">
+                    <button class="premium-btn" (click)="showSprintModal.set(true)">
+                        {{ 'INITIALIZE_CYCLE' | translate }}
+                    </button>
+                    <button class="btn-secondary" (click)="showBoardModal.set(true)">
+                        {{ 'CONFIGURE_BOARD' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Create Board Modal -->
+    <div class="modal-overlay" *ngIf="showBoardModal()">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <div class="modal-header">
+                <h2>{{ 'CONFIGURE_BOARD' | translate }}</h2>
+                <button class="close-btn" (click)="showBoardModal.set(false)"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form (ngSubmit)="onCreateBoard()" class="agile-form" style="padding: 2rem;">
+                <div class="form-group">
+                    <label>{{ 'BOARD_NAME' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newBoard.name" required
+                        placeholder="e.g. Engineering Kanban">
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>{{ 'BOARD_TYPE' | translate }}</label>
+                    <select name="type" [(ngModel)]="newBoard.type">
+                        <option value="kanban">Kanban (Continuous Flow)</option>
+                        <option value="scrum">Scrum (Sprint Based)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>{{ 'MISSION_DESCRIPTION' | translate }}</label>
+                    <textarea name="description" [(ngModel)]="newBoard.description" rows="2"
+                        placeholder="Purpose of this board..."></textarea>
+                </div>
+                <div class="modal-actions"
+                    style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn-secondary" (click)="showBoardModal.set(false)">{{ 'ABORT' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'CREATE_BOARD' | translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Sprint Modal -->
+    <div class="modal-overlay" *ngIf="showSprintModal()">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <div class="modal-header">
+                <h2>{{ 'INITIALIZE_STRATEGIC_CYCLE' | translate }}</h2>
+                <button class="close-btn" (click)="showSprintModal.set(false)"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form (ngSubmit)="onCreateSprint()" class="agile-form" style="padding: 2rem;">
+                <div class="form-group">
+                    <label>{{ 'CYCLE_IDENTIFICATION' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="newSprint.name" required
+                        placeholder="Cycle identifier (e.g. ALPHA-PHASE-1)">
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>{{ 'OPERATIONAL_OBJECTIVE' | translate }}</label>
+                    <textarea name="goal" [(ngModel)]="newSprint.goal" rows="2"
+                        placeholder="Define core mission targets..."></textarea>
+                </div>
+                <div class="form-row" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <div class="form-group half" style="flex: 1;">
+                        <label>{{ 'ENGAGEMENT_DATE' | translate }}</label>
+                        <input type="date" name="start_date" [(ngModel)]="newSprint.start_date" required>
+                    </div>
+                    <div class="form-group half" style="flex: 1;">
+                        <label>{{ 'TERMINATION_DATE' | translate }}</label>
+                        <input type="date" name="end_date" [(ngModel)]="newSprint.end_date" required>
+                    </div>
+                </div>
+                <div class="modal-actions"
+                    style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn-secondary" (click)="showSprintModal.set(false)">{{ 'ABORT' |
+                        translate }}</button>
+                    <button type="submit" class="premium-btn">{{ 'AUTHORIZE_CYCLE' | translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <app-task-create-modal *ngIf="showTaskModal()" [sprintId]="activeSprint()?.id || null"
+        (close)="showTaskModal.set(false)" (taskCreated)="onTaskCreated()">
+    </app-task-create-modal>
+</div>

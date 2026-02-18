@@ -1,5 +1,8 @@
 <div class="layout-container" [class.collapsed]="isSidebarCollapsed">
-    <aside class="sidebar glass-card">
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" [class.active]="isMobileSidebarActive()" (click)="toggleSidebar()"></div>
+
+    <aside class="sidebar glass-card" [class.active]="isMobileSidebarActive()">
         <div class="sidebar-header">
             <div class="logo">
                 @if (currentOrg()?.logo_url) {
@@ -12,25 +15,20 @@
         </div>
 
         <nav class="sidebar-nav">
-            @for (item of navItems; track item.label) {
+            @for (item of navItems(); track item.label) {
             <a [routerLink]="item.route" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact: item.route === '/'}" class="nav-item">
                 <i [class]="'bi ' + item.icon"></i>
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
             </a>
             }
         </nav>
 
         <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="avatar">RS</div>
-                <div class="user-info">
-                    <span class="name">Rediet Solomon</span>
-                    <span class="role">Administrator</span>
-                </div>
-            </div>
-            <button class="logout-btn" title="Logout" (click)="logout()">
+            <button class="logout-btn" title="Logout" (click)="logout()"
+                style="width: 100%; display: flex; justify-content: center; gap: 0.75rem; align-items: center;">
                 <i class="bi bi-box-arrow-right"></i>
+                <span class="logout-text">{{ 'LOGOUT' | translate }}</span>
             </button>
         </div>
     </aside>
@@ -44,11 +42,67 @@
                 </button>
                 <div class="search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" placeholder="Search for tasks, branches...">
+                    <input type="text" #searchInput (keyup.enter)="onSearch(searchInput.value)"
+                        [placeholder]="'SEARCH_PLACEHOLDER' | translate">
                 </div>
             </div>
             <div class="navbar-right">
-                <button class="icon-btn"><i class="bi bi-bell-fill"></i></button>
+                <!-- Language Selector -->
+                <div class="language-selector mr-3">
+                    <select [ngModel]="currentLanguage()" (ngModelChange)="setLanguage($event)" class="lang-select">
+                        <option value="en">EN</option>
+                        <option value="am">አማ</option>
+                        <option value="om">ORM</option>
+                    </select>
+                </div>
+
+                <div class="user-profile header-profile" routerLink="/profile" style="cursor: pointer;">
+                    <div class="avatar small">
+                        <img *ngIf="currentUser()?.profile_photo_url" [src]="currentUser()?.profile_photo_url"
+                            alt="User">
+                        <span *ngIf="!currentUser()?.profile_photo_url">{{ currentUser()?.full_name?.charAt(0) || 'U'
+                            }}</span>
+                    </div>
+                    <div class="user-info hide-mobile">
+                        <span class="name">{{ currentUser()?.full_name || 'Operational Agent' }}</span>
+                        <span class="role">{{ currentUser()?.role_name || 'Member' }}</span>
+                    </div>
+                </div>
+                <div class="notification-wrapper">
+                    <button class="icon-btn" (click)="showNotifications.set(!showNotifications())">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="badge" *ngIf="notificationService.unreadCount() > 0">
+                            {{ notificationService.unreadCount() }}
+                        </span>
+                    </button>
+
+                    <!-- Notification Dropdown -->
+                    <div class="notification-dropdown glass-card" *ngIf="showNotifications()">
+                        <div class="dropdown-header">
+                            <h3>{{ 'NOTIFICATIONS' | translate }}</h3>
+                            <button (click)="notificationService.markAllRead()">{{ 'MARK_ALL_READ' | translate
+                                }}</button>
+                        </div>
+                        <div class="notification-list">
+                            @for (notif of notificationService.notifications(); track notif.id) {
+                            <div class="notification-item" [class.unread]="notif.status === 'Pending'"
+                                (click)="notificationService.markAsRead(notif.id)">
+                                <div class="notif-icon">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </div>
+                                <div class="notif-content">
+                                    <p>{{ notif.message }}</p>
+                                    <span>{{ notif.created_at | date:'short' }}</span>
+                                </div>
+                            </div>
+                            } @empty {
+                            <div class="empty-notif">
+                                <p>{{ 'ALL_CAUGHT_UP' | translate }}</p>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
                 <button class="icon-btn"><i class="bi bi-question-circle-fill"></i></button>
             </div>
         </header>

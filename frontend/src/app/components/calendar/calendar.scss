@@ -1,0 +1,211 @@
+.calendar-card {
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+    }
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    position: relative;
+    border: 1px solid transparent;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.not-current {
+        opacity: 0.3;
+    }
+
+    &.today {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    &.selected {
+        background: var(--primary);
+        color: white;
+
+        .dot {
+            background: white !important;
+        }
+    }
+
+    .day-num {
+        font-size: 0.875rem;
+    }
+
+    .indicators {
+        display: flex;
+        gap: 2px;
+        margin-top: 2px;
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+
+            &.task-dot {
+                background: var(--primary);
+            }
+
+            &.note-dot {
+                background: #f59e0b;
+            }
+        }
+    }
+}
+
+.day-details {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+
+    h4 {
+        margin: 0 0 1rem;
+        font-size: 0.9375rem;
+        color: var(--text-main);
+    }
+
+    .item-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .empty {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            border: 1px solid var(--glass-border);
+
+            i {
+                font-size: 1rem;
+            }
+
+            span {
+                font-size: 0.8125rem;
+                color: var(--text-main);
+                flex: 1;
+            }
+
+            .badge {
+                font-size: 0.625rem;
+                padding: 0.125rem 0.5rem;
+                border-radius: 1rem;
+                text-transform: uppercase;
+                font-weight: 700;
+
+                &.high {
+                    background: rgba(239, 68, 68, 0.2);
+                    color: #f87171;
+                }
+
+                &.medium {
+                    background: rgba(245, 158, 11, 0.2);
+                    color: #fbbf24;
+                }
+
+                &.low {
+                    background: rgba(16, 185, 129, 0.2);
+                    color: #34d399;
+                }
+
+                &.note {
+                    background: rgba(139, 92, 246, 0.2);
+                    color: #a78bfa;
+                }
+            }
+
+            &.task-item i {
+                color: var(--primary);
+            }
+
+            &.note-item i {
+                color: #f59e0b;
+            }
+
+            &.clickable {
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    border-color: var(--primary);
+                    transform: translateX(4px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                &:active {
+                    transform: translateX(2px) scale(0.98);
+                }
+            }
+        }
+    }
+}

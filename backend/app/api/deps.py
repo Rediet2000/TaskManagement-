@@ -50,3 +50,29 @@ def get_current_org_id(
     current_user: User = Depends(get_current_active_user),
 ) -> int:
     return current_user.org_id
+
+# Permission Dependency Factory
+def has_permission(required_code: str):
+    def permission_checker(
+        current_user: User = Depends(get_current_active_user),
+    ) -> User:
+        # 1. Super Admin Bypass (Optional, but good for safety)
+        if current_user.role and current_user.role.name == "Admin":
+            return current_user
+            
+        # 2. Check Permissions
+        if not current_user.role or not current_user.role.permissions:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted. Required: {required_code}"
+            )
+            
+        user_perms = {p.code for p in current_user.role.permissions}
+        if required_code not in user_perms:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted. Required: {required_code}"
+            )
+            
+        return current_user
+    return permission_checker

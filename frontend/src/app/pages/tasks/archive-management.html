@@ -1,0 +1,47 @@
+<div class="archive-container">
+    <header class="archive-header">
+        <div class="header-info">
+            <h1>{{ 'MISSION_ARCHIVES' | translate }}</h1>
+            <p>{{ 'DECOMMISSIONED_STRATEGIC_TASKS' | translate }}</p>
+        </div>
+    </header>
+
+    <div *ngIf="success()" class="alert-premium alert-success">
+        <i class="bi bi-check-circle"></i> {{ success() }}
+    </div>
+    <div *ngIf="error()" class="alert-premium alert-error">
+        <i class="bi bi-shield-exclamation"></i> {{ error() }}
+    </div>
+
+    <div class="archive-content">
+        <div *ngIf="loading()" class="loader-container">
+            <span class="loader"></span>
+            <p>{{ 'ACCESS_ENCRYPTED_ARCHIVES' | translate }}</p>
+        </div>
+
+        <div *ngIf="!loading() && archivedTasks().length === 0" class="empty-archive">
+            <i class="bi bi-safe-fill"></i>
+            <h3>{{ 'ARCHIVES_EMPTY' | translate }}</h3>
+            <p>{{ 'NO_DECOMMISSIONED_MISSIONS' | translate }}</p>
+        </div>
+
+        <div class="archive-grid" *ngIf="!loading() && archivedTasks().length > 0">
+            <div class="archive-card" *ngFor="let task of archivedTasks()">
+                <div class="card-body">
+                    <div class="priority-dot" [class]="task.priority.toLowerCase()"></div>
+                    <h3>{{ task.title }}</h3>
+                    <p>{{ task.description || ('NO_DESCRIPTIVE_DATA' | translate) }}</p>
+                    <div class="meta">
+                        <span><i class="bi bi-calendar-event"></i> {{ task.created_at | date:'shortDate' }}</span>
+                        <span><i class="bi bi-tag"></i> {{ task.module_type | uppercase }}</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-restore" (click)="onRestore(task)">
+                        <i class="bi bi-arrow-counterclockwise"></i> {{ 'RESTORE' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

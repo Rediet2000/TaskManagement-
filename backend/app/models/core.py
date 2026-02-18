@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Table, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Table, DateTime, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -35,10 +35,39 @@ class Organization(Base):
     # Notification Settings
     telegram_bot_token = Column(String, nullable=True)
     telegram_chat_id = Column(String, nullable=True)
+    telegram_enabled = Column(Boolean, default=False)
+    
+    # Advanced Email Notification Settings
+    email_notifications_enabled = Column(Boolean, default=True)
+    emission_email_address = Column(String, nullable=True)
+    bcc_recipients = Column(Boolean, default=False)
+    plain_text_mail = Column(Boolean, default=False)
+    address_user_in_emails_with = Column(String, default="full_name")
+    emails_header = Column(String, nullable=True) # Stored as JSON string
+    emails_footer = Column(String, nullable=True) # Stored as JSON string
+    notification_template = Column(String, nullable=True) # Stored as JSON string
+    
+    # Enhanced SMTP Settings
+    email_delivery_method = Column(String, default="smtp")
+    smtp_helo_domain = Column(String, nullable=True)
+    smtp_authentication = Column(String, default="login")
+    smtp_use_starttls = Column(Boolean, default=True)
+    smtp_use_ssl = Column(Boolean, default=False)
     
     # Branding Settings
     system_page_title = Column(String, default="Task Management System")
     theme_mode = Column(String, default="system") # system, light, dark
+    border_radius = Column(String, default="0.75rem")
+    font_family = Column(String, default="'Inter', sans-serif")
+    font_size_base = Column(String, default="16px")
+    
+    # Company Profile (Phase 15)
+    industry = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    timezone = Column(String, default="UTC")
+    default_language = Column(String, default="en")
+    contact_phone = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
     
     # Dashboard Settings
     show_dashboard_clock = Column(Boolean, default=True)
@@ -46,10 +75,18 @@ class Organization(Base):
     show_dashboard_stats = Column(Boolean, default=True)
     show_dashboard_tasks = Column(Boolean, default=True)
     
+    dashboard_layout = Column(String, default="clock,stats,tasks,map")
+    dashboard_refresh_rate = Column(Integer, default=30)
+    dashboard_clock_type = Column(String, default="analog")
+    dashboard_metrics_config = Column(String, default="tasks,active,overdue,problems")
+    dashboard_compact_mode = Column(Boolean, default=False)
+    
     users = relationship("User", back_populates="organization")
     departments = relationship("Department", back_populates="organization")
     roles = relationship("Role", back_populates="organization")
     branches = relationship("Branch", back_populates="organization")
+    tasks = relationship("Task", back_populates="organization")
+    problem_areas = relationship("ProblemArea", back_populates="organization")
 
 class Branch(Base):
     __tablename__ = "branches"
@@ -61,6 +98,7 @@ class Branch(Base):
 
     organization = relationship("Organization", back_populates="branches")
     departments = relationship("Department", back_populates="branch")
+    problem_areas = relationship("ProblemArea", back_populates="branch")
 
 class Department(Base):
     __tablename__ = "departments"
@@ -98,6 +136,8 @@ class Role(Base):
     
     organization = relationship("Organization", back_populates="roles")
     permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
+    permissions_json = Column(String, nullable=True) # JSON string for granular overrides
+    is_standard = Column(Boolean, default=False)
 
 class Permission(Base):
     __tablename__ = "permissions"
@@ -116,6 +156,20 @@ role_permissions = Table(
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )
 
+user_branches = Table(
+    "user_branches",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("branch_id", Integer, ForeignKey("branches.id"), primary_key=True),
+)
+
+user_departments = Table(
+    "user_departments",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("dept_id", Integer, ForeignKey("departments.id"), primary_key=True),
+)
+
 class User(Base):
     __tablename__ = "users"
 
@@ -130,9 +184,46 @@ class User(Base):
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Profile Information
+    profile_photo_url = Column(String, nullable=True)
+    username = Column(String, nullable=True, unique=True)
+    job_title = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    timezone = Column(String, default="UTC")
+    language = Column(String, default="en")
+    auth_method = Column(String, default="email_password")  # email_password, google, microsoft
+    
+    # Work Preferences
+    task_view_preference = Column(String, default="board")  # list, board, calendar
+    default_task_sort = Column(String, default="due_date")  # due_date, priority, status, created_at
+    start_of_week = Column(String, default="monday")  # monday, sunday
+    date_format = Column(String, default="YYYY-MM-DD")
+    time_format = Column(String, default="24h")  # 12h, 24h
+    
+    # Notification Settings (JSON stored as string)
+    email_notifications = Column(String, default='{"task_assigned":true,"status_changes":true,"mentions":true,"daily_summary":false,"weekly_summary":false}')
+    in_app_notifications = Column(String, default='{"task_assigned":true,"status_changes":true,"mentions":true}')
+    dnd_schedule = Column(String, nullable=True)  # JSON: {"enabled":false,"start":"22:00","end":"08:00"}
+    
+    # Security
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String, nullable=True)
+    last_login = Column(DateTime(timezone=True), nullable=True)
 
     organization = relationship("Organization", back_populates="users")
+    department = relationship("Department")
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
+    role = relationship("Role")
+    
+    branches = relationship("Branch", secondary=user_branches)
+    departments = relationship("Department", secondary=user_departments)
+
+    created_tasks = relationship("Task", foreign_keys="Task.creator_id", back_populates="creator")
+    assigned_tasks = relationship("Task", foreign_keys="Task.assignee_id", back_populates="assignee")
+    comments = relationship("Comment", back_populates="author")
+    attachments = relationship("Attachment", back_populates="uploader")
 
 class AllowedDomain(Base):
     __tablename__ = "allowed_domains"
@@ -151,3 +242,20 @@ class MailList(Base):
     is_active = Column(Boolean, default=True)
     
     organization = relationship("Organization", backref="mail_lists")
+
+class Invitation(Base):
+    __tablename__ = "invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True)
+    email = Column(String, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True))
+    is_used = Column(Boolean, default=False)
+    branch_ids = Column(ARRAY(Integer), default=[])
+    dept_ids = Column(ARRAY(Integer), default=[])
+
+    organization = relationship("Organization")
+    role = relationship("Role")

@@ -29,4 +29,8 @@ export class ReportsService {
     generateReport(type: string): Observable<TaskReport> {
         return this.http.post<TaskReport>(`${this.apiUrl}/generate?report_type=${type}`, {});
     }
+
+    getAdminStats(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/admin-stats`);
+    }
 }

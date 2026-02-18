@@ -1,105 +1,141 @@
 <div class="settings-layout">
-    <aside class="settings-sidebar glass-card">
+    <aside class="settings-sidebar">
         <div class="sidebar-header">
-            <i class="bi bi-gear-fill"></i>
-            <h3>Settings</h3>
+            <i class="bi bi-gear-wide-connected"></i>
+            <h3>{{ 'SYSTEM_SETTINGS' | translate }}</h3>
         </div>
         <nav class="settings-nav">
             <button [class.active]="activeTab() === 'user-access'" (click)="setTab('user-access')">
-                <i class="bi bi-shield-lock"></i> User & Access
+                <i class="bi bi-shield-lock-fill"></i> {{ 'USER_ACCESS' | translate }}
             </button>
             <button [class.active]="activeTab() === 'organization'" (click)="setTab('organization')">
-                <i class="bi bi-building"></i> Organization
+                <i class="bi bi-building-fill"></i> {{ 'ORGANIZATION' | translate }}
             </button>
             <button [class.active]="activeTab() === 'communication'" (click)="setTab('communication')">
-                <i class="bi bi-envelope-at"></i> Communication
+                <i class="bi bi-broadcast-pin"></i> {{ 'COMMUNICATION' | translate }}
             </button>
             <button [class.active]="activeTab() === 'branding'" (click)="setTab('branding')">
-                <i class="bi bi-palette"></i> Branding
+                <i class="bi bi-palette-fill"></i> {{ 'BRANDING' | translate }}
             </button>
             <button [class.active]="activeTab() === 'dashboard'" (click)="setTab('dashboard')">
-                <i class="bi bi-speedometer2"></i> Dashboard
+                <i class="bi bi-grid-1x2-fill"></i> {{ 'DASHBOARD' | translate }}
             </button>
             <button [class.active]="activeTab() === 'security'" (click)="setTab('security')">
-                <i class="bi bi-journal-text"></i> Security & Audit
+                <i class="bi bi-shield-fill-exclamation"></i> {{ 'SECURITY' | translate }}
             </button>
+            <button [class.active]="activeTab() === 'access-rights'" (click)="setTab('access-rights')">
+                <i class="bi bi-key-fill"></i> Access Rights
+            </button>
+            <a href="/settings/integrations" class="nav-link" routerLink="/settings/integrations"
+                routerLinkActive="active"
+                style="display: flex; align-items: center; gap: 1.25rem; padding: 1rem 1.5rem; text-decoration: none; color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 700;">
+                <i class="bi bi-plugin"></i> {{ 'INTEGRATIONS' | translate }}
+            </a>
         </nav>
     </aside>
 
     <main class="settings-content">
         <!-- Global Success/Error Alerts -->
-        <div *ngIf="success" class="alert alert-success glass-card">
-            <i class="bi bi-check-circle-fill"></i> {{ success }}
+        <div *ngIf="success()" class="alert-premium alert-success">
+            <i class="bi bi-check-circle"></i> {{ success() }}
         </div>
-        <div *ngIf="error" class="alert alert-error glass-card">
-            <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
+        <div *ngIf="error()" class="alert-premium alert-error">
+            <i class="bi bi-shield-exclamation"></i> {{ error() }}
         </div>
 
         <!-- User & Access Management -->
         <div *ngIf="activeTab() === 'user-access'" class="tab-pane">
-            <section class="glass-card settings-section">
+            <!-- Standard User Record Form -->
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi" [class.bi-person-plus]="!isEditingUser()"
-                        [class.bi-person-gear]="isEditingUser()"></i>
-                    <h2>{{ isEditingUser() ? 'Edit User' : 'Create New User' }}</h2>
+                    <i class="bi" [class.bi-send-fill]="!isEditingUser()"
+                        [class.bi-person-gear-fill]="isEditingUser()"></i>
+                    <h2>{{ isEditingUser() ? ('MODIFY_USER' | translate) : ('INVITE_MEMBER' | translate) }}</h2>
                 </div>
+
+                <!-- User specific alerts -->
+                <div *ngIf="userSuccess()" class="alert-premium alert-success">
+                    <i class="bi bi-check-circle"></i> {{ userSuccess() }}
+                </div>
+                <div *ngIf="userError()" class="alert-premium alert-error">
+                    <i class="bi bi-shield-exclamation"></i> {{ userError() }}
+                </div>
+
                 <form (ngSubmit)="onCreateUser()" class="settings-form">
                     <div class="form-row">
                         <div class="form-group flex-2">
-                            <label>Full Name</label>
-                            <input type="text" name="fullName" [(ngModel)]="newUser.fullName" placeholder="John Doe">
+                            <label>{{ 'FULL_NAME' | translate }}</label>
+                            <input type="text" name="fullName" [(ngModel)]="newUser.fullName"
+                                placeholder="{{ 'FULL_NAME' | translate }}">
                         </div>
                         <div class="form-group flex-2">
-                            <label>Email Address</label>
-                            <input type="email" name="email" [(ngModel)]="newUser.email" placeholder="john@example.com">
+                            <label>{{ 'EMAIL_ADDRESS' | translate }}</label>
+                            <input type="email" name="email" [(ngModel)]="newUser.email" placeholder="user@company.com"
+                                [disabled]="isEditingUser()">
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group flex-2">
-                            <label>Password {{ isEditingUser() ? '(Leave blank to keep current)' : '' }}</label>
+                        <div class="form-group flex-2" *ngIf="isEditingUser()">
+                            <label>{{ 'PASSWORD' | translate }} (Leave blank to keep current)</label>
                             <input type="password" name="password" [(ngModel)]="newUser.password">
                         </div>
                         <div class="form-group flex-1">
-                            <label>Role</label>
+                            <label>System Role</label>
                             <select name="roleId" [(ngModel)]="newUser.roleId">
                                 <option [ngValue]="null">Select Role</option>
                                 <option *ngFor="let role of roles()" [value]="role.id">{{ role.name }}</option>
                             </select>
                         </div>
                     </div>
-                    <div *ngIf="userSuccess" class="alert alert-success mt-3">
-                        <i class="bi bi-person-check-fill"></i> {{ userSuccess }}
+
+                    <!-- Advanced Relations: Multiple Branches/Departments -->
+                    <div class="form-row mt-3">
+                        <div class="form-group flex-1">
+                            <label>Linked Branches</label>
+                            <select multiple name="branch_ids" [(ngModel)]="newUser.branch_ids"
+                                style="height: 100px; padding: 0.5rem;">
+                                <option *ngFor="let b of branches()" [value]="b.id">{{ b.name }}</option>
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Linked Departments</label>
+                            <select multiple name="dept_ids" [(ngModel)]="newUser.dept_ids"
+                                style="height: 100px; padding: 0.5rem;">
+                                <option *ngFor="let d of departments()" [value]="d.id">{{ d.name }}</option>
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        </div>
                     </div>
-                    <div *ngIf="userError" class="alert alert-error mt-3">
-                        <i class="bi bi-person-exclamation-fill"></i> {{ userError }}
-                    </div>
-                    <div class="form-actions gap-2">
-                        <button *ngIf="isEditingUser()" type="button" class="btn-secondary" (click)="onCancelEdit()">
-                            Cancel
+
+                    <div class="form-actions gap-2 mt-4">
+                        <button *ngIf="isEditingUser()" type="button" class="btn-secondary" (click)="onCancelEdit()"
+                            style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
+                            {{ 'CANCEL' | translate }}
                         </button>
-                        <button type="submit" class="btn-primary" [disabled]="userLoading">
-                            <span *ngIf="!userLoading">{{ isEditingUser() ? 'Update User' : 'Create User' }}</span>
+                        <button type="submit" class="premium-btn" [disabled]="userLoading">
+                            <span *ngIf="!userLoading">{{ isEditingUser() ? ('UPDATE_USER' | translate) :
+                                ('SEND_INVITATION' | translate)
+                                }}</span>
                             <span *ngIf="userLoading" class="loader small"></span>
                         </button>
                     </div>
                 </form>
             </section>
 
-            <section class="glass-card settings-section mt-4">
+            <section class="settings-section mt-4">
                 <div class="section-header">
-                    <i class="bi bi-people"></i>
-                    <h2>Active Users</h2>
+                    <i class="bi bi-people-fill"></i>
+                    <h2>{{ 'USER_MANAGEMENT' | translate }}</h2>
                 </div>
-                <div *ngIf="userError" class="alert alert-error mt-3">
-                    <i class="bi bi-person-exclamation-fill"></i> {{ userError }}
-                </div>
-                <div class="user-table-container mt-3">
+                <div class="user-table-container">
                     <table class="user-table">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Org Links</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -108,209 +144,402 @@
                             <tr *ngFor="let u of users()">
                                 <td>{{ u.full_name }}</td>
                                 <td>{{ u.email }}</td>
-                                <td>{{ u.role_name || 'No Role' }}</td>
+                                <td>{{ u.role_name || 'No Clearance' }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <span class="badge" style="background: rgba(30,58,138,0.4); color: #60a5fa;"
+                                            title="Linked Branches">📍 {{ u.branch_ids?.length || 0 }}</span>
+                                        <span class="badge" style="background: rgba(20,83,45,0.4); color: #4ade80;"
+                                            title="Linked Departments">🏢 {{ u.dept_ids?.length || 0 }}</span>
+                                    </div>
+                                </td>
                                 <td>
                                     <span class="badge" [class.badge-success]="u.is_active"
                                         [class.badge-error]="!u.is_active">
-                                        {{ u.is_active ? 'Active' : 'Inactive' }}
+                                        {{ u.is_active ? 'ACTIVE' : 'INACTIVE' }}
                                     </span>
                                 </td>
                                 <td>
                                     <div class="table-actions" *ngIf="canManageUsers()">
                                         <button type="button" class="btn-icon"
-                                            (click)="onEditUser(u); $event.stopPropagation()" title="Edit Profile">
-                                            <i class="bi bi-pencil-square"></i>
+                                            (click)="onEditUser(u); $event.stopPropagation()" title="Edit User">
+                                            <i class="bi bi-pencil-fill"></i>
                                         </button>
                                         <button type="button" class="btn-icon"
                                             (click)="onToggleUserStatus(u.id); $event.stopPropagation()"
-                                            [title]="u.is_active ? 'Deactivate' : 'Activate'"
+                                            [title]="u.is_active ? 'Deactivate' : 'Reactivate'"
                                             [disabled]="togglingUserId() === u.id">
                                             <i *ngIf="togglingUserId() !== u.id" class="bi"
-                                                [class.bi-toggle-on]="u.is_active" [class.bi-toggle-off]="!u.is_active"
+                                                [class.bi-shield-check]="u.is_active"
+                                                [class.bi-shield-exclamation]="!u.is_active"
                                                 [class.text-success]="u.is_active"
                                                 [class.text-muted]="!u.is_active"></i>
                                             <span *ngIf="togglingUserId() === u.id" class="loader small"></span>
                                         </button>
                                     </div>
-                                    <span *ngIf="!canManageUsers()" class="text-muted">No Access</span>
+                                    <span *ngIf="!canManageUsers()" class="text-muted"
+                                        style="font-size: 0.75rem; opacity: 0.5;">LOCKED</span>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
-
-            <section class="glass-card settings-section mt-4">
-                <div class="section-header">
-                    <i class="bi bi-key"></i>
-                    <h2>Password Policy</h2>
-                </div>
-                <div class="settings-form">
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label>Min Length</label>
-                            <input type="number" [(ngModel)]="passwordPolicy.minLength">
-                        </div>
-                        <div class="form-group flex-1">
-                            <label>Expiry (Days)</label>
-                            <input type="number" [(ngModel)]="passwordPolicy.expiryDays">
-                        </div>
-                    </div>
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-container">
-                            <input type="checkbox" [(ngModel)]="passwordPolicy.requireSpecial">
-                            <span class="checkmark"></span>
-                            Require special characters
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <section class="glass-card settings-section mt-4">
-                <div class="section-header">
-                    <i class="bi bi-clock-history"></i>
-                    <h2>Session Settings</h2>
-                </div>
-                <div class="form-group flex-1">
-                    <label>Session Timeout (Minutes)</label>
-                    <input type="number" [(ngModel)]="sessionConfig.timeoutMinutes">
-                </div>
-            </section>
         </div>
 
-        <!-- Organization -->
+        <!-- Command Post (Organization) -->
         <div *ngIf="activeTab() === 'organization'" class="tab-pane">
-            <section class="glass-card settings-section">
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-globe"></i>
-                    <h2>Allowed Domains</h2>
+                    <i class="bi bi-globe-central-south-line"></i>
+                    <h2>{{ 'DOMAIN_RESTRICTIONS' | translate }}</h2>
                 </div>
                 <div class="domain-management">
-                    <div class="domain-add-group">
-                        <input type="text" [(ngModel)]="newDomain" placeholder="example.com">
-                        <button class="btn-primary" (click)="onAddDomain()">Add Domain</button>
+                    <div class="domain-add-group" style="display: flex; gap: 1rem;">
+                        <input type="text" [(ngModel)]="newDomain" placeholder="company.com"
+                            style="flex: 1; min-width: 0;">
+                        <button class="premium-btn" (click)="onAddDomain()">{{ 'ADD' | translate }}</button>
                     </div>
-                    <div class="domain-list mt-3">
-                        <div *ngFor="let domain of allowedDomains()" class="domain-item">
-                            <span>{{ domain.domain }}</span>
-                            <button class="btn-icon" (click)="onDeleteDomain(domain.id)">
-                                <i class="bi bi-trash"></i>
+                    <div class="domain-list mt-4"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                        <div *ngFor="let domain of allowedDomains()" class="domain-item"
+                            style="background: rgba(15,23,42,0.4); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
+                            <span style="font-family: 'Outfit', sans-serif; font-weight: 700;">{{ domain.domain
+                                }}</span>
+                            <button class="btn-icon" (click)="onDeleteDomain(domain.id)"
+                                style="width: 24px; height: 24px;">
+                                <i class="bi bi-trash-fill"></i>
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="glass-card settings-section mt-4">
+            <section class="settings-section mt-4">
                 <div class="section-header">
-                    <i class="bi bi-database-check"></i>
-                    <h2>LDAP Integration</h2>
+                    <i class="bi bi-building-fill-gear"></i>
+                    <h2>{{ 'COMPANY_PROFILE' | translate }}</h2>
                 </div>
                 <div class="settings-form">
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-container">
-                            <input type="checkbox" [(ngModel)]="ldap.enabled">
-                            <span class="checkmark"></span>
-                            Enable LDAP Authentication
-                        </label>
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>Industry</label>
+                            <input type="text" [(ngModel)]="companyProfile.industry" placeholder="e.g. Technology">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Timezone</label>
+                            <select [(ngModel)]="companyProfile.timezone">
+                                <option value="UTC">UTC</option>
+                                <option value="EST">EST</option>
+                                <option value="PST">PST</option>
+                                <option value="GMT">GMT</option>
+                                <option value="IST">IST</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group" *ngIf="ldap.enabled">
-                        <label>LDAP Server URL</label>
-                        <input type="text" [(ngModel)]="ldap.server" placeholder="ldap://domain.com:389">
+                    <div class="form-group">
+                        <label>Company Address</label>
+                        <input type="text" [(ngModel)]="companyProfile.address" placeholder="Physical address">
                     </div>
-                    <div class="form-group" *ngIf="ldap.enabled">
-                        <label>Base DN</label>
-                        <input type="text" [(ngModel)]="ldap.baseDn" placeholder="dc=example,dc=com">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label>Contact Email</label>
+                            <input type="email" [(ngModel)]="companyProfile.contact_email"
+                                placeholder="contact@company.com">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Contact Phone</label>
+                            <input type="text" [(ngModel)]="companyProfile.contact_phone"
+                                placeholder="+00 000-000-0000">
+                        </div>
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- Communication -->
+        <!-- Tactical Comms (Communication) -->
         <div *ngIf="activeTab() === 'communication'" class="tab-pane">
-            <section class="glass-card settings-section">
+            <!-- Section 1: Email Notifications -->
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-send"></i>
-                    <h2>SMTP Configuration</h2>
+                    <i class="bi bi-envelope-check-fill"></i>
+                    <h2>Email notifications</h2>
                 </div>
+
                 <div class="settings-form">
+                    <div class="form-group flex-2">
+                        <label>Emission email address</label>
+                        <input type="email" [(ngModel)]="notifications.emissionEmailAddress"
+                            placeholder="administrator@hagbes.com">
+                    </div>
+
+                    <div class="form-row mt-2">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" [(ngModel)]="notifications.bccRecipients">
+                                Blind carbon copy recipients (bcc)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row mt-1">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" [(ngModel)]="notifications.plainTextMail">
+                                Plain text mail (no HTML)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>Address user in emails with</label>
+                        <select [(ngModel)]="notifications.addressUserWith">
+                            <option value="full_name">Full name</option>
+                            <option value="first_name">First name</option>
+                            <option value="username">Username</option>
+                        </select>
+                    </div>
+
+                    <div class="hr-premium"></div>
+
+                    <div class="sub-header">EMAILS HEADER & EMAILS FOOTER</div>
+
+                    <!-- Header Editor -->
+                    <div class="form-group">
+                        <label>Emails header</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-type-bold"></i>
+                                    <i class="bi bi-type-italic"></i>
+                                    <i class="bi bi-type-strikethrough"></i>
+                                    <i class="bi bi-code-slash"></i>
+                                    <i class="bi bi-link-45deg"></i>
+                                    <i class="bi bi-image"></i>
+                                    <i class="bi bi-list-ul"></i>
+                                    <i class="bi bi-list-ol"></i>
+                                    <i class="bi bi-quote"></i>
+                                    <i class="bi bi-table"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.emailsHeader[currentTemplateLang()]"
+                                placeholder="Enter email header for {{ currentTemplateLang() | uppercase }}..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Footer Editor -->
+                    <div class="form-group mt-4">
+                        <label>Emails footer</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-type-bold"></i>
+                                    <i class="bi bi-type-italic"></i>
+                                    <i class="bi bi-type-strikethrough"></i>
+                                    <i class="bi bi-code-slash"></i>
+                                    <i class="bi bi-image"></i>
+                                    <i class="bi bi-list-ul"></i>
+                                    <i class="bi bi-quote"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.emailsFooter[currentTemplateLang()]"
+                                placeholder="Enter email footer for {{ currentTemplateLang() | uppercase }}..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Notification Template Editor -->
+                    <div class="form-group mt-4">
+                        <label>Notification Message Template</label>
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <div class="lang-tabs">
+                                    <button *ngFor="let lang of templateLangs"
+                                        [class.active]="currentTemplateLang() === lang"
+                                        (click)="currentTemplateLang.set(lang); $event.preventDefault()">
+                                        {{ lang | uppercase }}
+                                    </button>
+                                </div>
+                                <div class="rich-text-tools">
+                                    <i class="bi bi-info-circle"
+                                        title="Variables: {task_title}, {user_name}, {status}, {priority}, {sender_name}, {content}, {folder_name}, {date}, {time}, {hour}, {minute}, {day}, {org_name}"></i>
+                                </div>
+                            </div>
+                            <textarea [(ngModel)]="notifications.notificationTemplate[currentTemplateLang()]"
+                                placeholder="Enter notification template (e.g. New task assigned: {task_title}) for {{ currentTemplateLang() | uppercase }}..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Configure Your Email Provider -->
+            <section class="settings-section mt-4">
+                <div class="section-header">
+                    <i class="bi bi-server"></i>
+                    <h2>CONFIGURE YOUR EMAIL PROVIDER</h2>
+                </div>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Email delivery method</label>
+                        <select [(ngModel)]="smtp.deliveryMethod">
+                            <option value="smtp">smtp</option>
+                            <option value="sendmail">sendmail</option>
+                            <option value="test">test (no delivery)</option>
+                        </select>
+                    </div>
+
                     <div class="form-row">
-                        <div class="form-group flex-3">
-                            <label>SMTP Host</label>
-                            <input type="text" [(ngModel)]="smtp.host" placeholder="smtp.gmail.com">
+                        <div class="form-group flex-2">
+                            <label>SMTP server</label>
+                            <input type="text" [(ngModel)]="smtp.host" placeholder="mail.hagbes.com">
                         </div>
                         <div class="form-group flex-1">
-                            <label>Port</label>
-                            <input type="number" [(ngModel)]="smtp.port">
+                            <label>SMTP port</label>
+                            <input type="number" [(ngModel)]="smtp.port" placeholder="587">
                         </div>
                     </div>
+
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input type="text" [(ngModel)]="smtp.user">
+                        <div class="form-group flex-2">
+                            <label>SMTP HELO domain</label>
+                            <input type="text" [(ngModel)]="smtp.heloDomain" placeholder="hagbes.com">
                         </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input type="password" [(ngModel)]="smtp.password">
+                        <div class="form-group flex-2">
+                            <label>Sender Email (Technical)</label>
+                            <input type="email" [(ngModel)]="smtp.from_email" placeholder="noreply@hagbes.com">
                         </div>
                     </div>
+
                     <div class="form-group">
-                        <label>From Email</label>
-                        <input type="email" [(ngModel)]="smtp.from_email">
+                        <label>SMTP authentication</label>
+                        <select [(ngModel)]="smtp.authentication">
+                            <option value="none">none</option>
+                            <option value="plain">plain</option>
+                            <option value="login">login</option>
+                            <option value="cram_md5">cram_md5</option>
+                        </select>
                     </div>
-                    <div *ngIf="testSuccess" class="alert alert-success mt-3">
-                        <i class="bi bi-check-circle-fill"></i> {{ testSuccess }}
+
+                    <div class="form-row" *ngIf="smtp.authentication !== 'none'">
+                        <div class="form-group flex-1">
+                            <label>SMTP username</label>
+                            <input type="text" [(ngModel)]="smtp.user" placeholder="administrator@hagbes.com">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>SMTP password</label>
+                            <input type="password" [(ngModel)]="smtp.password" placeholder="••••••••">
+                        </div>
                     </div>
-                    <div *ngIf="testError" class="alert alert-error mt-3">
-                        <i class="bi bi-exclamation-triangle-fill"></i> {{ testError }}
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="smtp.useStartTLS">
+                            Automatically use STARTTLS if available
+                        </label>
                     </div>
-                    <div class="form-actions gap-2">
+
+                    <div class="form-group checkbox-group mt-1">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="smtp.useSSL">
+                            Use SSL connection
+                        </label>
+                    </div>
+
+                    <div class="form-actions mt-4">
                         <button type="button" class="btn-secondary" (click)="onTestSmtp()" [disabled]="testLoading">
                             <span *ngIf="!testLoading">Test Connection</span>
                             <span *ngIf="testLoading" class="loader small"></span>
                         </button>
-                        <button type="button" class="btn-primary" (click)="onUpdateSettings()" [disabled]="loading">
-                            <span *ngIf="!loading">Save Configuration</span>
-                            <span *ngIf="loading" class="loader small"></span>
+                        <div *ngIf="testSuccess() && activeTab() === 'communication'" class="text-success mt-2">
+                            <i class="bi bi-check-circle"></i> {{ testSuccess() }}
+                        </div>
+                        <div *ngIf="testError() && activeTab() === 'communication'" class="text-error mt-2">
+                            <i class="bi bi-shield-exclamation"></i> {{ testError() }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Telegram Settings -->
+            <section class="settings-section mt-4">
+                <div class="section-header">
+                    <i class="bi bi-telegram"></i>
+                    <h2>STANDARD TELEGRAM SETTINGS</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group checkbox-group mb-4">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="notifications.telegramEnabled">
+                            Enable Telegram Notifications
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>Bot Token</label>
+                            <input type="text" [(ngModel)]="notifications.telegramBotToken"
+                                placeholder="123456789:ABCDefgh-IJKLmnop...">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Chat ID</label>
+                            <input type="text" [(ngModel)]="notifications.telegramChatId" placeholder="-100123456789">
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3">
+                        <button type="button" class="btn-secondary" (click)="onTestTelegram()" [disabled]="testLoading">
+                            <span *ngIf="!testLoading">Test Standard Telegram</span>
+                            <span *ngIf="testLoading" class="loader small"></span>
                         </button>
                     </div>
                 </div>
             </section>
 
-            <section class="glass-card settings-section mt-4">
+            <!-- Section 4: Global Controls -->
+            <section class="settings-section mt-4">
                 <div class="section-header">
-                    <i class="bi bi-chat-dots"></i>
-                    <h2>Notification Channels</h2>
+                    <i class="bi bi-toggle-on"></i>
+                    <h2>GLOBAL COMMS CONTROL</h2>
                 </div>
                 <div class="settings-form">
-                    <div class="form-group">
-                        <label>Telegram Bot Token</label>
-                        <input type="text" [(ngModel)]="notifications.telegramBotToken">
-                    </div>
-                    <div class="form-group">
-                        <label>Default Chat ID</label>
-                        <input type="text" [(ngModel)]="notifications.telegramChatId">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="notifications.emailNotificationsEnabled">
+                            Enable Global Email Notifications
+                        </label>
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- Branding -->
+        <!-- Visual Protocols (Branding) -->
         <div *ngIf="activeTab() === 'branding'" class="tab-pane">
-            <section class="glass-card settings-section">
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-palette"></i>
-                    <h2>Appearance & Logo</h2>
+                    <i class="bi bi-display-fill"></i>
+                    <h2>{{ 'BRANDING' | translate }}</h2>
                 </div>
                 <div class="logo-upload-box">
                     <div class="logo-preview-container">
                         <img *ngIf="org()?.logo_url" [src]="org()?.logo_url" class="logo-preview">
-                        <div *ngIf="!org()?.logo_url" class="logo-placeholder">NA</div>
+                        <div *ngIf="!org()?.logo_url" class="logo-placeholder">LR</div>
                     </div>
                     <div class="upload-controls">
-                        <label class="btn-secondary">
-                            <i class="bi bi-cloud-arrow-up"></i>
-                            Select New Logo
+                        <label class="premium-btn" style="cursor: pointer;">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            Upload Company Logo
                             <input type="file" (change)="onFileSelected($event)" hidden>
                         </label>
                     </div>
@@ -320,83 +549,243 @@
                         <label>System Page Title</label>
                         <input type="text" [(ngModel)]="branding.systemPageTitle">
                     </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label>Theme Appearance</label>
+                            <select [(ngModel)]="branding.themeMode">
+                                <option value="light">Light Mode</option>
+                                <option value="dark">Dark Mode</option>
+                                <option value="system">Follow System</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Border Radius</label>
+                            <select [(ngModel)]="branding.borderRadius">
+                                <option value="0px">Sharp (0px)</option>
+                                <option value="0.25rem">Modern (4px)</option>
+                                <option value="0.5rem">Soft (8px)</option>
+                                <option value="0.75rem">Premium (12px)</option>
+                                <option value="1rem">Bubbled (16px)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row mt-3">
+                        <div class="form-group flex-2">
+                            <label>Typography (Font Family)</label>
+                            <select [(ngModel)]="branding.fontFamily">
+                                <option value="'Inter', sans-serif">Inter (Standard Modern)</option>
+                                <option value="'Outfit', sans-serif">Outfit (Premium Rounded)</option>
+                                <option value="'Roboto', sans-serif">Roboto (Clean / Tech)</option>
+                                <option value="'Segoe UI', sans-serif">System Optimized</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Base Scaling</label>
+                            <select [(ngModel)]="branding.fontSizeBase">
+                                <option value="14px">Compact (14px)</option>
+                                <option value="16px">Standard (16px)</option>
+                                <option value="18px">Large (18px)</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-row mt-3">
                         <div class="form-group">
-                            <label>Primary color</label>
-                            <input type="color" [(ngModel)]="primaryColor">
+                            <label>Primary Theme Color</label>
+                            <input type="color" [(ngModel)]="primaryColor" style="height: 50px; padding: 5px;">
                         </div>
                         <div class="form-group">
-                            <label>Secondary color</label>
-                            <input type="color" [(ngModel)]="secondaryColor">
+                            <label>Secondary Theme Color</label>
+                            <input type="color" [(ngModel)]="secondaryColor" style="height: 50px; padding: 5px;">
                         </div>
                     </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Interface Config -->
+        <div *ngIf="activeTab() === 'dashboard'" class="tab-pane">
+            <section class="settings-section">
+                <div class="section-header">
+                    <i class="bi bi-sliders2"></i>
+                    <h2>{{ 'DASH_CONFIG' | translate }}</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="dashboard.showClock">
+                            Show Dashboard Clock
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="dashboard.showMap">
+                            Show Branch Map
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="dashboard.showStats">
+                            Show Analytics Stats
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="dashboard.showTasks">
+                            Show Task Feed
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" [(ngModel)]="dashboard.compactMode">
+                            Enable Compact Mode (High Density)
+                        </label>
+                    </div>
+
+                    <div class="hr-divider" style="margin: 2rem 0; border-top: 1px solid var(--glass-border);"></div>
+                    <h3 style="font-size: 1.125rem; color: var(--text-main); margin-bottom: 1.5rem;">Advanced
+                        Customization</h3>
+
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label>Clock Style</label>
+                            <select [(ngModel)]="dashboard.clockType">
+                                <option value="analog">Premium Analog</option>
+                                <option value="digital">Modern Digital</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Refresh Interval (Seconds)</label>
+                            <input type="number" [(ngModel)]="dashboard.refreshRate" min="5" max="300">
+                        </div>
+                    </div>
+
                     <div class="form-group mt-3">
-                        <label>Theme Mode</label>
-                        <select [(ngModel)]="branding.themeMode">
-                            <option value="system">System Default</option>
-                            <option value="light">Light Mode</option>
-                            <option value="dark">Dark Mode</option>
-                        </select>
+                        <label>Widget Display Order</label>
+                        <input type="text" [(ngModel)]="dashboard.layout" placeholder="e.g. clock,stats,tasks,map">
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">Comma-separated: clock, stats,
+                            tasks, map</small>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>Metrics Selection</label>
+                        <input type="text" [(ngModel)]="dashboard.metricsConfig"
+                            placeholder="tasks,active,overdue,problems">
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">Comma-separated selection of
+                            metrics</small>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label>Session Timeout (Minutes)</label>
+                        <input type="number" [(ngModel)]="sessionConfig.timeoutMinutes" min="5" max="1440">
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- Dashboard -->
-        <div *ngIf="activeTab() === 'dashboard'" class="tab-pane">
-            <section class="glass-card settings-section">
+        <!-- Security & Crypt -->
+        <div *ngIf="activeTab() === 'security'" class="tab-pane">
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-speedometer"></i>
-                    <h2>Dashboard Components</h2>
+                    <i class="bi bi-bank2"></i>
+                    <h2>{{ 'AUDIT_LOGS' | translate }}</h2>
                 </div>
-                <div class="checkbox-list">
-                    <label class="checkbox-container">
-                        <input type="checkbox" [(ngModel)]="dashboard.showClock">
-                        <span class="checkmark"></span>
-                        Show Real-time Clock
-                    </label>
-                    <label class="checkbox-container mt-2">
-                        <input type="checkbox" [(ngModel)]="dashboard.showMap">
-                        <span class="checkmark"></span>
-                        Show Organizational Map
-                    </label>
-                    <label class="checkbox-container mt-2">
-                        <input type="checkbox" [(ngModel)]="dashboard.showStats">
-                        <span class="checkmark"></span>
-                        Show Performance Metrics (Stats)
-                    </label>
-                    <label class="checkbox-container mt-2">
-                        <input type="checkbox" [(ngModel)]="dashboard.showTasks">
-                        <span class="checkmark"></span>
-                        Show Recent Critical Tasks
-                    </label>
+                <p style="color: #64748b; font-family: 'Outfit', sans-serif; font-weight: 500; margin-bottom: 2rem;">
+                    View and download a history of system activities and user actions.</p>
+                <div class="mt-3" style="display: flex; gap: 1.5rem;">
+                    <button class="premium-btn" (click)="onDownloadAuditLogs()">
+                        <i class="bi bi-file-earmark-arrow-down-fill"></i> Download Audit Logs (CSV)
+                    </button>
+                    <button class="btn-secondary" (click)="onViewAllLogs()"
+                        style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 10px;">
+                        <i class="bi bi-shield-shaded"></i> View All Logs
+                    </button>
                 </div>
             </section>
         </div>
 
-        <!-- Security -->
-        <div *ngIf="activeTab() === 'security'" class="tab-pane">
-            <section class="glass-card settings-section">
+        <!-- Access Rights (RBAC) -->
+        <div *ngIf="activeTab() === 'access-rights'" class="tab-pane">
+            <section class="settings-section">
                 <div class="section-header">
-                    <i class="bi bi-shield-check"></i>
-                    <h2>Audit Logs</h2>
+                    <i class="bi bi-key-fill"></i>
+                    <h2>System Roles & Granular Overrides</h2>
                 </div>
-                <p class="field-hint">View detailed system activity and access logs.</p>
-                <div class="mt-3">
-                    <button class="btn-secondary">
-                        <i class="bi bi-download"></i> Download Access Logs (CSV)
-                    </button>
-                    <button class="btn-secondary ms-2">
-                        <i class="bi bi-file-earmark-text"></i> View System Audit
-                    </button>
+
+                <div class="role-management-grid">
+                    <!-- Roles List -->
+                    <div class="role-list">
+                        <div *ngFor="let role of roles()" class="role-card"
+                            [class.active]="selectedRole()?.id === role.id" (click)="onSelectRole(role)">
+                            <div class="role-card-info">
+                                <span class="role-name">{{ role.name }}</span>
+                                <span class="role-type" *ngIf="role.is_standard">STANDARD</span>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Permissions Editor -->
+                    <div class="permission-editor" *ngIf="isEditingRole()">
+                        <div class="editor-header">
+                            <h3>Configuring: {{ selectedRole().name }}</h3>
+                            <div class="header-actions">
+                                <button class="btn-ghost" (click)="onCancelRoleEdit()">Cancel</button>
+                                <button class="premium-btn small" (click)="onSaveRole()">Save Overrides</button>
+                            </div>
+                        </div>
+
+                        <div class="permission-groups">
+                            <div class="perm-table-container">
+                                <table class="perm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission Code</th>
+                                            <th>Inherited / Overriden</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let perm of allPermissions()">
+                                            <td>
+                                                <div class="perm-info">
+                                                    <code>{{ perm.code }}</code>
+                                                    <small>{{ perm.description }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="inheritance-badge"
+                                                    [class.overridden]="rolePermissions()[perm.code] !== undefined">
+                                                    {{ rolePermissions()[perm.code] !== undefined ? 'OVERRIDDEN' :
+                                                    'INHERITED' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <label class="switch">
+                                                    <input type="checkbox" [checked]="rolePermissions()[perm.code]"
+                                                        (change)="togglePermission(perm.code)">
+                                                    <span class="slider round"></span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="no-role-selected" *ngIf="!isEditingRole()">
+                        <i class="bi bi-shield-lock"></i>
+                        <p>Select a role from the list to manage its granular permission overrides.</p>
+                    </div>
                 </div>
             </section>
         </div>
 
         <!-- Save button footer -->
-        <div class="settings-footer glass-card">
-            <button class="btn-primary" (click)="onUpdateSettings()" [disabled]="loading">
-                <span *ngIf="!loading">Save All Changes</span>
+        <div class="settings-footer">
+            <button class="premium-btn" (click)="onUpdateSettings()" [disabled]="loading"
+                style="padding: 1rem 3rem; font-size: 1.125rem;">
+                <span *ngIf="!loading">{{ 'SAVE_CHANGES' | translate }}</span>
                 <span *ngIf="loading" class="loader small"></span>
             </button>
         </div>

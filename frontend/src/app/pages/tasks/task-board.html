@@ -1,85 +1,326 @@
-<div class="board-container animate-fade-in">
+<div class="board-container">
     <header class="board-header">
         <div class="header-info">
-            <h1>Daily Task Board</h1>
-            <p>Track and manage individual operational tasks</p>
+            <h1>{{ 'TASKS_BOARD' | translate }}</h1>
+            <p>{{ 'TASKS_DESC' | translate }}</p>
         </div>
         <div class="actions">
-            <button class="btn-primary" (click)="showModal.set(true)">
-                <i class="bi bi-plus-lg"></i> Add Task
+            <button class="premium-btn" (click)="showModal.set(true)" *appHasPermission="'task:create'">
+                <i class="bi bi-plus-circle-fill"></i> {{ 'NEW_TASK' | translate }}
             </button>
         </div>
     </header>
 
-    <div class="board-columns">
+    <div class="board-columns" cdkDropListGroup>
         @for (column of columns; track column) {
         <div class="column">
             <div class="column-header">
-                <h3>{{ column }}</h3>
+                <h3>{{ column | translate }}</h3>
                 <span class="count">{{ getTasksByStatus(column).length }}</span>
             </div>
 
-            <div class="task-list">
+            <div class="task-list" cdkDropList [cdkDropListData]="getTasksByStatus(column)" [id]="column"
+                (cdkDropListDropped)="onDrop($event)" [cdkDropListDisabled]="!canEditTask()">
+
                 @for (task of getTasksByStatus(column); track task.id) {
-                <div class="glass-card task-card">
+                <div class="task-card" (click)="onSelectTask(task)" cdkDrag [cdkDragData]="task">
                     <div class="task-priority" [class]="task.priority.toLowerCase()"></div>
                     <h4>{{ task.title }}</h4>
                     <p>{{ task.description }}</p>
+
+                    <div class="task-tags" *ngIf="task.tags.length">
+                        @for (tag of task.tags; track tag) {
+                        <span class="tag">{{ tag }}</span>
+                        }
+                    </div>
+
                     <div class="task-footer">
-                        <span class="date">{{ task.due_date | date:'shortDate' }}</span>
-                        <div class="avatar-sm">U</div>
+                        <span class="date">{{ task.due_date | date:'MMM dd' }}</span>
+                        <div class="task-meta">
+                            <span *ngIf="task.comments?.length">
+                                <i class="bi bi-chat-text-fill" style="color: var(--neon-blue)"></i> {{
+                                task.comments?.length }}
+                            </span>
+                            <span *ngIf="task.attachments?.length">
+                                <i class="bi bi-paperclip" style="color: var(--neon-purple)"></i> {{
+                                task.attachments?.length }}
+                            </span>
+                        </div>
+                        <div class="avatar-sm" [title]="getUserName(task.assignee_id)">
+                            {{ getUserInitial(task.assignee_id) }}
+                        </div>
                     </div>
                 </div>
                 }
                 @if (getTasksByStatus(column).length === 0) {
-                <div class="column-empty">No tasks in this stage</div>
+                <div class="column-empty">
+                    <i class="bi bi-inbox"
+                        style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                    {{ 'NO_TASKS' | translate }}
+                </div>
                 }
             </div>
         </div>
         }
     </div>
 
-    <!-- Add Task Modal -->
-    <div class="modal-overlay" *ngIf="showModal()">
-        <div class="glass-card modal-content">
-            <div class="modal-header">
-                <h2>Create New Task</h2>
-                <button class="close-btn" (click)="showModal.set(false)"><i class="bi bi-x"></i></button>
-            </div>
-
-            <form (ngSubmit)="onAddTask()" #taskForm="ngForm" class="task-form">
-                <div class="form-group">
-                    <label>Task Title</label>
-                    <input type="text" name="title" [(ngModel)]="newTask.title" required
-                        placeholder="What needs to be done?">
+    <!-- Task Detail Drawer -->
+    <div class="drawer-overlay" [class.open]="showDetails()" (click)="showDetails.set(false)">
+        <div class="detail-drawer" (click)="$event.stopPropagation()">
+            <header class="drawer-header">
+                <div class="priority-label" [class]="selectedTask()?.priority?.toLowerCase()">
+                    @if (canEditTask()) {
+                    <select [ngModel]="selectedTask()?.priority" (ngModelChange)="updateTaskField('priority', $event)">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                    } @else {
+                    {{ selectedTask()?.priority }} {{ 'PRIORITY_SEVERITY' | translate }}
+                    }
                 </div>
+                @if (canEditTask()) {
+                <input type="text" [ngModel]="selectedTask()?.title"
+                    (blur)="updateTaskField('title', $any($event.target).value)" class="edit-title">
+                } @else {
+                <h2>{{ selectedTask()?.title }}</h2>
+                }
+                <button class="close-btn" (click)="showDetails.set(false)"><i class="bi bi-x-lg"></i></button>
+            </header>
 
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="description" [(ngModel)]="newTask.description" rows="3"
-                        placeholder="Additional details..."></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>Priority</label>
-                        <select name="priority" [(ngModel)]="newTask.priority">
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
+            <div class="drawer-body">
+                <section class="info-section grid-3">
+                    <div class="info-item">
+                        <label>{{ 'CATEGORY_WORKER' | translate }}</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.assignee_id"
+                            (ngModelChange)="updateTaskField('assignee_id', $event)">
+                            <option [ngValue]="null">{{ 'UNALLOCATED_ASSETS' | translate }}</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
                         </select>
+                        } @else {
+                        <div class="assignee-badge">
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.assignee_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.assignee_id) }}</span>
+                        </div>
+                        }
                     </div>
-                    <div class="form-group half">
-                        <label>Due Date</label>
-                        <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
-                    </div>
-                </div>
 
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" (click)="showModal.set(false)">Cancel</button>
-                    <button type="submit" class="btn-primary" [disabled]="!taskForm.form.valid">Create Task</button>
-                </div>
-            </form>
+                    <div class="info-item">
+                        <label>{{ 'STATUS' | translate }}</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.status" (ngModelChange)="updateTaskField('status', $event)">
+                            <option *ngFor="let s of columns" [value]="s">{{ s | translate }}</option>
+                        </select>
+                        } @else {
+                        <span class="status-indicator">{{ selectedTask()?.status }}</span>
+                        }
+                    </div>
+
+                    <div class="info-item">
+                        <label>{{ 'SECTOR_LOCATION' | translate }}</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.module_type"
+                            (ngModelChange)="updateTaskField('module_type', $event)">
+                            <option *ngFor="let m of modules" [value]="m">{{ m | uppercase }}</option>
+                        </select>
+                        } @else {
+                        <span class="module-tag">{{ selectedTask()?.module_type | uppercase }}</span>
+                        }
+                    </div>
+                </section>
+
+                <section class="info-section grid-2">
+                    <div class="info-item">
+                        <label>{{ 'ASSIGNER_INFO' | translate }}</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.assigner_id"
+                            (ngModelChange)="updateTaskField('assigner_id', $event)">
+                            <option [ngValue]="null">{{ 'NOT_SPECIFIED' | translate }}</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
+                        </select>
+                        } @else {
+                        <div class="assignee-badge">
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.assigner_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.assigner_id) }}</span>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="info-item">
+                        <label>{{ 'ACCOUNTABLE_INFO' | translate }}</label>
+                        @if (canEditTask()) {
+                        <select [ngModel]="selectedTask()?.accountable_id"
+                            (ngModelChange)="updateTaskField('accountable_id', $event)">
+                            <option [ngValue]="null">{{ 'NOT_SPECIFIED' | translate }}</option>
+                            <option *ngFor="let user of users()" [value]="user.id">{{ user.full_name || user.email }}
+                            </option>
+                        </select>
+                        } @else {
+                        <div class="assignee-badge">
+                            <span class="avatar-sm">{{ getUserInitial(selectedTask()?.accountable_id) }}</span>
+                            <span>{{ getUserName(selectedTask()?.accountable_id) }}</span>
+                        </div>
+                        }
+                    </div>
+                </section>
+
+                <section class="description-section">
+                    <label>{{ 'TACTICAL_DESC' | translate }}</label>
+                    @if (canEditTask()) {
+                    <textarea [ngModel]="selectedTask()?.description"
+                        (blur)="updateTaskField('description', $any($event.target).value)" rows="4"
+                        class="edit-desc"></textarea>
+                    } @else {
+                    <p>{{ selectedTask()?.description || ('NO_DESCRIPTIVE_DATA' | translate) }}</p>
+                    }
+                </section>
+
+                <!-- Rating Section -->
+                <section class="rating-section" *ngIf="selectedTask()?.status === 'Completed'">
+                    <label>{{ 'EVALUATION' | translate }}</label>
+                    <div class="rating-container" [class.readonly]="!canRateTask()">
+                        @if (selectedTask()?.rating) {
+                        <div class="stars">
+                            @for (star of [1,2,3,4,5]; track star) {
+                            <i class="bi text-warning" [class.bi-star-fill]="star <= (selectedTask()?.rating || 0)"
+                                [class.bi-star]="star > (selectedTask()?.rating || 0)">
+                            </i>
+                            }
+                            <span class="rating-value">{{ selectedTask()?.rating }}/5</span>
+                        </div>
+                        } @else {
+                        @if (canRateTask()) {
+                        <div class="stars interact">
+                            @for (star of [1,2,3,4,5]; track star) {
+                            <i class="bi bi-star text-warning" (click)="rateTask(star)"></i>
+                            }
+                        </div>
+                        <p class="text-xs" style="color: #64748b; margin-top: 0.5rem;">{{ 'SELECT_METRIC' | translate }}
+                        </p>
+                        } @else {
+                        <p class="text-sm text-muted">{{ 'EVAL_PENDING' | translate }}</p>
+                        }
+                        }
+                    </div>
+                </section>
+
+                <section class="tags-section">
+                    <label>{{ 'TAGS' | translate }}</label>
+                    <div class="tag-manager">
+                        <div class="tag-list">
+                            @for (tag of selectedTask()?.tags; track tag) {
+                            <span class="tag edit">
+                                {{ tag }}
+                                <i *ngIf="canEditTask()" class="bi bi-x-circle-fill" (click)="removeTag(tag)"
+                                    style="margin-left: 0.5rem; cursor: pointer;"></i>
+                            </span>
+                            }
+                        </div>
+                        <div class="add-tag" *ngIf="canEditTask()">
+                            <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()"
+                                [placeholder]="'NEW_TAG_PLACEHOLDER' | translate">
+                            <button (click)="addTag()"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="attachments-section">
+                    <label>{{ 'ATTACHMENTS' | translate }} ({{ selectedTask()?.attachments?.length || 0 }})</label>
+                    <div class="attachment-list">
+                        @for (file of selectedTask()?.attachments; track file.id) {
+                        <a [href]="file.file_path" target="_blank" class="attachment-item">
+                            <i class="bi bi-file-earmark-zip-fill"></i>
+                            <span>{{ file.file_name }}</span>
+                        </a>
+                        }
+                    </div>
+                    <label class="file-upload">
+                        <input type="file" (change)="onUploadFile($event)" style="display: none;">
+                        <i class="bi bi-cloud-arrow-up-fill"></i> {{ 'UPLOAD_DATA' | translate }}
+                    </label>
+                </section>
+
+                <section class="developer-activity-section"
+                    *ngIf="selectedTask()?.commits?.length || selectedTask()?.pull_requests?.length">
+                    <label>{{ 'NEURAL_SYNC_GITHUB' | translate }}</label>
+                    <div class="activity-timeline">
+                        <!-- Pull Requests First -->
+                        @for (pr of selectedTask()?.pull_requests; track pr.id) {
+                        <div class="activity-item pr" [ngClass]="pr.state">
+                            <div class="activity-dot"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="type-badge">PR #{{ pr.number }}</span>
+                                    <span class="status-badge">{{ pr.state }}</span>
+                                    <span class="commit-author">{{ pr.author }}</span>
+                                </div>
+                                <div class="commit-message">{{ pr.title }}</div>
+                                <a [href]="pr.html_url" target="_blank" class="commit-link">
+                                    <i class="bi bi-github"></i> {{ 'VIEW_PR' | translate }}
+                                </a>
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Then Commits -->
+                        @for (commit of selectedTask()?.commits; track commit.id) {
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="commit-hash">{{ commit.hash }}</span>
+                                    <span class="commit-author">{{ commit.author }}</span>
+                                    <span class="commit-time">{{ commit.timestamp | date:'MMM dd, HH:mm' }}</span>
+                                </div>
+                                <div class="commit-message">{{ commit.message }}</div>
+                                <a [href]="commit.url" target="_blank" class="commit-link" *ngIf="commit.url">
+                                    <i class="bi bi-github"></i> {{ 'VIEW_COMMIT' | translate }}
+                                </a>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </section>
+
+                <section class="comments-section">
+                    <label>{{ 'COMMENTS' | translate }} ({{ selectedTask()?.comments?.length || 0 }})</label>
+                    <div class="comment-list">
+                        @for (comment of selectedTask()?.comments; track comment.id) {
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="author">Agent {{ comment.author_id }}</span>
+                                <span class="time">{{ comment.created_at | date:'HH:mm MMM dd' }}</span>
+                            </div>
+                            <div class="comment-body">{{ comment.content }}</div>
+                        </div>
+                        }
+                    </div>
+                    <div class="comment-input">
+                        <textarea [(ngModel)]="newComment"
+                            [placeholder]="'TRANSMISSION_CONTENT' | translate"></textarea>
+                        <button class="premium-btn" (click)="onAddComment()" [disabled]="!newComment.trim()"
+                            style="width: 100%; justify-content: center;">
+                            {{ 'POST_COMMENT' | translate }}
+                        </button>
+                    </div>
+                </section>
+
+                <!-- NEW: Archive Action -->
+                <section class="archive-action" *ngIf="canEditTask()">
+                    <button class="btn-danger-outline" (click)="onArchiveTask()"
+                        style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px dashed #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-weight: 700; cursor: pointer;">
+                        <i class="bi bi-archive"></i> {{ 'DECOMMISSION_MISSION' | translate }}
+                    </button>
+                </section>
+            </div>
         </div>
     </div>
+
+    <!-- Add Task Modal -->
+    <app-task-create-modal *ngIf="showModal()" (close)="showModal.set(false)" (taskCreated)="onTaskCreated()">
+    </app-task-create-modal>
 </div>

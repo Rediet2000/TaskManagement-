@@ -27,16 +27,50 @@ class OrganizationBase(BaseModel):
     # Notification Settings
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_enabled: bool = False
     
-    # Branding Settings
+    # Advanced Email Notification Settings
+    email_notifications_enabled: bool = True
+    emission_email_address: Optional[str] = None
+    bcc_recipients: bool = False
+    plain_text_mail: bool = False
+    address_user_in_emails_with: str = "full_name"
+    emails_header: Optional[str] = None
+    emails_footer: Optional[str] = None
+    notification_template: Optional[str] = None
+    
+    # Enhanced SMTP Settings
+    email_delivery_method: str = "smtp"
+    smtp_helo_domain: Optional[str] = None
+    smtp_authentication: str = "login"
+    smtp_use_starttls: bool = True
+    smtp_use_ssl: bool = False
+    
     system_page_title: str = "Task Management System"
     theme_mode: str = "system"
+    border_radius: str = "0.75rem"
+    font_family: str = "'Inter', sans-serif"
+    font_size_base: str = "16px"
     
+    # Company Profile (Phase 15)
+    industry: Optional[str] = None
+    address: Optional[str] = None
+    timezone: str = "UTC"
+    default_language: str = "en"
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+
     # Dashboard Settings
     show_dashboard_clock: bool = True
     show_dashboard_map: bool = False
     show_dashboard_stats: bool = True
     show_dashboard_tasks: bool = True
+    
+    dashboard_layout: str = "clock,stats,tasks,map"
+    dashboard_refresh_rate: int = 30
+    dashboard_clock_type: str = "analog"
+    dashboard_metrics_config: str = "tasks,active,overdue,problems"
+    dashboard_compact_mode: bool = False
 
 class OrganizationCreate(OrganizationBase):
     pass
@@ -53,6 +87,14 @@ class OrganizationUpdate(BaseModel):
     smtp_password: Optional[str] = None
     smtp_from_email: Optional[str] = None
     
+    # Company Profile (Phase 15)
+    industry: Optional[str] = None
+    address: Optional[str] = None
+    timezone: Optional[str] = None
+    default_language: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    
     password_min_length: Optional[int] = None
     password_require_special: Optional[bool] = None
     password_expiry_days: Optional[int] = None
@@ -64,14 +106,41 @@ class OrganizationUpdate(BaseModel):
     
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_enabled: Optional[bool] = None
+    
+    # Advanced Email Notification Settings
+    email_notifications_enabled: Optional[bool] = None
+    emission_email_address: Optional[str] = None
+    bcc_recipients: Optional[bool] = None
+    plain_text_mail: Optional[bool] = None
+    address_user_in_emails_with: Optional[str] = None
+    emails_header: Optional[str] = None
+    emails_footer: Optional[str] = None
+    notification_template: Optional[str] = None
+    
+    # Enhanced SMTP Settings
+    email_delivery_method: Optional[str] = None
+    smtp_helo_domain: Optional[str] = None
+    smtp_authentication: Optional[str] = None
+    smtp_use_starttls: Optional[bool] = None
+    smtp_use_ssl: Optional[bool] = None
     
     system_page_title: Optional[str] = None
     theme_mode: Optional[str] = None
+    border_radius: Optional[str] = None
+    font_family: Optional[str] = None
+    font_size_base: Optional[str] = None
     
     show_dashboard_clock: Optional[bool] = None
     show_dashboard_map: Optional[bool] = None
     show_dashboard_stats: Optional[bool] = None
     show_dashboard_tasks: Optional[bool] = None
+    
+    dashboard_layout: Optional[str] = None
+    dashboard_refresh_rate: Optional[int] = None
+    dashboard_clock_type: Optional[str] = None
+    dashboard_metrics_config: Optional[str] = None
+    dashboard_compact_mode: Optional[bool] = None
 
 class Organization(OrganizationBase):
     id: int
@@ -158,3 +227,5 @@ class SMTPTest(BaseModel):
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
     smtp_from_email: str
+    use_starttls: bool = True
+    use_ssl: bool = False

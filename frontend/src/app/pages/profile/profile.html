@@ -1,0 +1,269 @@
+<div class="profile-container">
+    <header class="profile-header">
+        <div class="header-info">
+            <h1>{{ 'OPERATIONAL_PROFILE' | translate }}</h1>
+            <p>{{ 'TASKS_DESC' | translate }}</p>
+        </div>
+        <button class="premium-btn" (click)="saveProfile()" [disabled]="loading()">
+            <span *ngIf="!loading()">{{ 'SYNC_PROFILE' | translate }}</span>
+            <span *ngIf="loading()" class="loader small"></span>
+        </button>
+    </header>
+
+    <div *ngIf="success()" class="alert-premium alert-success">
+        <i class="bi bi-check-circle"></i> {{ success() }}
+    </div>
+    <div *ngIf="error()" class="alert-premium alert-error">
+        <i class="bi bi-shield-exclamation"></i> {{ error() }}
+    </div>
+
+    <div class="profile-layout" *ngIf="user()">
+        <!-- Sidebar Navigation -->
+        <aside class="profile-nav">
+            <button [class.active]="activeTab() === 'personal'" (click)="setTab('personal')">
+                <i class="bi bi-person-circle"></i> {{ 'PERSONAL_INFO' | translate }}
+            </button>
+            <button [class.active]="activeTab() === 'preferences'" (click)="setTab('preferences')">
+                <i class="bi bi-gear-wide-connected"></i> Work Preferences
+            </button>
+            <button [class.active]="activeTab() === 'notifications'" (click)="setTab('notifications')">
+                <i class="bi bi-bell"></i> Notifications
+            </button>
+            <button [class.active]="activeTab() === 'security'" (click)="setTab('security')">
+                <i class="bi bi-shield-lock"></i> {{ 'SECURITY_ACCESS' | translate }}
+            </button>
+            <button [class.active]="activeTab() === 'activity'" (click)="setTab('activity')">
+                <i class="bi bi-activity"></i> Activity Snapshot
+            </button>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="profile-content">
+
+            <!-- Personal Information Tab -->
+            <section *ngIf="activeTab() === 'personal'" class="profile-form">
+                <div class="section-header">
+                    <h2>{{ 'PERSONAL_INFO' | translate }}</h2>
+                    <p>{{ 'TASKS_DESC' | translate }}</p>
+                </div>
+
+                <div class="avatar-section">
+                    <div class="avatar-wrapper">
+                        <label for="photoUpload" class="current-avatar">
+                            <img *ngIf="user().profile_photo_url" [src]="user().profile_photo_url" alt="Profile">
+                            <span *ngIf="!user().profile_photo_url">{{ user().full_name?.charAt(0) }}</span>
+                        </label>
+                        <input type="file" id="photoUpload" (change)="onPhotoUpload($event)" style="display: none">
+                    </div>
+                    <div>
+                        <label for="photoUpload" class="upload-btn">
+                            <i class="bi bi-camera me-2"></i> Update Avatar
+                        </label>
+                        <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">JPG or PNG, max 2MB.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>{{ 'FULL_NAME' | translate }}</label>
+                        <input type="text" [(ngModel)]="user().full_name" [placeholder]="'FULL_NAME' | translate">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'USER_ID' | translate }}</label>
+                        <input type="text" [(ngModel)]="user().username" [placeholder]="'USER_ID' | translate">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address (Primary)</label>
+                        <input type="email" [value]="user().email" readonly style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" [(ngModel)]="user().phone_number" placeholder="+1 (555) 000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>Job Title / Department</label>
+                        <input type="text" [(ngModel)]="user().job_title" placeholder="Operational Role">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'LANGUAGE' | translate }}</label>
+                        <select [(ngModel)]="user().language">
+                            <option value="en">English (US)</option>
+                            <option value="am">Amharic (አማርኛ)</option>
+                            <option value="om">Oromo (Afaan Oromoo)</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Bio / Mission Statement</label>
+                        <textarea [(ngModel)]="user().bio" rows="3"
+                            placeholder="Brief personnel background..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Work Preferences Tab -->
+            <section *ngIf="activeTab() === 'preferences'" class="profile-form">
+                <div class="section-header">
+                    <h2>Work Preferences</h2>
+                    <p>Customize your interaction with the task management substrate.</p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Default Task View</label>
+                        <select [(ngModel)]="user().task_view_preference">
+                            <option value="board">Agile Board</option>
+                            <option value="list">Strategic List</option>
+                            <option value="calendar">Operational Calendar</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Default Task Sort</label>
+                        <select [(ngModel)]="user().default_task_sort">
+                            <option value="due_date">Due Date (Urgency)</option>
+                            <option value="priority">Priority (Impact)</option>
+                            <option value="created_at">Submission Date</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start of Week</label>
+                        <select [(ngModel)]="user().start_of_week">
+                            <option value="monday">Monday</option>
+                            <option value="sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Timezone</label>
+                        <select [(ngModel)]="user().timezone">
+                            <option value="UTC">UTC (Universal)</option>
+                            <option value="GMT">GMT (London)</option>
+                            <option value="EST">EST (New York)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date Format</label>
+                        <select [(ngModel)]="user().date_format">
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Time Format</label>
+                        <select [(ngModel)]="user().time_format">
+                            <option value="24h">24 Hour (Military)</option>
+                            <option value="12h">12 Hour (AM/PM)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notifications Tab -->
+            <section *ngIf="activeTab() === 'notifications'">
+                <div class="section-header">
+                    <h2>Notification Settings</h2>
+                    <p>Control the volume of intelligence updates.</p>
+                </div>
+
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <div class="info">
+                            <h4>Email: Task Assigned</h4>
+                            <p>Receive alert when a new objective is delegated to you.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="user().email_notifications.task_assigned">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <div class="info">
+                            <h4>Email: Status Changes</h4>
+                            <p>Updates on task progression and stage transitions.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="user().email_notifications.status_changes">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <div class="info">
+                            <h4>In-App: Mentions</h4>
+                            <p>Immediate tactical pings for direct user mentions.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="user().in_app_notifications.mentions">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Tab -->
+            <section *ngIf="activeTab() === 'security'" class="profile-form">
+                <div class="section-header">
+                    <h2>{{ 'SECURITY_ACCESS' | translate }}</h2>
+                    <p>{{ 'TASKS_DESC' | translate }}</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Authentication Method</label>
+                    <div class="toggle-item">
+                        <div class="info">
+                            <h4>{{ user().auth_method | uppercase }}</h4>
+                            <p>Account linked via {{ user().auth_method === 'email_password' ? 'Direct Credentials' :
+                                'Third-party Provider' }}.</p>
+                        </div>
+                        <i class="bi bi-shield-check text-success" style="font-size: 1.5rem"></i>
+                    </div>
+                </div>
+
+                <div class="form-grid mt-3">
+                    <div class="form-group">
+                        <label>{{ 'OLD_PASSWORD' | translate }}</label>
+                        <input type="password" [(ngModel)]="passwordData.old_password">
+                    </div>
+                    <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div class="form-group">
+                            <label>{{ 'NEW_PASSWORD' | translate }}</label>
+                            <input type="password" [(ngModel)]="passwordData.new_password">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ 'CONFIRM_PASSWORD' | translate }}</label>
+                            <input type="password" [(ngModel)]="passwordData.confirm_password">
+                        </div>
+                    </div>
+                </div>
+                <button class="premium-btn" (click)="changePassword()"
+                    [disabled]="loading() || !passwordData.new_password">
+                    {{ 'CHANGE_PASSWORD' | translate }}
+                </button>
+            </section>
+
+            <!-- Activity Tab -->
+            <section *ngIf="activeTab() === 'activity'">
+                <div class="section-header">
+                    <h2>Activity Snapshot</h2>
+                    <p>Visual summary of your recent tactical performance.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Open Tasks</div>
+                        <div class="value">{{ stats().open }}</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="label">Completed</div>
+                        <div class="value">{{ stats().completed }}</div>
+                    </div>
+                    <div class="stat-card urgent">
+                        <div class="label">Overdue</div>
+                        <div class="value">{{ stats().overdue }}</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>

@@ -1,9 +1,16 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, BackgroundTasks
+import os
+import uuid
+import shutil
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from app import schemas, models
 from app.api import deps
 from app.db.base import get_db
+from app.db.utils import create_audit_log
+from app.core.notifications import notification_service
+import asyncio
 
 router = APIRouter()
 
@@ -13,19 +20,31 @@ def read_tasks(
     current_user: models.core.User = Depends(deps.get_current_active_user),
     skip: int = 0,
     limit: int = 100,
+    search: str = None,
+    include_archived: bool = False,
 ) -> Any:
     """
     Retrieve tasks for the current organization.
     """
-    return db.query(models.task_tracking.Task).filter(
+    query = db.query(models.task_tracking.Task).filter(
         models.task_tracking.Task.org_id == current_user.org_id
-    ).offset(skip).limit(limit).all()
+    )
+    if not include_archived:
+        query = query.filter(models.task_tracking.Task.is_archived == False)
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (models.task_tracking.Task.title.ilike(search_filter)) |
+            (models.task_tracking.Task.description.ilike(search_filter))
+        )
+    return query.offset(skip).limit(limit).all()
 
 @router.post("", response_model=schemas.task.Task)
 async def create_task(
     *,
     db: Session = Depends(get_db),
     task_in: schemas.task.TaskCreate,
+    background_tasks: BackgroundTasks,
     current_user: models.core.User = Depends(deps.get_current_active_user),
     org_id: int = Depends(deps.get_current_org_id)
 ) -> Any:
@@ -41,23 +60,130 @@ async def create_task(
     db.commit()
     db.refresh(db_obj)
     
+    create_audit_log(db, current_user.id, "TASK_CREATE", f"Task '{db_obj.title}' created.", org_id=org_id)
+
     # Notify assignee if exists
     if db_obj.assignee_id:
         assignee = db.query(models.core.User).filter(models.core.User.id == db_obj.assignee_id).first()
         if assignee:
-            from app.core.notifications import notification_service
-            message = f"New Task Assigned: {db_obj.title}"
-            # await notification_service.send_telegram_notification(assignee.telegram_chat_id, message)
-            # notification_service.send_email_notification(assignee.email, "New Task Assigned", message)
+            # Use dynamic formatting
+            context = {
+                "task_title": db_obj.title,
+                "priority": db_obj.priority,
+                "sender_name": current_user.full_name,
+                "user_name": assignee.full_name
+            }
+            message = notification_service.format_message(db, org_id, assignee.language or "en", "NEW_TASK", context)
+            
+            # 1. Create Web Notification (database)
+            db_notif = models.task_tracking.Notification(
+                user_id=assignee.id,
+                channel="web",
+                message=message,
+                status="Pending",
+                trigger_event="task_assign"
+            )
+            db.add(db_notif)
+            db.commit() # Commit to ensure it's saved
+
+            # 2. External Notifications
+            background_tasks.add_task(
+                notification_service.send_telegram_background,
+                current_user.org_id, 
+                message
+            )
+            notification_service.send_email_notification(db, current_user.org_id, assignee.email, "New Task Assigned", message)
             
     return db_obj
+
+@router.get("/reports/dashboard", response_model=schemas.task.TaskReportStats)
+def get_reports_dashboard(
+    db: Session = Depends(get_db),
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get aggregated task report and performance metrics.
+    """
+    # 1. Base query for org tasks
+    tasks_query = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.org_id == current_user.org_id
+    )
+    all_tasks = tasks_query.all()
+    
+    total = len(all_tasks)
+    unassigned = sum(1 for t in all_tasks if not t.assignee_id)
+    pending = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.PENDING)
+    completed = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.COMPLETED)
+    started = sum(1 for t in all_tasks if t.status == schemas.task.TaskStatus.STARTED)
+    
+    # 2. Per User Performance
+    users = db.query(models.core.User).filter(models.core.User.org_id == current_user.org_id).all()
+    user_stats = []
+    
+    for u in users:
+        u_tasks = [t for t in all_tasks if t.assignee_id == u.id]
+        u_completed = [t for t in u_tasks if t.status == schemas.task.TaskStatus.COMPLETED]
+        u_started = [t for t in u_tasks if t.status == schemas.task.TaskStatus.STARTED]
+        
+        # On-Time calculation
+        on_time_count = 0
+        for t in u_completed:
+            # If completed_at is set and <= due_date
+            if t.completed_at and t.due_date:
+                if t.completed_at <= t.due_date:
+                    on_time_count += 1
+            elif not t.due_date:
+                on_time_count += 1 # No due date = on time
+        
+        on_time_rate = (on_time_count / len(u_completed)) * 100 if u_completed else 0.0
+        
+        # Avg Rating
+        rated_tasks = [t.rating for t in u_completed if t.rating is not None]
+        avg_rating = sum(rated_tasks) / len(rated_tasks) if rated_tasks else None
+        
+        user_stats.append(schemas.task.UserPerformance(
+            user_id=u.id,
+            user_name=u.full_name or u.email,
+            tasks_assigned=len(u_tasks),
+            tasks_completed=len(u_completed),
+            tasks_started=len(u_started),
+            avg_rating=avg_rating,
+            on_time_rate=round(on_time_rate, 1)
+        ))
+        
+    return schemas.task.TaskReportStats(
+        total_tasks=total,
+        unassigned=unassigned,
+        pending=pending,
+        completed=completed,
+        started=started,
+        user_performance=user_stats
+    )
+
+@router.get("/{id}", response_model=schemas.task.Task)
+def read_task(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get a specific task by ID.
+    """
+    task = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.id == id,
+        models.task_tracking.Task.org_id == current_user.org_id
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
 
 @router.put("/{id}", response_model=schemas.task.Task)
 def update_task(
     *,
     db: Session = Depends(get_db),
     id: int,
-    task_in: schemas.task.TaskCreate,
+    task_in: schemas.task.TaskUpdate,
     current_user: models.core.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -70,11 +196,139 @@ def update_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    # Access Rights Model: Only Assigner, Accountable, Assignee or Admin can update
+    is_admin = current_user.role and current_user.role.name in ["Admin", "Super Admin"]
+    is_owner = current_user.id in [task.creator_id, task.assigner_id, task.accountable_id, task.assignee_id]
+    
+    if not (is_admin or is_owner):
+        raise HTTPException(
+            status_code=403, 
+            detail="Strategic access denied. You are not authorized for this specific task sector."
+        )
+    
     update_data = task_in.dict(exclude_unset=True)
+    print(f"DEBUG: update_task {id} data: {update_data}")
+    
+    # Auto-set completed_at
+    if "status" in update_data:
+        if update_data["status"] == schemas.task.TaskStatus.COMPLETED:
+            if not task.completed_at:
+                from datetime import datetime
+                task.completed_at = datetime.now()
+        else:
+            task.completed_at = None
+
     for field, value in update_data.items():
         setattr(task, field, value)
     
     db.add(task)
     db.commit()
     db.refresh(task)
+
+    # Notify assignee on update (if status changed or new assignee)
+    if "status" in update_data or "assignee_id" in update_data:
+        assignee = task.assignee
+        if assignee:
+            context = {
+                "task_title": task.title,
+                "status": task.status,
+                "priority": task.priority,
+                "sender_name": current_user.full_name,
+                "user_name": assignee.full_name
+            }
+            event_type = "TASK_UPDATE"
+            message = notification_service.format_message(db, current_user.org_id, assignee.language or "en", event_type, context)
+            
+            # 1. Create Web Notification
+            db_notif = models.task_tracking.Notification(
+                user_id=assignee.id,
+                channel="web",
+                message=message,
+                status="Pending",
+                trigger_event="task_update"
+            )
+            db.add(db_notif)
+            db.commit()
+
+            # 2. External Notifications
+            notification_service.send_email_notification(db, current_user.org_id, assignee.email, f"Task Update: {task.title}", message)
+            # notification_service.send_telegram_background(current_user.org_id, message) # This handles its own DB session
+
+    create_audit_log(db, current_user.id, "TASK_UPDATE", f"Task '{task.title}' updated.", org_id=current_user.org_id)
     return task
+
+@router.post("/{id}/comments", response_model=schemas.task.Comment)
+def create_task_comment(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    comment_in: schemas.task.CommentBase,
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    task = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.id == id,
+        models.task_tracking.Task.org_id == current_user.org_id
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    db_obj = models.task_tracking.Comment(
+        content=comment_in.content,
+        task_id=id,
+        author_id=current_user.id
+    )
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+@router.get("/{id}/comments", response_model=List[schemas.task.Comment])
+def get_task_comments(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    return db.query(models.task_tracking.Comment).filter(
+        models.task_tracking.Comment.task_id == id
+    ).all()
+
+@router.post("/{id}/attachments", response_model=schemas.task.Attachment)
+async def upload_task_attachment(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    file: UploadFile = File(...),
+    current_user: models.core.User = Depends(deps.get_current_active_user),
+) -> Any:
+    task = db.query(models.task_tracking.Task).filter(
+        models.task_tracking.Task.id == id,
+        models.task_tracking.Task.org_id == current_user.org_id
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Simple local storage for now
+    upload_dir = f"/app/static/attachments/task_{id}"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+    
+    file_id = str(uuid.uuid4())
+    ext = os.path.splitext(file.filename)[1]
+    file_path = f"{upload_dir}/{file_id}{ext}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    db_obj = models.task_tracking.Attachment(
+        file_name=file.filename,
+        file_path=f"static/attachments/task_{id}/{file_id}{ext}",
+        file_type=file.content_type,
+        file_size=0, # Could be improved by checking buffer size
+        task_id=id,
+        uploader_id=current_user.id
+    )
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj

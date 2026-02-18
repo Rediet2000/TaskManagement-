@@ -15,7 +15,8 @@ export class ThemeService {
     private mediaQueryListener: any = null;
 
     constructor() {
-        this.authService.currentUser.subscribe(user => {
+        effect(() => {
+            const user = this.authService.currentUser();
             if (user && user.org_id) {
                 this.loadTheme(user.org_id);
             } else {
@@ -63,6 +64,18 @@ export class ThemeService {
 
         if (org.secondary_color) {
             root.style.setProperty('--accent', org.secondary_color);
+        }
+
+        if (org.border_radius) {
+            root.style.setProperty('--glass-radius', org.border_radius);
+        }
+
+        if (org.font_family) {
+            root.style.setProperty('--font-family', org.font_family);
+        }
+
+        if (org.font_size_base) {
+            root.style.setProperty('--font-size-base', org.font_size_base);
         }
 
         this.setThemeMode(org.theme_mode || 'system');

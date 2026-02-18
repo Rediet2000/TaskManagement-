@@ -1,0 +1,111 @@
+<div class="reports-container">
+    <div class="reports-header">
+        <h1>{{ 'INTELLIGENCE_ANALYTICS' | translate }}</h1>
+        <div class="tabs">
+            <button [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">{{ 'MACRO_OVERVIEW' |
+                translate }}</button>
+            <button [class.active]="activeTab() === 'performance'" (click)="setTab('performance')">{{
+                'OPERATIONAL_INDEX' | translate }}</button>
+        </div>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="loader"></div>
+        <p>{{ 'SYNCHRONIZING_METRICS' | translate }}</p>
+    </div>
+    } @else {
+    <div class="reports-content">
+        <!-- Overview Tab -->
+        @if (activeTab() === 'overview') {
+        <div class="overview-grid">
+            <div class="stat-card">
+                <h3>{{ 'TOTAL_INITIATIVES' | translate }}</h3>
+                <div class="value">{{ reportData()?.total_tasks || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ 'RESOLVED_CASES' | translate }}</h3>
+                <div class="value success">{{ reportData()?.completed || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ 'ACTIVE_OPERATIONS' | translate }}</h3>
+                <div class="value warning">{{ reportData()?.pending || 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ 'UNALLOCATED_ASSETS' | translate }}</h3>
+                <div class="value error">{{ reportData()?.unassigned || 0 }}</div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <h2>{{ 'DEPLOYMENT_EFFICIENCY' | translate }}</h2>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getCompletionPercentage()"></div>
+                </div>
+                <div class="progress-stats">
+                    <span>{{ getCompletionPercentage() }}% {{ 'OBJECTIVE_COMPLETION' | translate }}</span>
+                    <span>{{ reportData()?.started || 0 }} {{ 'UNITS_ENGAGED' | translate }}</span>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Performance Tab -->
+        @if (activeTab() === 'performance') {
+        <div class="performance-table-container">
+            <h2>{{ 'OPERATIONAL_INDEX' | translate }}</h2>
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'AGENT_ASSET' | translate }}</th>
+                        <th>{{ 'ASSIGNED_INITIATIVES' | translate }}</th>
+                        <th>{{ 'ENGAGEMENT' | translate }}</th>
+                        <th>{{ 'RESOLUTIONS' | translate }}</th>
+                        <th>{{ 'EXECUTION_RATE' | translate }}</th>
+                        <th>{{ 'AVERAGE_FEEDBACK' | translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (user of reportData()?.user_performance; track user.user_id) {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar">{{ user.user_name.charAt(0) }}</div>
+                                <span>{{ user.user_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.tasks_assigned }}</td>
+                        <td>{{ user.tasks_started }}</td>
+                        <td>{{ user.tasks_completed }}</td>
+                        <td>
+                            <div class="rate-bar">
+                                <div class="rate-fill-container">
+                                    <div class="rate-fill" [style.width.%]="user.on_time_rate"
+                                        [class.high]="user.on_time_rate >= 80"
+                                        [class.med]="user.on_time_rate >= 50 && user.on_time_rate < 80"
+                                        [class.low]="user.on_time_rate < 50">
+                                    </div>
+                                </div>
+                                <span>{{ user.on_time_rate }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="star-rating">
+                                @if (user.avg_rating) {
+                                <i class="bi bi-shield-fill-check"></i>
+                                <span>{{ user.avg_rating | number:'1.1-1' }}</span>
+                                } @else {
+                                <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">NO DATA</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+    }
+</div>

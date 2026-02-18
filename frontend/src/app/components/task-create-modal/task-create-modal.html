@@ -1,0 +1,104 @@
+<div class="modal-overlay" (click)="onClose()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>{{ 'NEW_TASK' | translate }}</h2>
+            <button class="close-btn" (click)="onClose()"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <!-- Success/Error Alerts inside modal -->
+        <div *ngIf="success()" class="alert-premium alert-success" style="margin: 1rem;">
+            <i class="bi bi-check-circle"></i> {{ success() }}
+        </div>
+        <div *ngIf="error()" class="alert-premium alert-error" style="margin: 1rem;">
+            <i class="bi bi-shield-exclamation"></i> {{ error() }}
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #taskForm="ngForm" class="task-form">
+            <div class="form-group">
+                <label>{{ 'TASK_TITLE' | translate }}</label>
+                <input type="text" name="title" [(ngModel)]="newTask.title" required
+                    [placeholder]="'TASK_TITLE' | translate">
+            </div>
+
+            <div class="form-group">
+                <label>{{ 'MISSION_DESCRIPTION' | translate }}</label>
+                <textarea name="description" [(ngModel)]="newTask.description" rows="3"
+                    [placeholder]="'TACTICAL_DESC' | translate"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>{{ 'ASSIGNER_INFO' | translate }}</label>
+                    <select name="assigner" [(ngModel)]="newTask.assigner_id">
+                        <option [ngValue]="null">Not Specified</option>
+                        <option *ngFor="let user of users()" [value]="user.id">
+                            {{ user.full_name || user.email }}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group half">
+                    <label>{{ 'ACCOUNTABLE_INFO' | translate }}</label>
+                    <select name="accountable" [(ngModel)]="newTask.accountable_id">
+                        <option [ngValue]="null">Not Specified</option>
+                        <option *ngFor="let user of users()" [value]="user.id">
+                            {{ user.full_name || user.email }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>{{ 'CATEGORY_WORKER' | translate }}</label>
+                    <select name="assignee" [(ngModel)]="newTask.assignee_id">
+                        <option [ngValue]="null">Unassigned</option>
+                        <option *ngFor="let user of users()" [value]="user.id">
+                            {{ user.full_name || user.email }}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group half">
+                    <label>{{ 'SECTOR_LOCATION' | translate }}</label>
+                    <select name="module_type" [(ngModel)]="newTask.module_type">
+                        <option *ngFor="let m of modules" [value]="m">{{ m | uppercase }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>{{ 'THREAT_LEVEL' | translate }}</label>
+                    <select name="priority" [(ngModel)]="newTask.priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group half">
+                    <label>{{ 'ASSIGNED_CYCLE' | translate }}</label>
+                    <select name="sprint_id" [(ngModel)]="newTask.sprint_id">
+                        <option [ngValue]="null">Project Backlog</option>
+                        <option *ngFor="let s of sprints()" [value]="s.id">
+                            {{ s.name }} ({{ s.status }})
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{{ 'DEADLINE' | translate }}</label>
+                <input type="date" name="due_date" [(ngModel)]="newTask.due_date" required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="onClose()" [disabled]="loading()">{{ 'ABORT' |
+                    translate }}</button>
+                <button type="submit" class="premium-btn" [disabled]="!taskForm.form.valid || loading()">
+                    <span *ngIf="!loading()">{{ 'AUTHORIZE_CYCLE' | translate }}</span>
+                    <span *ngIf="loading()" class="loader small"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

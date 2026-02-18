@@ -2,11 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProblemService, ProblemArea } from '../../services/problem.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
     selector: 'app-problem-tracking',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TranslatePipe],
     templateUrl: './problem-tracking.html',
     styleUrls: ['./problem-tracking.scss']
 })
@@ -16,7 +17,10 @@ export class ProblemTracking implements OnInit {
 
     newProblem = {
         branch_location: '',
+        component: '',
+        device_id: '',
         problem_type: '',
+        severity: 'Medium'
     };
 
     constructor(private problemService: ProblemService) { }
@@ -36,7 +40,13 @@ export class ProblemTracking implements OnInit {
             next: () => {
                 this.loadProblems();
                 this.showModal.set(false);
-                this.newProblem = { branch_location: '', problem_type: '' };
+                this.newProblem = {
+                    branch_location: '',
+                    component: '',
+                    device_id: '',
+                    problem_type: '',
+                    severity: 'Medium'
+                };
             },
             error: (err: any) => console.error('Failed to report problem', err)
         });
